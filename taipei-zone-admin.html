@@ -3,83 +3,144 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>BodyFix 台北據點需求統計</title>
+  <title>BodyFix 台北據點需求統計（內部）</title>
   <style>
-    :root { --bg:#f2efe7; --green:#1f3a31; --card:#faf7f1; --line:#d9d2c3; }
+    :root { --bg:#f2efe7; --green:#1f3a31; --green-soft:#314c43; --card:#faf7f1; --line:#d9d2c3; --white:#fff; }
+    * { box-sizing: border-box; }
     body { margin:0; font-family:"Noto Sans TC",sans-serif; background:var(--bg); color:var(--green); }
-    .wrap { max-width:920px; margin:0 auto; padding:32px 20px 80px; }
-    h1 { font-size:32px; margin-bottom:8px; }
-    .muted { opacity:.8; margin-top:0; }
-    .toolbar { margin:18px 0; }
+    .wrap { max-width:1200px; margin:0 auto; padding:30px 20px 50px; }
+    h1 { margin:0 0 10px; font-size:32px; }
+    .desc { margin:0 0 16px; color:var(--green-soft); }
+    .panel { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; margin-bottom:14px; }
+    .toolbar { display:flex; gap:10px; align-items:center; justify-content:space-between; flex-wrap:wrap; }
     button { border:none; border-radius:8px; padding:10px 14px; background:var(--green); color:#fff; font-weight:700; cursor:pointer; }
-    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
-    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
-    .card h2 { font-size:18px; margin:0 0 10px; }
-    pre { margin:0; white-space:pre-wrap; word-break:break-word; font-size:13px; line-height:1.6; }
-    #status { font-weight:700; min-height:24px; }
+    .hint { font-size:14px; color:var(--green-soft); }
+    .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--white); }
+    table { width:100%; border-collapse:collapse; min-width:1100px; }
+    th, td { border-bottom:1px solid #ece6da; padding:10px 12px; text-align:left; vertical-align:top; }
+    th { background:#f7f3ea; white-space:nowrap; }
+    tr:hover td { background:#fcfaf5; }
+    .num { text-align:right; font-variant-numeric: tabular-nums; }
+    .muted { color:#6b796f; }
   </style>
 </head>
 <body>
   <main class="wrap">
-    <h1>台北據點需求統計</h1>
-    <p class="muted">此頁面僅讀取 <code>GET /api/taipei-zone-summary</code> 的結果。</p>
+    <h1>BodyFix 台北據點需求統計（內部）</h1>
+    <p class="desc">資料來源：<code>GET /api/taipei-zone-summary</code>。此頁僅供內部快速查看需求趨勢。</p>
 
-    <div class="toolbar">
-      <button id="reload" type="button">重新整理統計</button>
-    </div>
-    <p id="status">讀取中...</p>
+    <section class="panel toolbar">
+      <div id="status" class="hint">尚未載入資料。</div>
+      <button id="reloadBtn" type="button">重新整理</button>
+    </section>
 
-    <section class="grid" id="summary-grid"></section>
+    <section class="table-wrap" aria-live="polite">
+      <table>
+        <thead>
+          <tr>
+            <th>區域</th>
+            <th class="num">登記數</th>
+            <th class="num">距離阻力人數</th>
+            <th class="num">高意願人數</th>
+            <th class="num">+30 興趣人數</th>
+            <th class="num">60 分鐘主力人數</th>
+            <th class="num">到府需求人數</th>
+            <th class="num">12 次計畫興趣人數</th>
+            <th class="num">訓練興趣人數</th>
+            <th class="num">舊客人數</th>
+            <th>最後登記時間</th>
+            <th>建議動作</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="12" class="muted">載入中…</td></tr>
+        </tbody>
+      </table>
+    </section>
   </main>
 
   <script>
     const statusEl = document.getElementById('status');
-    const gridEl = document.getElementById('summary-grid');
+    const tbodyEl = document.getElementById('tbody');
+    const reloadBtn = document.getElementById('reloadBtn');
 
-    function renderSummary(data) {
-      gridEl.innerHTML = '';
-      const entries = Object.entries(data || {});
-
-      if (!entries.length) {
-        statusEl.textContent = '目前沒有可顯示的統計資料。';
-        return;
+    function pick(row, keys, fallback = '') {
+      for (const key of keys) {
+        if (row[key] !== undefined && row[key] !== null) return row[key];
       }
+      return fallback;
+    }
 
-      statusEl.textContent = `統計更新時間：${new Date().toLocaleString('zh-TW')}`;
+    function asNumber(value) {
+      const n = Number(value);
+      return Number.isFinite(n) ? n : 0;
+    }
 
-      entries.forEach(([key, value]) => {
-        const card = document.createElement('article');
-        card.className = 'card';
+    function formatTime(value) {
+      if (!value) return '-';
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return String(value);
+      return new Intl.DateTimeFormat('zh-TW', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false,
+        timeZone: 'Asia/Taipei'
+      }).format(d);
+    }
 
-        const title = document.createElement('h2');
-        title.textContent = key;
+    function rowHtml(row) {
+      const zone = pick(row, ['zone', 'preferred_zone', 'area', 'zone_name'], '-');
+      const total = asNumber(pick(row, ['total_count', 'register_count', 'count']));
+      const distanceBarrier = asNumber(pick(row, ['distance_barrier_count', 'distance_resistance_count']));
+      const highIntent = asNumber(pick(row, ['high_intent_count', 'strong_intent_count']));
+      const plus30 = asNumber(pick(row, ['plus_30_interest_count', 'plus30_interest_count']));
+      const sixtyMain = asNumber(pick(row, ['sixty_main_count', 'sixty_minutes_main_count']));
+      const homeVisit = asNumber(pick(row, ['home_visit_count', 'home_visit_demand_count']));
+      const plan12 = asNumber(pick(row, ['twelve_session_interest_count', 'plan_12_interest_count']));
+      const training = asNumber(pick(row, ['training_interest_count', 'movement_training_interest_count']));
+      const existing = asNumber(pick(row, ['existing_client_count', 'old_client_count']));
+      const lastAt = pick(row, ['last_registered_at', 'last_registration_at', 'last_created_at']);
+      const action = pick(row, ['recommended_action', 'suggested_action'], '-');
 
-        const content = document.createElement('pre');
-        content.textContent = JSON.stringify(value, null, 2);
-
-        card.appendChild(title);
-        card.appendChild(content);
-        gridEl.appendChild(card);
-      });
+      return `<tr>
+        <td>${zone}</td>
+        <td class="num">${total}</td>
+        <td class="num">${distanceBarrier}</td>
+        <td class="num">${highIntent}</td>
+        <td class="num">${plus30}</td>
+        <td class="num">${sixtyMain}</td>
+        <td class="num">${homeVisit}</td>
+        <td class="num">${plan12}</td>
+        <td class="num">${training}</td>
+        <td class="num">${existing}</td>
+        <td>${formatTime(lastAt)}</td>
+        <td>${action || '-'}</td>
+      </tr>`;
     }
 
     async function loadSummary() {
-      statusEl.textContent = '讀取中...';
+      statusEl.textContent = '載入中…';
+      tbodyEl.innerHTML = '<tr><td colspan="12" class="muted">載入中…</td></tr>';
       try {
         const res = await fetch('/api/taipei-zone-summary', { method: 'GET' });
-        const data = await res.json();
+        const json = await res.json();
+        if (!res.ok || !json.ok) throw new Error(json.error || '讀取失敗');
 
-        if (!res.ok) {
-          throw new Error(data?.error || `HTTP ${res.status}`);
+        const rows = Array.isArray(json.data) ? json.data : [];
+        if (!rows.length) {
+          tbodyEl.innerHTML = '<tr><td colspan="12" class="muted">目前尚無統計資料。</td></tr>';
+          statusEl.textContent = '已載入（0 筆）';
+          return;
         }
 
-        renderSummary(data);
+        tbodyEl.innerHTML = rows.map(rowHtml).join('');
+        statusEl.textContent = `已載入 ${rows.length} 筆區域統計`; 
       } catch (err) {
-        statusEl.textContent = `讀取失敗：${err.message}`;
+        tbodyEl.innerHTML = `<tr><td colspan="12" class="muted">載入失敗：${err.message}</td></tr>`;
+        statusEl.textContent = '載入失敗';
       }
     }
 
-    document.getElementById('reload').addEventListener('click', loadSummary);
+    reloadBtn.addEventListener('click', loadSummary);
     loadSummary();
   </script>
 </body>
