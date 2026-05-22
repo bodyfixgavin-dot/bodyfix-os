@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyFix 台北據點需求登記</title>
+  <style>
+    :root { --bg:#f2efe7; --green:#1f3a31; --green-soft:#314c43; --card:#faf7f1; --line:#d9d2c3; }
+    body { margin:0; font-family:"Noto Sans TC",sans-serif; background:var(--bg); color:var(--green); }
+    .wrap { max-width:760px; margin:0 auto; padding:32px 20px 80px; }
+    h1 { font-size:34px; margin-bottom:10px; }
+    p { line-height:1.7; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:18px; margin:16px 0; }
+    label { display:block; font-weight:700; margin-bottom:8px; }
+    select, input, textarea { width:100%; border:1px solid var(--line); border-radius:8px; padding:10px; background:white; }
+    .row { margin-bottom:14px; }
+    .checkbox-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
+    button { width:100%; border:none; border-radius:8px; padding:13px; background:var(--green); color:#fff; font-weight:700; cursor:pointer; }
+    #message { margin-top:14px; font-weight:700; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>BodyFix 台北據點需求登記</h1>
+    <p>六張犁是目前常駐服務點。如果你覺得距離較遠，可以先登記你方便的服務區域。西門、國父紀念館、到府整理，會依照需求累積狀況優先安排對應時段。</p>
+
+    <div class="card">
+      <p>這不是正式預約，也不需要付款。這份登記只是讓我知道：你比較方便在哪裡做整理、六張犁對你來說是否太遠、以及你主要想處理什麼身體狀態。</p>
+    </div>
+
+    <form id="form" class="card">
+      <div class="row"><label>你希望 BodyFix 優先開放哪個據點？</label><select name="preferred_zone" required><option value="">請選擇</option><option value="ximen">西門</option><option value="liuzhangli">六張犁</option><option value="sun_yat_sen_memorial_hall">國父紀念館</option><option value="home_visit">到府整理</option><option value="other">其他地區</option></select></div>
+      <div class="row"><label>六張犁對你來說方便嗎？</label><select name="liuzhangli_distance_feeling" required><option value="convenient">方便</option><option value="acceptable">還可以</option><option value="a_bit_far">有點遠</option><option value="too_far_affects_booking">太遠會影響預約意願</option></select></div>
+      <div class="row"><label>你主要想處理什麼？</label><select name="main_need" required><option value="neck_shoulder_chest">肩頸胸廓</option><option value="lower_back_pelvis">下背骨盆</option><option value="hip_legs">髖與腿</option><option value="training_recovery">重訓後恢復</option><option value="movement_training">教練課 / 動作整合</option><option value="twelve_session_plan">12 次完整計畫諮詢</option><option value="ziwei_tarot">紫微 / 塔羅</option><option value="other">其他</option></select></div>
+      <div class="row"><label>你預計想安排的服務長度？</label><select name="session_length_preference" required><option value="sixty_main">60 分鐘為主</option><option value="sixty_plus_30_if_needed">60 分鐘，若適合可加購 +30</option><option value="consult_first">想先諮詢哪種長度適合</option></select></div>
+      <div class="row"><label>你偏好的服務方式？</label><select name="service_mode" required><option value="studio">工作室</option><option value="home_visit">到府</option><option value="flexible">都可以</option><option value="consult_first">想先諮詢</option></select></div>
+      <div class="row"><label>你比較方便的時段？（可複選）</label><div class="checkbox-grid"><label><input type="checkbox" name="preferred_time" value="weekday_afternoon"> 平日下午</label><label><input type="checkbox" name="preferred_time" value="weekday_evening"> 平日晚上</label><label><input type="checkbox" name="preferred_time" value="weekend_daytime"> 週末白天</label><label><input type="checkbox" name="preferred_time" value="weekend_evening"> 週末晚上</label><label><input type="checkbox" name="preferred_time" value="flexible"> 彈性</label></div></div>
+      <div class="row"><label>你是舊客戶嗎？</label><select name="is_existing_client" required><option value="yes">是</option><option value="no">否</option><option value="unknown">不確定</option></select></div>
+      <div class="row"><label>聯絡方式類型</label><select name="contact_type" required><option value="line">LINE</option><option value="instagram">Instagram</option><option value="phone">電話</option><option value="other">其他</option></select></div>
+      <div class="row"><label>聯絡方式</label><input name="contact_value" required></div>
+      <div class="row"><label>備註</label><textarea name="note" rows="4"></textarea></div>
+      <button type="submit">送出需求登記</button>
+      <div id="message"></div>
+    </form>
+  </main>
+  <script>
+    document.getElementById('form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const form = e.currentTarget;
+      const data = Object.fromEntries(new FormData(form).entries());
+      data.preferred_time = Array.from(form.querySelectorAll('input[name="preferred_time"]:checked')).map((el) => el.value);
+      const res = await fetch('/api/taipei-zone-register', { method: 'POST', headers: { 'Content-Type':'application/json' }, body: JSON.stringify(data) });
+      const json = await res.json();
+      const msg = document.getElementById('message');
+      if (json.ok) {
+        msg.textContent = '已收到你的台北據點需求登記。這不是正式預約，也不需要付款。';
+        form.reset();
+      } else {
+        msg.textContent = json.error || '送出失敗';
+      }
+    });
+  </script>
+</body>
+</html>
