@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyFix 台北據點需求統計</title>
+  <style>
+    :root { --bg:#f2efe7; --green:#1f3a31; --card:#faf7f1; --line:#d9d2c3; }
+    body { margin:0; font-family:"Noto Sans TC",sans-serif; background:var(--bg); color:var(--green); }
+    .wrap { max-width:920px; margin:0 auto; padding:32px 20px 80px; }
+    h1 { font-size:32px; margin-bottom:8px; }
+    .muted { opacity:.8; margin-top:0; }
+    .toolbar { margin:18px 0; }
+    button { border:none; border-radius:8px; padding:10px 14px; background:var(--green); color:#fff; font-weight:700; cursor:pointer; }
+    .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(260px,1fr)); gap:14px; }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .card h2 { font-size:18px; margin:0 0 10px; }
+    pre { margin:0; white-space:pre-wrap; word-break:break-word; font-size:13px; line-height:1.6; }
+    #status { font-weight:700; min-height:24px; }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>台北據點需求統計</h1>
+    <p class="muted">此頁面僅讀取 <code>GET /api/taipei-zone-summary</code> 的結果。</p>
+
+    <div class="toolbar">
+      <button id="reload" type="button">重新整理統計</button>
+    </div>
+    <p id="status">讀取中...</p>
+
+    <section class="grid" id="summary-grid"></section>
+  </main>
+
+  <script>
+    const statusEl = document.getElementById('status');
+    const gridEl = document.getElementById('summary-grid');
+
+    function renderSummary(data) {
+      gridEl.innerHTML = '';
+      const entries = Object.entries(data || {});
+
+      if (!entries.length) {
+        statusEl.textContent = '目前沒有可顯示的統計資料。';
+        return;
+      }
+
+      statusEl.textContent = `統計更新時間：${new Date().toLocaleString('zh-TW')}`;
+
+      entries.forEach(([key, value]) => {
+        const card = document.createElement('article');
+        card.className = 'card';
+
+        const title = document.createElement('h2');
+        title.textContent = key;
+
+        const content = document.createElement('pre');
+        content.textContent = JSON.stringify(value, null, 2);
+
+        card.appendChild(title);
+        card.appendChild(content);
+        gridEl.appendChild(card);
+      });
+    }
+
+    async function loadSummary() {
+      statusEl.textContent = '讀取中...';
+      try {
+        const res = await fetch('/api/taipei-zone-summary', { method: 'GET' });
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data?.error || `HTTP ${res.status}`);
+        }
+
+        renderSummary(data);
+      } catch (err) {
+        statusEl.textContent = `讀取失敗：${err.message}`;
+      }
+    }
+
+    document.getElementById('reload').addEventListener('click', loadSummary);
+    loadSummary();
+  </script>
+</body>
+</html>
