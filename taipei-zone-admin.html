@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>BodyFix 台北據點需求統計</title>
+  <style>
+    :root { --bg:#f2efe7; --green:#1f3a31; --card:#faf7f1; --line:#d9d2c3; --muted:#5d6f68; }
+    body { margin:0; font-family:"Noto Sans TC",sans-serif; background:var(--bg); color:var(--green); }
+    .wrap { max-width:1180px; margin:0 auto; padding:28px 18px 40px; }
+    h1 { margin:0 0 8px; font-size:30px; }
+    p { margin:0 0 16px; color:var(--muted); }
+    .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .table-wrap { overflow:auto; }
+    table { width:100%; border-collapse:collapse; min-width:1080px; }
+    th, td { text-align:left; border-bottom:1px solid var(--line); padding:10px 8px; font-size:14px; }
+    th { font-size:13px; color:var(--muted); font-weight:700; white-space:nowrap; }
+    .empty { padding:14px 8px; color:var(--muted); }
+  </style>
+</head>
+<body>
+  <main class="wrap">
+    <h1>BodyFix 台北據點需求統計</h1>
+    <p>內部 MVP：僅顯示據點需求摘要，資料來源為 <code>GET /api/taipei-zone-summary</code>。</p>
+
+    <section class="card table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>區域</th>
+            <th>登記數</th>
+            <th>距離阻力人數</th>
+            <th>高意願人數</th>
+            <th>+30 興趣人數</th>
+            <th>60 分鐘主力人數</th>
+            <th>到府需求人數</th>
+            <th>12 次計畫興趣人數</th>
+            <th>訓練興趣人數</th>
+            <th>舊客人數</th>
+            <th>最後登記時間</th>
+            <th>建議動作</th>
+          </tr>
+        </thead>
+        <tbody id="rows">
+          <tr><td class="empty" colspan="12">讀取中...</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </main>
+
+  <script>
+    const zoneLabels = {
+      ximen: '西門',
+      liuzhangli: '六張犁',
+      sun_yat_sen_memorial_hall: '國父紀念館',
+      home_visit: '到府整理',
+      other: '其他地區'
+    };
+
+    function formatDate(value) {
+      if (!value) return '-';
+      const date = new Date(value);
+      if (Number.isNaN(date.getTime())) return value;
+      return new Intl.DateTimeFormat('zh-TW', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit', hour12: false
+      }).format(date);
+    }
+
+    function cell(value) {
+      return value ?? 0;
+    }
+
+    async function loadSummary() {
+      const tbody = document.getElementById('rows');
+
+      try {
+        const res = await fetch('/api/taipei-zone-summary', { method: 'GET' });
+        const json = await res.json();
+
+        if (!json.ok) {
+          tbody.innerHTML = '<tr><td class="empty" colspan="12">讀取失敗：' + (json.error || 'unknown error') + '</td></tr>';
+          return;
+        }
+
+        const rows = Array.isArray(json.data) ? json.data : [];
+        if (rows.length === 0) {
+          tbody.innerHTML = '<tr><td class="empty" colspan="12">目前尚無登記資料</td></tr>';
+          return;
+        }
+
+        tbody.innerHTML = rows.map((row) => `
+          <tr>
+            <td>${zoneLabels[row.preferred_zone] || row.preferred_zone || '-'}</td>
+            <td>${cell(row.total_count)}</td>
+            <td>${cell(row.distance_friction_count)}</td>
+            <td>${cell(row.high_intent_count)}</td>
+            <td>${cell(row.plus_30_interest_count)}</td>
+            <td>${cell(row.sixty_main_count)}</td>
+            <td>${cell(row.home_visit_count)}</td>
+            <td>${cell(row.twelve_session_interest_count)}</td>
+            <td>${cell(row.movement_training_interest_count)}</td>
+            <td>${cell(row.existing_client_count)}</td>
+            <td>${formatDate(row.latest_registration_at)}</td>
+            <td>${row.suggested_action || '-'}</td>
+          </tr>
+        `).join('');
+      } catch (error) {
+        tbody.innerHTML = '<tr><td class="empty" colspan="12">讀取失敗：' + error.message + '</td></tr>';
+      }
+    }
+
+    loadSummary();
+  </script>
+</body>
+</html>
