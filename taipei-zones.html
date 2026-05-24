@@ -34,6 +34,7 @@
     .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 18px 52px; }
     .brand-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
     .brand-box {
+      pointer-events: none;
       width: 118px; min-width: 118px; aspect-ratio: 1 / 1;
       background: linear-gradient(160deg, #0f2335, #071627);
       border: 1px solid var(--gold);
@@ -50,6 +51,7 @@
     .lead { color: var(--ink-soft); line-height: 1.9; font-size: 18px; max-width: 860px; margin: 0; }
     .divider { display: flex; align-items: center; gap: 8px; margin: 14px 0 20px; color: var(--gold); }
     .divider::before, .divider::after { content: ""; height: 1px; background: linear-gradient(to right, transparent, var(--gold-soft), transparent); flex: 1; }
+    .divider::before, .divider::after { pointer-events: none; }
 
     .notice {
       background: var(--paper);
@@ -64,6 +66,8 @@
     .notice p { margin: 0; line-height: 1.8; color: var(--ink-soft); }
 
     .form-card {
+      position: relative;
+      z-index: 2;
       background: var(--card);
       border: 1px solid var(--gold-soft);
       border-radius: 12px;
@@ -88,11 +92,20 @@
     .q-title { margin: 0; font-size: 24px; font-family: "Noto Serif TC", Georgia, serif; }
 
     .choices { display: flex; flex-wrap: wrap; gap: 10px; }
-    .pill { position: relative; display: inline-flex; }
-    .pill input {
-      position: absolute; opacity: 0; pointer-events: none;
+    .pill-option { position: relative; display: inline-flex; }
+    .pill-option input {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      clip-path: inset(50%);
+      white-space: nowrap;
+      border: 0;
     }
-    .pill span {
+    .pill-option span {
       display: inline-flex; align-items: center; justify-content: center;
       min-height: 44px; padding: 10px 17px;
       border-radius: 999px; border: 1px solid #ccb996;
@@ -100,9 +113,9 @@
       font-size: 16px; line-height: 1.3;
       transition: all .18s ease;
     }
-    .pill:hover span { border-color: var(--gold); color: var(--ink); }
-    .pill input:focus-visible + span { outline: 2px solid #2f4e69; outline-offset: 2px; }
-    .pill input:checked + span {
+    .pill-option:hover span { border-color: var(--gold); color: var(--ink); }
+    .pill-option input:focus-visible + span { outline: 2px solid #2f4e69; outline-offset: 2px; }
+    .pill-option input:checked + span {
       background: linear-gradient(180deg, #163854, #102e47);
       color: #f7e6c7;
       border-color: var(--gold);
@@ -167,35 +180,35 @@
         <section class="q-item">
           <div class="q-head"><span class="q-num">01</span><h2 class="q-title">你希望 BodyFix 優先開放哪個據點？</h2></div>
           <div class="choices">
-            <label class="pill"><input type="radio" name="preferred_zone" value="ximen" required><span>西門</span></label>
-            <label class="pill"><input type="radio" name="preferred_zone" value="liuzhangli"><span>六張犁</span></label>
-            <label class="pill"><input type="radio" name="preferred_zone" value="sun_yat_sen_memorial_hall"><span>國父紀念館</span></label>
-            <label class="pill"><input type="radio" name="preferred_zone" value="home_visit"><span>到府整理</span></label>
-            <label class="pill"><input type="radio" name="preferred_zone" value="other"><span>其他地區</span></label>
+            <label class="pill-option"><input type="radio" name="preferred_zone" value="ximen" required><span>西門</span></label>
+            <label class="pill-option"><input type="radio" name="preferred_zone" value="liuzhangli"><span>六張犁</span></label>
+            <label class="pill-option"><input type="radio" name="preferred_zone" value="sun_yat_sen_memorial_hall"><span>國父紀念館</span></label>
+            <label class="pill-option"><input type="radio" name="preferred_zone" value="home_visit"><span>到府整理</span></label>
+            <label class="pill-option"><input type="radio" name="preferred_zone" value="other"><span>其他地區</span></label>
           </div>
         </section>
 
         <section class="q-item">
           <div class="q-head"><span class="q-num">02</span><h2 class="q-title">六張犁對你來說方便嗎？</h2></div>
           <div class="choices">
-            <label class="pill"><input type="radio" name="liuzhangli_distance_feeling" value="convenient" required><span>方便</span></label>
-            <label class="pill"><input type="radio" name="liuzhangli_distance_feeling" value="acceptable"><span>還可以</span></label>
-            <label class="pill"><input type="radio" name="liuzhangli_distance_feeling" value="a_bit_far"><span>有點遠</span></label>
-            <label class="pill"><input type="radio" name="liuzhangli_distance_feeling" value="too_far_affects_booking"><span>太遠會影響預約意願</span></label>
+            <label class="pill-option"><input type="radio" name="liuzhangli_distance_feeling" value="convenient" required><span>方便</span></label>
+            <label class="pill-option"><input type="radio" name="liuzhangli_distance_feeling" value="acceptable"><span>還可以</span></label>
+            <label class="pill-option"><input type="radio" name="liuzhangli_distance_feeling" value="a_bit_far"><span>有點遠</span></label>
+            <label class="pill-option"><input type="radio" name="liuzhangli_distance_feeling" value="too_far_affects_booking"><span>太遠會影響預約意願</span></label>
           </div>
         </section>
 
         <section class="q-item">
           <div class="q-head"><span class="q-num">03</span><h2 class="q-title">你主要想處理什麼？</h2></div>
           <div class="choices">
-            <label class="pill"><input type="radio" name="main_need" value="neck_shoulder_chest" required><span>肩頸胸廓</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="lower_back_pelvis"><span>下背骨盆</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="hip_legs"><span>髖與腿</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="training_recovery"><span>重訓恢復</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="movement_training"><span>教練課／動作整合</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="twelve_session_plan"><span>12次完整計畫諮詢</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="ziwei_tarot"><span>紫微／塔羅</span></label>
-            <label class="pill"><input type="radio" name="main_need" value="other"><span>其他</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="neck_shoulder_chest" required><span>肩頸胸廓</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="lower_back_pelvis"><span>下背骨盆</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="hip_legs"><span>髖與腿</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="training_recovery"><span>重訓恢復</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="movement_training"><span>教練課／動作整合</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="twelve_session_plan"><span>12次完整計畫諮詢</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="ziwei_tarot"><span>紫微／塔羅</span></label>
+            <label class="pill-option"><input type="radio" name="main_need" value="other"><span>其他</span></label>
           </div>
         </section>
 
@@ -203,19 +216,19 @@
           <section class="q-item">
             <div class="q-head"><span class="q-num">04</span><h2 class="q-title">你預計想安排的服務長度？</h2></div>
             <div class="choices">
-              <label class="pill"><input type="radio" name="session_length_preference" value="sixty_main" required><span>60分鐘為主</span></label>
-              <label class="pill"><input type="radio" name="session_length_preference" value="sixty_plus_30_if_needed"><span>60分鐘若適合可加購+30</span></label>
-              <label class="pill"><input type="radio" name="session_length_preference" value="consult_first"><span>想先諮詢哪種長度適合</span></label>
+              <label class="pill-option"><input type="radio" name="session_length_preference" value="sixty_main" required><span>60分鐘為主</span></label>
+              <label class="pill-option"><input type="radio" name="session_length_preference" value="sixty_plus_30_if_needed"><span>60分鐘若適合可加購+30</span></label>
+              <label class="pill-option"><input type="radio" name="session_length_preference" value="consult_first"><span>想先諮詢哪種長度適合</span></label>
             </div>
           </section>
 
           <section class="q-item">
             <div class="q-head"><span class="q-num">05</span><h2 class="q-title">你偏好的服務方式？</h2></div>
             <div class="choices">
-              <label class="pill"><input type="radio" name="service_mode" value="studio" required><span>工作室</span></label>
-              <label class="pill"><input type="radio" name="service_mode" value="home_visit"><span>到府</span></label>
-              <label class="pill"><input type="radio" name="service_mode" value="flexible"><span>都可以</span></label>
-              <label class="pill"><input type="radio" name="service_mode" value="consult_first"><span>想先諮詢</span></label>
+              <label class="pill-option"><input type="radio" name="service_mode" value="studio" required><span>工作室</span></label>
+              <label class="pill-option"><input type="radio" name="service_mode" value="home_visit"><span>到府</span></label>
+              <label class="pill-option"><input type="radio" name="service_mode" value="flexible"><span>都可以</span></label>
+              <label class="pill-option"><input type="radio" name="service_mode" value="consult_first"><span>想先諮詢</span></label>
             </div>
           </section>
         </div>
@@ -224,20 +237,20 @@
           <section class="q-item">
             <div class="q-head"><span class="q-num">06</span><h2 class="q-title">你比較方便的時段？（可複選）</h2></div>
             <div class="choices">
-              <label class="pill"><input type="checkbox" name="preferred_time" value="weekday_afternoon"><span>平日下午</span></label>
-              <label class="pill"><input type="checkbox" name="preferred_time" value="weekday_evening"><span>平日晚上</span></label>
-              <label class="pill"><input type="checkbox" name="preferred_time" value="weekend_daytime"><span>週末白天</span></label>
-              <label class="pill"><input type="checkbox" name="preferred_time" value="weekend_evening"><span>週末晚上</span></label>
-              <label class="pill"><input type="checkbox" name="preferred_time" value="flexible"><span>彈性</span></label>
+              <label class="pill-option"><input type="checkbox" name="preferred_time" value="weekday_afternoon"><span>平日下午</span></label>
+              <label class="pill-option"><input type="checkbox" name="preferred_time" value="weekday_evening"><span>平日晚上</span></label>
+              <label class="pill-option"><input type="checkbox" name="preferred_time" value="weekend_daytime"><span>週末白天</span></label>
+              <label class="pill-option"><input type="checkbox" name="preferred_time" value="weekend_evening"><span>週末晚上</span></label>
+              <label class="pill-option"><input type="checkbox" name="preferred_time" value="flexible"><span>彈性</span></label>
             </div>
           </section>
 
           <section class="q-item">
             <div class="q-head"><span class="q-num">07</span><h2 class="q-title">你是舊客戶嗎？</h2></div>
             <div class="choices">
-              <label class="pill"><input type="radio" name="is_existing_client" value="yes" required><span>是</span></label>
-              <label class="pill"><input type="radio" name="is_existing_client" value="no"><span>否</span></label>
-              <label class="pill"><input type="radio" name="is_existing_client" value="unknown"><span>不確定</span></label>
+              <label class="pill-option"><input type="radio" name="is_existing_client" value="yes" required><span>是</span></label>
+              <label class="pill-option"><input type="radio" name="is_existing_client" value="no"><span>否</span></label>
+              <label class="pill-option"><input type="radio" name="is_existing_client" value="unknown"><span>不確定</span></label>
             </div>
           </section>
         </div>
@@ -245,10 +258,10 @@
         <section class="q-item">
           <div class="q-head"><span class="q-num">08</span><h2 class="q-title">聯絡方式類型</h2></div>
           <div class="choices">
-            <label class="pill"><input type="radio" name="contact_type" value="line" required><span>LINE</span></label>
-            <label class="pill"><input type="radio" name="contact_type" value="instagram"><span>Instagram</span></label>
-            <label class="pill"><input type="radio" name="contact_type" value="phone"><span>電話</span></label>
-            <label class="pill"><input type="radio" name="contact_type" value="other"><span>其他</span></label>
+            <label class="pill-option"><input type="radio" name="contact_type" value="line" required><span>LINE</span></label>
+            <label class="pill-option"><input type="radio" name="contact_type" value="instagram"><span>Instagram</span></label>
+            <label class="pill-option"><input type="radio" name="contact_type" value="phone"><span>電話</span></label>
+            <label class="pill-option"><input type="radio" name="contact_type" value="other"><span>其他</span></label>
           </div>
         </section>
 
