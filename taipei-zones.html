@@ -91,8 +91,8 @@
     }
     .q-title { margin: 0; font-size: 24px; font-family: "Noto Serif TC", Georgia, serif; }
 
-    .choices { display: flex; flex-wrap: wrap; gap: 10px; }
-    .pill-option { position: relative; display: inline-flex; }
+    .choices { position: relative; z-index: 4; display: flex; flex-wrap: wrap; gap: 10px; }
+    .pill-option { position: relative; z-index: 5; display: inline-flex; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .pill-option input {
       position: absolute;
       width: 1px;
@@ -112,6 +112,9 @@
       background: #fffefb; color: #324454; cursor: pointer;
       font-size: 16px; line-height: 1.3;
       transition: all .18s ease;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
     }
     .pill-option:hover span { border-color: var(--gold); color: var(--ink); }
     .pill-option input:focus-visible + span { outline: 2px solid #2f4e69; outline-offset: 2px; }
