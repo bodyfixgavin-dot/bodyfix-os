@@ -16,12 +16,29 @@
     button { border:none; border-radius:8px; padding:10px 14px; background:var(--green); color:#fff; font-weight:700; cursor:pointer; }
     .hint { font-size:14px; color:var(--green-soft); }
     .table-wrap { overflow:auto; border:1px solid var(--line); border-radius:12px; background:var(--white); }
-    table { width:100%; border-collapse:collapse; min-width:1100px; }
+    table { width:100%; border-collapse:collapse; min-width:1400px; }
     th, td { border-bottom:1px solid #ece6da; padding:10px 12px; text-align:left; vertical-align:top; }
     th { background:#f7f3ea; white-space:nowrap; }
     tr:hover td { background:#fcfaf5; }
     .num { text-align:right; font-variant-numeric: tabular-nums; }
     .muted { color:#6b796f; }
+
+    .mobile-cards { display:none; gap:12px; }
+    .zone-card { background:var(--white); border:1px solid var(--line); border-radius:12px; padding:14px; }
+    .zone-title { margin:0 0 10px; font-size:18px; font-weight:700; }
+    .card-section { margin-bottom:12px; }
+    .card-section:last-child { margin-bottom:0; }
+    .card-heading { margin:0 0 8px; font-size:13px; color:var(--green-soft); font-weight:700; letter-spacing:.02em; }
+    .card-grid { display:grid; grid-template-columns:1fr auto; gap:6px 10px; }
+    .card-label { color:var(--green-soft); font-size:14px; }
+    .card-value { text-align:right; font-variant-numeric:tabular-nums; font-weight:600; }
+
+    @media (max-width: 767px) {
+      .wrap { padding:20px 14px 36px; }
+      h1 { font-size:24px; }
+      .table-wrap { display:none; }
+      .mobile-cards { display:grid; }
+    }
   </style>
 </head>
 <body>
@@ -48,20 +65,33 @@
             <th class="num">12 次計畫興趣人數</th>
             <th class="num">訓練興趣人數</th>
             <th class="num">舊客人數</th>
+            <th class="num">預估單次營收</th>
+            <th class="num">90 分鐘潛在營收</th>
+            <th class="num">12 次潛在金額</th>
+            <th class="num">粗估總潛在營收</th>
             <th>最後登記時間</th>
             <th>建議動作</th>
           </tr>
         </thead>
         <tbody id="tbody">
-          <tr><td colspan="12" class="muted">載入中…</td></tr>
+          <tr><td colspan="16" class="muted">載入中…</td></tr>
         </tbody>
       </table>
+    </section>
+
+    <section id="mobileCards" class="mobile-cards" aria-live="polite">
+      <article class="zone-card"><p class="muted">載入中…</p></article>
     </section>
   </main>
 
   <script>
+    const PRICE_60 = 2000;
+    const PRICE_90 = 3200;
+    const PRICE_12_SESSION = 36000;
+
     const statusEl = document.getElementById('status');
     const tbodyEl = document.getElementById('tbody');
+    const mobileCardsEl = document.getElementById('mobileCards');
     const reloadBtn = document.getElementById('reloadBtn');
 
     function pick(row, keys, fallback = '') {
@@ -87,8 +117,13 @@
       }).format(d);
     }
 
-    function rowHtml(row) {
-      const zone = pick(row, ['zone', 'preferred_zone', 'area', 'zone_name'], '-');
+    function formatMoney(amount) {
+      if (!amount) return '—';
+      return `NT$${amount.toLocaleString('en-US')}`;
+    }
+
+    function normalizeRow(row) {
+      const zone = String(pick(row, ['zone', 'preferred_zone', 'area', 'zone_name'], '-'));
       const total = asNumber(pick(row, ['total_count', 'register_count', 'count']));
       const distanceBarrier = asNumber(pick(row, ['distance_barrier_count', 'distance_resistance_count']));
       const highIntent = asNumber(pick(row, ['high_intent_count', 'strong_intent_count']));
@@ -101,41 +136,116 @@
       const lastAt = pick(row, ['last_registered_at', 'last_registration_at', 'last_created_at']);
       const action = pick(row, ['recommended_action', 'suggested_action'], '-');
 
+      const estSingleRevenue = sixtyMain * PRICE_60;
+      const potential90Revenue = plus30 * PRICE_90;
+      const potential12Revenue = plan12 * PRICE_12_SESSION;
+      const potentialTotalRevenue = estSingleRevenue + potential90Revenue + potential12Revenue;
+
+      return {
+        zone,
+        total,
+        distanceBarrier,
+        highIntent,
+        plus30,
+        sixtyMain,
+        homeVisit,
+        plan12,
+        training,
+        existing,
+        lastAt,
+        action: action || '-',
+        estSingleRevenue,
+        potential90Revenue,
+        potential12Revenue,
+        potentialTotalRevenue
+      };
+    }
+
+    function rowHtml(row) {
       return `<tr>
-        <td>${zone}</td>
-        <td class="num">${total}</td>
-        <td class="num">${distanceBarrier}</td>
-        <td class="num">${highIntent}</td>
-        <td class="num">${plus30}</td>
-        <td class="num">${sixtyMain}</td>
-        <td class="num">${homeVisit}</td>
-        <td class="num">${plan12}</td>
-        <td class="num">${training}</td>
-        <td class="num">${existing}</td>
-        <td>${formatTime(lastAt)}</td>
-        <td>${action || '-'}</td>
+        <td>${row.zone}</td>
+        <td class="num">${row.total}</td>
+        <td class="num">${row.distanceBarrier}</td>
+        <td class="num">${row.highIntent}</td>
+        <td class="num">${row.plus30}</td>
+        <td class="num">${row.sixtyMain}</td>
+        <td class="num">${row.homeVisit}</td>
+        <td class="num">${row.plan12}</td>
+        <td class="num">${row.training}</td>
+        <td class="num">${row.existing}</td>
+        <td class="num">${formatMoney(row.estSingleRevenue)}</td>
+        <td class="num">${formatMoney(row.potential90Revenue)}</td>
+        <td class="num">${formatMoney(row.potential12Revenue)}</td>
+        <td class="num">${formatMoney(row.potentialTotalRevenue)}</td>
+        <td>${formatTime(row.lastAt)}</td>
+        <td>${row.action}</td>
       </tr>`;
+    }
+
+    function cardHtml(row) {
+      return `<article class="zone-card">
+        <h2 class="zone-title">${row.zone}</h2>
+
+        <section class="card-section">
+          <h3 class="card-heading">需求統計</h3>
+          <div class="card-grid">
+            <div class="card-label">登記數</div><div class="card-value">${row.total}</div>
+            <div class="card-label">距離阻力人數</div><div class="card-value">${row.distanceBarrier}</div>
+            <div class="card-label">高意願人數</div><div class="card-value">${row.highIntent}</div>
+            <div class="card-label">+30 興趣人數</div><div class="card-value">${row.plus30}</div>
+            <div class="card-label">60 分鐘主力人數</div><div class="card-value">${row.sixtyMain}</div>
+            <div class="card-label">到府需求人數</div><div class="card-value">${row.homeVisit}</div>
+            <div class="card-label">12 次計畫興趣人數</div><div class="card-value">${row.plan12}</div>
+            <div class="card-label">訓練興趣人數</div><div class="card-value">${row.training}</div>
+            <div class="card-label">舊客人數</div><div class="card-value">${row.existing}</div>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <h3 class="card-heading">金額試算</h3>
+          <div class="card-grid">
+            <div class="card-label">預估單次營收</div><div class="card-value">${formatMoney(row.estSingleRevenue)}</div>
+            <div class="card-label">90 分鐘潛在營收</div><div class="card-value">${formatMoney(row.potential90Revenue)}</div>
+            <div class="card-label">12 次潛在金額</div><div class="card-value">${formatMoney(row.potential12Revenue)}</div>
+            <div class="card-label">粗估總潛在營收</div><div class="card-value">${formatMoney(row.potentialTotalRevenue)}</div>
+          </div>
+        </section>
+
+        <section class="card-section">
+          <h3 class="card-heading">其他</h3>
+          <div class="card-grid">
+            <div class="card-label">最後登記時間</div><div class="card-value">${formatTime(row.lastAt)}</div>
+            <div class="card-label">建議動作</div><div class="card-value">${row.action}</div>
+          </div>
+        </section>
+      </article>`;
     }
 
     async function loadSummary() {
       statusEl.textContent = '載入中…';
-      tbodyEl.innerHTML = '<tr><td colspan="12" class="muted">載入中…</td></tr>';
+      tbodyEl.innerHTML = '<tr><td colspan="16" class="muted">載入中…</td></tr>';
+      mobileCardsEl.innerHTML = '<article class="zone-card"><p class="muted">載入中…</p></article>';
       try {
         const res = await fetch('/api/taipei-zone-summary', { method: 'GET' });
         const json = await res.json();
         if (!res.ok || !json.ok) throw new Error(json.error || '讀取失敗');
 
-        const rows = Array.isArray(json.data) ? json.data : [];
+        const rawRows = Array.isArray(json.data) ? json.data : [];
+        const rows = rawRows.map(normalizeRow);
         if (!rows.length) {
-          tbodyEl.innerHTML = '<tr><td colspan="12" class="muted">目前尚無統計資料。</td></tr>';
+          tbodyEl.innerHTML = '<tr><td colspan="16" class="muted">目前尚無統計資料。</td></tr>';
+          mobileCardsEl.innerHTML = '<article class="zone-card"><p class="muted">目前尚無統計資料。</p></article>';
           statusEl.textContent = '已載入（0 筆）';
           return;
         }
 
         tbodyEl.innerHTML = rows.map(rowHtml).join('');
-        statusEl.textContent = `已載入 ${rows.length} 筆區域統計`; 
+        mobileCardsEl.innerHTML = rows.map(cardHtml).join('');
+        statusEl.textContent = `已載入 ${rows.length} 筆區域統計`;
       } catch (err) {
-        tbodyEl.innerHTML = `<tr><td colspan="12" class="muted">載入失敗：${err.message}</td></tr>`;
+        const message = `載入失敗：${err.message}`;
+        tbodyEl.innerHTML = `<tr><td colspan="16" class="muted">${message}</td></tr>`;
+        mobileCardsEl.innerHTML = `<article class="zone-card"><p class="muted">${message}</p></article>`;
         statusEl.textContent = '載入失敗';
       }
     }
