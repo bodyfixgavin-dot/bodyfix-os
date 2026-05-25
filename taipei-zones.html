@@ -33,19 +33,30 @@
 
     .wrap { max-width: 960px; margin: 0 auto; padding: 18px 14px 36px; }
     .brand-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
-    .brand-box {
+    .brand-badge {
       pointer-events: none;
-      width: 84px; min-width: 84px; aspect-ratio: 1 / 1;
-      background: linear-gradient(160deg, #0f2335, #071627);
-      border: 1px solid var(--gold);
-      color: #e8d2a6; border-radius: 5px;
+      width: 84px; min-width: 84px; height: 84px;
+      background: linear-gradient(160deg, #0c2740, #081b30);
+      border: 1px solid #c7a873;
+      color: #e8d2a6; border-radius: 4px;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      box-shadow: 0 10px 26px rgba(15, 35, 53, 0.22);
-      letter-spacing: 0.4px;
+      box-shadow: 0 6px 14px rgba(15, 35, 53, 0.14);
+      letter-spacing: 0.3px;
+      padding: 8px 6px 7px;
     }
-    .brand-box .bf { font-family: Georgia, serif; font-size: 34px; line-height: 1; }
-    .brand-box .name { font-family: Georgia, serif; font-size: 20px; line-height: 1.05; }
-    .brand-box .tag { font-size: 9px; margin-top: 4px; color: #d5c19a; }
+    .brand-badge-main {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 50px;
+      line-height: 0.9;
+      color: #d7bb88;
+    }
+    .brand-badge-sub {
+      margin-top: 9px;
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: 11px;
+      letter-spacing: 3.2px;
+      color: #d7bb88;
+    }
 
     h1 { margin: 0 0 8px; font-size: clamp(24px, 4.4vw, 40px); letter-spacing: 0.3px; font-family: Georgia, "Noto Serif TC", serif; }
     .hero-title { display: flex; flex-direction: column; gap: 2px; }
@@ -151,9 +162,9 @@
 
     @media (max-width: 900px) {
       .two-col { grid-template-columns: 1fr; gap: 0; }
-      .brand-box { width: 72px; min-width: 72px; }
-      .brand-box .bf { font-size: 29px; }
-      .brand-box .name { font-size: 16px; }
+      .brand-badge { width: 76px; min-width: 76px; height: 76px; }
+      .brand-badge-main { font-size: 43px; }
+      .brand-badge-sub { font-size: 10px; letter-spacing: 2.8px; margin-top: 8px; }
       .lead { font-size: 14px; }
       .q-title { font-size: 18px; }
     }
@@ -167,15 +178,15 @@
         letter-spacing: 0.25px;
         white-space: nowrap;
       }
-      .brand-box {
-        width: 78px;
-        min-width: 78px;
+      .brand-badge {
+        width: 80px;
+        min-width: 80px;
+        height: 80px;
         border-radius: 4px;
-        margin-top: 2px;
+        margin-top: 4px;
       }
-      .brand-box .bf { font-size: 28px; }
-      .brand-box .name { font-size: 15px; }
-      .brand-box .tag { display: none; }
+      .brand-badge-main { font-size: 46px; }
+      .brand-badge-sub { font-size: 10px; letter-spacing: 3px; margin-top: 8px; }
     }
   </style>
 </head>
@@ -190,10 +201,9 @@
         <p class="lead">六張犁為目前固定服務點。<br>如果你希望未來在西門、國父紀念館或到府整理，可以留下區域需求。</p>
         <div class="divider">◆</div>
       </div>
-      <div class="brand-box" aria-label="BodyFix 品牌標識">
-        <div class="bf">BF</div>
-        <div class="name">BodyFix</div>
-        <div class="tag">身體狀態管理系統</div>
+      <div class="brand-badge" aria-label="BodyFix 品牌標識">
+        <div class="brand-badge-main">BF</div>
+        <div class="brand-badge-sub">BODYFIX</div>
       </div>
     </section>
 
