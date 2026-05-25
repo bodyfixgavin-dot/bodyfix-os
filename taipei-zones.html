@@ -31,67 +31,66 @@
       min-height: 100vh;
     }
 
-    .wrap { max-width: 1080px; margin: 0 auto; padding: 28px 18px 52px; }
-    .brand-top { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; margin-bottom: 20px; }
+    .wrap { max-width: 960px; margin: 0 auto; padding: 18px 14px 36px; }
+    .brand-top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; margin-bottom: 12px; }
     .brand-box {
       pointer-events: none;
-      width: 118px; min-width: 118px; aspect-ratio: 1 / 1;
+      width: 84px; min-width: 84px; aspect-ratio: 1 / 1;
       background: linear-gradient(160deg, #0f2335, #071627);
       border: 1px solid var(--gold);
-      color: #e8d2a6; border-radius: 6px;
+      color: #e8d2a6; border-radius: 5px;
       display: flex; flex-direction: column; justify-content: center; align-items: center;
       box-shadow: 0 10px 26px rgba(15, 35, 53, 0.22);
       letter-spacing: 0.4px;
     }
-    .brand-box .bf { font-family: Georgia, serif; font-size: 48px; line-height: 1; }
-    .brand-box .name { font-family: Georgia, serif; font-size: 30px; line-height: 1.05; }
-    .brand-box .tag { font-size: 11px; margin-top: 6px; color: #d5c19a; }
+    .brand-box .bf { font-family: Georgia, serif; font-size: 34px; line-height: 1; }
+    .brand-box .name { font-family: Georgia, serif; font-size: 20px; line-height: 1.05; }
+    .brand-box .tag { font-size: 9px; margin-top: 4px; color: #d5c19a; }
 
-    h1 { margin: 0 0 12px; font-size: clamp(30px, 5vw, 52px); letter-spacing: 1px; font-family: Georgia, "Noto Serif TC", serif; }
-    .lead { color: var(--ink-soft); line-height: 1.9; font-size: 18px; max-width: 860px; margin: 0; }
-    .divider { display: flex; align-items: center; gap: 8px; margin: 14px 0 20px; color: var(--gold); }
+    h1 { margin: 0 0 8px; font-size: clamp(24px, 4.4vw, 40px); letter-spacing: 0.3px; font-family: Georgia, "Noto Serif TC", serif; }
+    .lead { color: var(--ink-soft); line-height: 1.6; font-size: 15px; max-width: 700px; margin: 0; }
+    .divider { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; color: var(--gold); }
     .divider::before, .divider::after { content: ""; height: 1px; background: linear-gradient(to right, transparent, var(--gold-soft), transparent); flex: 1; }
     .divider::before, .divider::after { pointer-events: none; }
 
     .notice {
       background: var(--paper);
       border: 1px solid var(--gold-soft);
-      border-left: 4px solid var(--gold);
-      border-radius: 10px;
-      padding: 18px;
-      margin-bottom: 24px;
-      box-shadow: 0 6px 18px rgba(18, 39, 56, 0.08);
+      border-left: 3px solid var(--gold);
+      border-radius: 8px;
+      padding: 10px 12px;
+      margin-bottom: 14px;
+      box-shadow: 0 4px 12px rgba(18, 39, 56, 0.06);
     }
-    .notice strong { display: block; margin-bottom: 8px; font-size: 22px; font-family: Georgia, "Noto Serif TC", serif; color: #473824; }
-    .notice p { margin: 0; line-height: 1.8; color: var(--ink-soft); }
+    .notice p { margin: 0; line-height: 1.5; color: var(--ink-soft); font-size: 14px; }
 
     .form-card {
       position: relative;
       z-index: 2;
       background: var(--card);
       border: 1px solid var(--gold-soft);
-      border-radius: 12px;
-      padding: 16px;
-      box-shadow: 0 10px 24px rgba(18, 39, 56, 0.07);
+      border-radius: 10px;
+      padding: 10px 12px;
+      box-shadow: 0 8px 20px rgba(18, 39, 56, 0.06);
     }
 
     .q-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
     .q-item {
       border-top: 1px solid var(--line);
-      padding: 18px 8px;
+      padding: 12px 4px;
     }
     .q-item:first-child { border-top: none; }
 
-    .q-head { display: flex; align-items: center; gap: 10px; margin-bottom: 13px; }
+    .q-head { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
     .q-num {
-      width: 34px; height: 34px; border-radius: 999px; background: #0f2640; color: #f5e7cc;
+      width: 30px; height: 30px; border-radius: 999px; background: #0f2640; color: #f5e7cc;
       display: inline-flex; align-items: center; justify-content: center; font-weight: 700; letter-spacing: 0.5px;
       border: 1px solid var(--gold);
-      font-size: 14px;
+      font-size: 12px;
     }
-    .q-title { margin: 0; font-size: 24px; font-family: "Noto Serif TC", Georgia, serif; }
+    .q-title { margin: 0; font-size: 19px; font-family: "Noto Serif TC", Georgia, serif; }
 
-    .choices { position: relative; z-index: 4; display: flex; flex-wrap: wrap; gap: 10px; }
+    .choices { position: relative; z-index: 4; display: flex; flex-wrap: wrap; gap: 8px; }
     .pill-option { position: relative; z-index: 5; display: inline-flex; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
     .pill-option input {
       position: absolute;
@@ -107,10 +106,10 @@
     }
     .pill-option span {
       display: inline-flex; align-items: center; justify-content: center;
-      min-height: 44px; padding: 10px 17px;
-      border-radius: 999px; border: 1px solid #ccb996;
-      background: #fffefb; color: #324454; cursor: pointer;
-      font-size: 16px; line-height: 1.3;
+      min-height: 40px; padding: 8px 14px;
+      border-radius: 999px; border: 1px solid #b59a69;
+      background: #f8f5ef; color: #0f2d44; cursor: pointer;
+      font-size: 15px; line-height: 1.3;
       transition: all .18s ease;
       user-select: none;
       -webkit-user-select: none;
@@ -119,13 +118,13 @@
     .pill-option:hover span { border-color: var(--gold); color: var(--ink); }
     .pill-option input:focus-visible + span { outline: 2px solid #2f4e69; outline-offset: 2px; }
     .pill-option input:checked + span {
-      background: linear-gradient(180deg, #163854, #102e47);
-      color: #f7e6c7;
-      border-color: var(--gold);
+      background: linear-gradient(180deg, #12344f, #0e2b42);
+      color: #f8f5ef;
+      border: 1px solid #c6a46e;
       box-shadow: 0 4px 12px rgba(16, 46, 71, 0.25);
     }
 
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
 
     .field {
       width: 100%; border: 1px solid #cdbf9f; border-radius: 10px; padding: 12px 14px;
@@ -134,14 +133,14 @@
     .field:focus { outline: 2px solid #355774; border-color: #355774; }
     textarea.field { min-height: 100px; resize: vertical; }
 
-    .submit-wrap { text-align: center; padding: 8px 0 4px; }
+    .submit-wrap { text-align: center; padding: 6px 0 4px; }
     button[type="submit"] {
-      width: min(100%, 360px); min-height: 54px;
+      width: min(100%, 300px); min-height: 46px;
       border: 1px solid var(--gold);
       border-radius: 8px;
       background: linear-gradient(180deg, #15354f, #0c253a);
-      color: #f5e2bf; font-size: 28px; font-family: "Noto Serif TC", Georgia, serif;
-      cursor: pointer; letter-spacing: 3px;
+      color: #f5e2bf; font-size: 20px; font-family: "Noto Serif TC", Georgia, serif;
+      cursor: pointer; letter-spacing: 1px;
     }
 
     #message { margin-top: 14px; font-weight: 700; color: #8d2f2f; text-align: center; line-height: 1.6; }
@@ -150,11 +149,11 @@
 
     @media (max-width: 900px) {
       .two-col { grid-template-columns: 1fr; gap: 0; }
-      .brand-box { width: 90px; min-width: 90px; }
-      .brand-box .bf { font-size: 37px; }
-      .brand-box .name { font-size: 24px; }
-      .lead { font-size: 16px; }
-      .q-title { font-size: 21px; }
+      .brand-box { width: 72px; min-width: 72px; }
+      .brand-box .bf { font-size: 29px; }
+      .brand-box .name { font-size: 16px; }
+      .lead { font-size: 14px; }
+      .q-title { font-size: 18px; }
     }
   </style>
 </head>
@@ -162,8 +161,8 @@
   <main class="wrap">
     <section class="brand-top">
       <div>
-        <h1>BodyFix 台北服務據點需求登記</h1>
-        <p class="lead">六張犁目前是固定服務點。如果希望未來在其他區域安排，可以先填寫這份需求登記。西門、國父紀念館、到府整理會依實際需求累積情況評估開放時段。</p>
+        <h1>BodyFix 台北服務區域登記</h1>
+        <p class="lead">六張犁為目前固定服務點。<br>如果你希望未來在西門、國父紀念館或到府整理，可以留下區域需求。</p>
         <div class="divider">◆</div>
       </div>
       <div class="brand-box" aria-label="BodyFix 品牌標識">
@@ -174,8 +173,7 @@
     </section>
 
     <section class="notice">
-      <strong>這不是正式預約，也不需要付款。</strong>
-      <p>這份表單只用來了解哪些區域需求較高、六張犁距離是否影響預約意願，以及大家最想處理的身體狀態。</p>
+      <p>非正式預約，不需付款。僅用於區域需求、距離阻力與時段安排。</p>
     </section>
 
     <form id="form" class="form-card">
@@ -282,7 +280,7 @@
       </div>
 
       <div class="submit-wrap">
-        <button type="submit">送出需求登記</button>
+        <button type="submit">送出我的區域需求</button>
         <div id="message"></div>
       </div>
     </form>
