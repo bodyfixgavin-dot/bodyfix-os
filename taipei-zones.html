@@ -48,6 +48,8 @@
     .brand-box .tag { font-size: 9px; margin-top: 4px; color: #d5c19a; }
 
     h1 { margin: 0 0 8px; font-size: clamp(24px, 4.4vw, 40px); letter-spacing: 0.3px; font-family: Georgia, "Noto Serif TC", serif; }
+    .hero-title { display: flex; flex-direction: column; gap: 2px; }
+    .brand-line, .title-line { display: block; line-height: 1.12; }
     .lead { color: var(--ink-soft); line-height: 1.6; font-size: 15px; max-width: 700px; margin: 0; }
     .divider { display: flex; align-items: center; gap: 8px; margin: 8px 0 12px; color: var(--gold); }
     .divider::before, .divider::after { content: ""; height: 1px; background: linear-gradient(to right, transparent, var(--gold-soft), transparent); flex: 1; }
@@ -155,13 +157,36 @@
       .lead { font-size: 14px; }
       .q-title { font-size: 18px; }
     }
+
+    @media (max-width: 640px) {
+      .brand-top { align-items: flex-start; gap: 12px; }
+      .hero-title { margin-right: 4px; }
+      .brand-line { font-size: clamp(29px, 8.3vw, 36px); }
+      .title-line {
+        font-size: clamp(20px, 5.8vw, 26px);
+        letter-spacing: 0.25px;
+        white-space: nowrap;
+      }
+      .brand-box {
+        width: 78px;
+        min-width: 78px;
+        border-radius: 4px;
+        margin-top: 2px;
+      }
+      .brand-box .bf { font-size: 28px; }
+      .brand-box .name { font-size: 15px; }
+      .brand-box .tag { display: none; }
+    }
   </style>
 </head>
 <body>
   <main class="wrap">
     <section class="brand-top">
       <div>
-        <h1>BodyFix 台北服務區域登記</h1>
+        <h1 class="hero-title">
+          <span class="brand-line">BodyFix</span>
+          <span class="title-line">台北服務區域登記</span>
+        </h1>
         <p class="lead">六張犁為目前固定服務點。<br>如果你希望未來在西門、國父紀念館或到府整理，可以留下區域需求。</p>
         <div class="divider">◆</div>
       </div>
