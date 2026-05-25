@@ -3,785 +3,1220 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>BodyFix｜線上管理系統</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<title>BodyFix 2.0 Prototype v3</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet">
 <style>
+/* ── TOKENS ── */
 :root {
-  --bg: #111;
-  --card-bg: #1a1a1a;
-  --text: #e8e4df;
-  --text-muted: #8a8580;
-  --accent: #c4956a;
-  --accent2: #8aab7b;
-  --border: #2a2a2a;
-  --input-bg: #151515;
-}
-* { margin:0; padding:0; box-sizing:border-box; }
-body {
-  font-family: 'Noto Sans TC', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  line-height: 1.6;
-  -webkit-font-smoothing: antialiased;
-  padding-bottom: 70px;
+  --ivory:   #F5F0E8;
+  --ivory-dk:#EDE7D8;
+  --navy:    #1A2744;
+  --navy-lt: #253560;
+  --gold:    #C4956A;
+  --gold-lt: #D4A97C;
+  --beige:   #E8DDD0;
+  --stone:   #8A8A82;
+  --stone-lt:#B0AEA8;
+  --ink:     #1C1C1A;
+  --white:   #FDFBF8;
+
+  --f-display: 'Cormorant Garamond', Georgia, serif;
+  --f-body:    'Noto Sans TC', sans-serif;
+  --f-mono:    'DM Mono', monospace;
+
+  --radius: 4px;
+  --gap: clamp(40px, 8vw, 120px);
 }
 
-.top-bar {
-  position: sticky; top: 0; z-index: 100;
-  background: rgba(17,17,17,.95);
-  backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
-  padding: 12px 16px;
-  display: flex; align-items: center; justify-content: space-between;
+/* ── RESET ── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body {
+  font-family: var(--f-body);
+  background: var(--ivory);
+  color: var(--ink);
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
 }
-.top-bar h1 { font-size: 15px; font-weight: 900; color: var(--accent); }
-.tab-toggle {
-  display: flex; gap: 6px;
-  overflow-x: auto;
+img { display:block; max-width:100%; }
+a { text-decoration: none; color: inherit; }
+
+/* ── NAV ── */
+nav {
+  position: fixed; top:0; left:0; right:0; z-index:100;
+  background: rgba(245,240,232,0.94);
+  backdrop-filter: blur(16px);
+  border-bottom: 1px solid rgba(196,149,106,0.15);
+  padding: 0 clamp(20px,5vw,80px);
+  height: 64px;
+  display: flex; align-items:center; justify-content:space-between;
 }
-.tab-btn {
-  padding: 6px 12px;
-  background: transparent;
-  border: 1px solid var(--border);
-  border-radius: 16px;
-  color: var(--text-muted);
-  font-size: 11px;
-  font-weight: 700;
-  cursor: pointer;
-  transition: all .15s;
+.nav-logo {
+  font-family: var(--f-mono);
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 4px;
+  color: var(--navy);
+}
+.nav-links {
+  display: flex; gap: 36px; list-style: none;
+}
+.nav-links a {
+  font-size: 13px;
+  color: var(--stone);
+  letter-spacing: 0.5px;
+  transition: color .2s;
+}
+.nav-links a:hover { color: var(--navy); }
+.nav-cta {
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 1.5px;
+  color: var(--white);
+  background: var(--navy);
+  padding: 10px 24px;
+  border-radius: var(--radius);
+  transition: background .2s;
+}
+.nav-cta:hover { background: var(--navy-lt); }
+
+/* ── HERO ── */
+.hero {
+  min-height: 100vh;
+  padding: 120px clamp(20px,5vw,80px) var(--gap);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 60px;
+  align-items: center;
+  background: var(--ivory);
+  position: relative;
+  overflow: hidden;
+}
+.hero::before {
+  content: 'BODYFIX';
+  position: absolute;
+  right: -2%;
+  top: 50%;
+  transform: translateY(-50%);
+  font-family: var(--f-display);
+  font-size: clamp(80px, 14vw, 200px);
+  font-weight: 300;
+  color: rgba(196,149,106,0.06);
+  letter-spacing: -4px;
+  pointer-events: none;
   white-space: nowrap;
 }
-.tab-btn.active {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #111;
+.hero-eyebrow {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 24px;
 }
-
-#quick-area, #files-area, #feedback-area { display: none; }
-#quick-area.show, #files-area.show, #feedback-area.show { display: block; }
-
-#quick-area, #files-area, #feedback-area { padding: 12px 16px; }
-.row { margin-bottom: 12px; }
-.row-label { font-size: 11px; font-weight: 700; color: var(--text-muted); margin-bottom: 4px; text-transform: uppercase; letter-spacing: 0.5px; }
-.row-label-note { font-size: 10px; color: var(--text-muted); margin-top: 2px; font-weight: 400; }
-input, textarea, select {
-  width: 100%;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 10px 12px;
-  color: var(--text);
-  font-family: 'Noto Sans TC', sans-serif;
+.hero-title {
+  font-family: var(--f-display);
+  font-size: clamp(28px, 4vw, 52px);
+  font-weight: 300;
+  line-height: 1.4;
+  color: var(--navy);
+  margin-bottom: 28px;
+}
+.hero-title em {
+  font-style: italic;
+  color: var(--gold);
+}
+.hero-sub {
   font-size: 14px;
-  outline: none;
+  line-height: 1.9;
+  color: var(--stone);
+  max-width: 480px;
+  margin-bottom: 48px;
 }
-input:focus, textarea:focus, select:focus { border-color: var(--accent); }
-textarea { min-height: 60px; resize: vertical; }
-
-.chips { display: flex; flex-wrap: wrap; gap: 6px; }
-.chip {
-  padding: 7px 14px;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  border-radius: 20px;
+.hero-actions {
+  display: flex; gap: 16px; flex-wrap: wrap;
+}
+.btn-primary {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 32px;
+  background: var(--navy);
+  color: var(--white);
   font-size: 13px;
-  color: var(--text-muted);
-  cursor: pointer;
-  user-select: none;
-  transition: all .15s;
-}
-.chip:active { transform: scale(0.95); }
-.chip.on {
-  background: #2a2520;
-  border-color: var(--accent);
-  color: var(--accent);
   font-weight: 500;
-}
-.chip.multi.on {
-  background: #1f2a1f;
-  border-color: var(--accent2);
-  color: var(--accent2);
-}
-
-.stars { display: flex; gap: 8px; }
-.star {
-  width: 40px; height: 40px;
-  border-radius: 50%;
-  background: var(--input-bg);
-  border: 1px solid var(--border);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 15px; font-weight: 900;
-  color: var(--text-muted);
-  cursor: pointer;
-}
-.star.on {
-  background: var(--accent);
-  border-color: var(--accent);
-  color: #111;
-}
-
-.empty-hint {
-  text-align: center;
-  padding: 40px 20px;
-  color: var(--text-muted);
-  font-size: 13px;
-}
-
-.client-card {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 14px;
-  margin-bottom: 10px;
-  border: 1px solid var(--border);
-  cursor: pointer;
-  transition: all .15s;
-}
-.client-card:active { background: #252525; }
-.client-id { font-size: 11px; font-weight: 900; color: var(--accent); margin-bottom: 4px; }
-.client-name { font-size: 15px; font-weight: 700; margin-bottom: 4px; }
-.client-meta { font-size: 12px; color: var(--text-muted); line-height: 1.5; }
-
-.bottom-bar {
-  position: fixed; bottom: 0; left: 0; right: 0;
-  background: rgba(17,17,17,.95);
-  backdrop-filter: blur(12px);
-  border-top: 1px solid var(--border);
-  padding: 10px 16px;
-  display: flex; gap: 10px;
-  z-index: 100;
-}
-.btn {
-  flex: 1; padding: 12px;
-  border-radius: 10px; border: none;
-  font-family: 'Noto Sans TC', sans-serif;
-  font-size: 13px; font-weight: 700;
-  cursor: pointer;
-}
-.btn-primary { background: var(--accent); color: #111; }
-.btn-secondary { background: var(--card-bg); color: var(--text); border: 1px solid var(--border); }
-
-.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
-
-.section-title {
-  font-size: 12px; font-weight: 900; color: var(--accent);
   letter-spacing: 1px;
-  margin-bottom: 10px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid var(--border);
+  border-radius: var(--radius);
+  transition: background .2s;
+}
+.btn-primary:hover { background: var(--navy-lt); }
+.btn-ghost {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 14px 32px;
+  border: 1px solid rgba(196,149,106,0.5);
+  color: var(--gold);
+  font-size: 13px;
+  letter-spacing: 1px;
+  border-radius: var(--radius);
+  transition: all .2s;
+}
+.btn-ghost:hover { border-color: var(--gold); background: rgba(196,149,106,0.06); }
+.hero-right {
+  display: flex; flex-direction:column; gap: 16px;
+}
+.hero-spec {
+  display: flex; justify-content:space-between; align-items:center;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(196,149,106,0.2);
+}
+.hero-spec:first-child { border-top: 1px solid rgba(196,149,106,0.2); }
+.hero-spec-label {
+  font-size: 11px; font-family:var(--f-mono); letter-spacing:2px; color: var(--stone);
+}
+.hero-spec-value {
+  font-family: var(--f-display); font-size: 18px; font-weight:400; color: var(--navy);
 }
 
-.option-group {
-  background: var(--card-bg);
-  border-radius: 10px;
-  padding: 12px;
+/* ── SECTION BASE ── */
+.section {
+  padding: var(--gap) clamp(20px,5vw,80px);
+}
+.section-dark {
+  background: var(--navy);
+  color: var(--white);
+}
+.section-beige { background: var(--beige); }
+.section-white { background: var(--white); }
+
+.section-label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 4px;
+  color: var(--gold);
+  margin-bottom: 16px;
+  display: flex; align-items:center; gap: 12px;
+}
+.section-label::before {
+  content:'';
+  display:block;
+  width:32px; height:1px;
+  background: var(--gold);
+}
+.section-title {
+  font-family: var(--f-display);
+  font-size: clamp(28px, 4vw, 48px);
+  font-weight: 300;
+  line-height: 1.3;
+  color: var(--navy);
+  margin-bottom: 16px;
+}
+.section-dark .section-title { color: var(--ivory); }
+.section-sub {
+  font-size: 14px;
+  line-height: 1.9;
+  color: var(--stone);
+  max-width: 600px;
+}
+.section-dark .section-sub { color: var(--stone-lt); }
+
+/* ── 三大服務入口 ── */
+.services-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1px;
+  background: rgba(196,149,106,0.2);
+  margin-top: 60px;
+  border: 1px solid rgba(196,149,106,0.2);
+}
+.svc-entry {
+  background: var(--white);
+  padding: 48px 36px;
+  transition: background .3s;
+}
+.svc-entry:hover { background: var(--ivory); }
+.svc-entry-num {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 24px;
+}
+.svc-entry-en {
+  font-family: var(--f-display);
+  font-size: 22px;
+  font-weight: 300;
+  color: var(--navy);
+  margin-bottom: 4px;
+  font-style: italic;
+}
+.svc-entry-zh {
+  font-size: 13px;
+  color: var(--stone);
+  letter-spacing: 2px;
+  margin-bottom: 24px;
+}
+.svc-entry-desc {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--stone);
+  margin-bottom: 32px;
+}
+.svc-entry-tags { display:flex; flex-wrap:wrap; gap:8px; }
+.tag {
+  font-size: 11px;
+  padding: 4px 12px;
+  border: 1px solid rgba(196,149,106,0.35);
+  border-radius: 20px;
+  color: var(--stone);
+}
+.svc-entry-arrow {
+  margin-top: 32px;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+
+/* ── METHOD ── */
+.method-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 40px;
+  margin-top: 60px;
+}
+.method-step { position:relative; }
+.method-num {
+  font-family: var(--f-display);
+  font-size: 80px;
+  font-weight: 300;
+  color: rgba(196,149,106,0.12);
+  line-height: 1;
+  margin-bottom: -20px;
+}
+.method-en {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 8px;
+}
+.method-zh {
+  font-family: var(--f-display);
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--ivory);
   margin-bottom: 12px;
-  border: 1px solid var(--border);
+}
+.method-desc {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--stone-lt);
 }
 
-.success-msg {
-  background: rgba(138, 174, 123, .15);
-  border: 1px solid var(--accent2);
-  border-radius: 10px;
-  padding: 14px;
-  text-align: center;
-  color: var(--accent2);
-  font-weight: 700;
+/* ── BODY RESET ── */
+.body-reset-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items: start;
+  margin-top: 60px;
+}
+.service-list { display:flex; flex-direction:column; gap:1px; }
+.service-item {
+  padding: 24px 0;
+  border-bottom: 1px solid rgba(196,149,106,0.2);
+  display:flex; justify-content:space-between; align-items:center;
+  cursor:pointer;
+  transition: padding .2s;
+}
+.service-item:hover { padding-left: 8px; }
+.service-item-name {
+  font-family: var(--f-display);
+  font-size: 18px;
+  color: var(--navy);
+}
+.service-item-price {
+  font-family: var(--f-mono);
+  font-size: 12px;
+  color: var(--gold);
+}
+.highlight-box {
+  background: var(--navy);
+  color: var(--white);
+  padding: 48px;
+  border-radius: var(--radius);
+}
+.highlight-box .label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
   margin-bottom: 20px;
 }
+.highlight-box h3 {
+  font-family: var(--f-display);
+  font-size: 26px;
+  font-weight: 300;
+  line-height: 1.4;
+  margin-bottom: 16px;
+  color: var(--ivory);
+}
+.highlight-box p {
+  font-size: 13px;
+  line-height: 1.9;
+  color: var(--stone-lt);
+  margin-bottom: 32px;
+}
 
-.max-2 { color: var(--text-muted); font-size: 10px; }
-.max-3 { color: var(--text-muted); font-size: 10px; }
+/* ── MOVEMENT ── */
+.movement-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 24px;
+  margin-top: 60px;
+}
+.movement-card {
+  border: 1px solid rgba(196,149,106,0.2);
+  padding: 36px;
+  border-radius: var(--radius);
+  transition: border-color .2s, background .2s;
+}
+.movement-card:hover {
+  border-color: var(--gold);
+  background: rgba(196,149,106,0.04);
+}
+.movement-card-icon {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 20px;
+}
+.movement-card h3 {
+  font-family: var(--f-display);
+  font-size: 20px;
+  font-weight: 400;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.movement-card p {
+  font-size: 13px;
+  line-height: 1.8;
+  color: var(--stone);
+}
+
+/* ── ZI WEI & TAROT ── */
+.zw-layout {
+  display: grid;
+  grid-template-columns: 1fr 1.2fr;
+  gap: 80px;
+  align-items: center;
+  margin-top: 60px;
+}
+.zw-services { display:flex; flex-direction:column; gap:20px; }
+.zw-service-card {
+  border: 1px solid rgba(255,255,255,0.12);
+  padding: 28px 32px;
+  border-radius: var(--radius);
+  transition: border-color .2s, background .2s;
+}
+.zw-service-card:hover {
+  border-color: rgba(196,149,106,0.5);
+  background: rgba(196,149,106,0.06);
+}
+.zw-service-card .name {
+  font-family: var(--f-display);
+  font-size: 17px;
+  font-weight: 400;
+  color: var(--ivory);
+  margin-bottom: 6px;
+}
+.zw-service-card .desc {
+  font-size: 12px;
+  color: var(--stone-lt);
+  line-height: 1.7;
+}
+.zw-quote {
+  padding: 60px 0;
+  border-left: 2px solid var(--gold);
+  padding-left: 40px;
+}
+.zw-quote blockquote {
+  font-family: var(--f-display);
+  font-size: clamp(22px, 3vw, 34px);
+  font-weight: 300;
+  font-style: italic;
+  line-height: 1.5;
+  color: var(--ivory);
+  margin-bottom: 20px;
+}
+.zw-quote cite {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  font-style: normal;
+}
+
+/* ── INSTAGRAM WORKS ── */
+.ig-works {
+  padding: var(--gap) clamp(20px,5vw,80px);
+  background: var(--white);
+}
+.ig-categories {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+  margin-top: 48px;
+  margin-bottom: 64px;
+}
+.ig-cat-card {
+  border: 1px solid rgba(196,149,106,0.2);
+  padding: 28px 24px;
+  border-radius: var(--radius);
+  transition: all .25s;
+  cursor: pointer;
+}
+.ig-cat-card:hover {
+  border-color: var(--gold);
+  background: rgba(196,149,106,0.04);
+  transform: translateY(-2px);
+}
+.ig-cat-en {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.ig-cat-zh {
+  font-family: var(--f-display);
+  font-size: 18px;
+  font-weight: 400;
+  color: var(--navy);
+  margin-bottom: 8px;
+}
+.ig-cat-desc {
+  font-size: 12px;
+  color: var(--stone);
+  line-height: 1.7;
+}
+.ig-embeds-title {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--stone);
+  margin-bottom: 24px;
+}
+.ig-embeds-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+  margin-bottom: 40px;
+}
+.ig-embed-placeholder {
+  aspect-ratio: 1;
+  border: 1px solid rgba(196,149,106,0.25);
+  border-radius: var(--radius);
+  background: var(--ivory);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 20px;
+  text-align: center;
+  transition: border-color .2s;
+}
+.ig-embed-placeholder:hover { border-color: var(--gold); }
+.ig-embed-placeholder .icon {
+  width: 32px; height: 32px;
+  border: 1px solid rgba(196,149,106,0.4);
+  border-radius: 8px;
+  display: flex; align-items:center; justify-content:center;
+  font-size: 14px;
+  color: var(--gold);
+  margin-bottom: 4px;
+}
+.ig-embed-placeholder .text {
+  font-size: 11px;
+  color: var(--stone-lt);
+  line-height: 1.5;
+}
+.ig-cta {
+  text-align: center;
+  padding-top: 8px;
+}
+.ig-cta a {
+  display: inline-flex; align-items:center; gap: 8px;
+  font-size: 13px;
+  color: var(--gold);
+  border-bottom: 1px solid rgba(196,149,106,0.4);
+  padding-bottom: 2px;
+  transition: border-color .2s, color .2s;
+  letter-spacing: 0.5px;
+}
+.ig-cta a:hover { color: var(--navy); border-color: var(--navy); }
+
+/* ── CITY TOUR ── */
+.city-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+  margin-top: 60px;
+}
+.city-card {
+  background: var(--navy-lt);
+  padding: 36px;
+  border-radius: var(--radius);
+  border: 1px solid rgba(255,255,255,0.06);
+}
+.city-card.active { background: var(--navy); border-color: rgba(196,149,106,0.3); }
+.city-name {
+  font-family: var(--f-display);
+  font-size: 28px;
+  color: var(--ivory);
+  font-weight: 300;
+  margin-bottom: 4px;
+}
+.city-status {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  margin-bottom: 20px;
+}
+.city-status.live { color: #6FCF97; }
+.city-status.coming { color: var(--gold); }
+.city-status.planned { color: var(--stone-lt); }
+.city-desc {
+  font-size: 13px;
+  color: var(--stone-lt);
+  line-height: 1.8;
+}
+.city-register {
+  margin-top: 48px;
+  padding: 36px 48px;
+  border: 1px solid rgba(196,149,106,0.3);
+  border-radius: var(--radius);
+  display:flex; justify-content:space-between; align-items:center;
+  gap: 24px;
+}
+.city-register p {
+  font-size: 14px;
+  color: var(--stone-lt);
+  line-height: 1.7;
+  max-width: 500px;
+}
+
+/* ── BOOKING ── */
+.booking-layout {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 80px;
+  align-items:start;
+  margin-top: 60px;
+}
+.booking-steps { display:flex; flex-direction:column; gap: 32px; }
+.booking-step {
+  display: flex;
+  gap: 24px;
+}
+.step-num-circle {
+  width: 36px; height: 36px; flex-shrink:0;
+  border: 1px solid rgba(196,149,106,0.4);
+  border-radius: 50%;
+  display:flex; align-items:center; justify-content:center;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: var(--gold);
+}
+.booking-step-content h4 {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--ivory);
+  margin-bottom: 6px;
+}
+.booking-step-content p {
+  font-size: 13px;
+  color: var(--stone-lt);
+  line-height: 1.7;
+}
+.booking-ctas { display:flex; flex-direction:column; gap: 16px; }
+.booking-cta-card {
+  border: 1px solid rgba(196,149,106,0.2);
+  padding: 28px 32px;
+  border-radius: var(--radius);
+  display:flex; justify-content:space-between; align-items:center;
+  transition: all .2s;
+  cursor:pointer;
+}
+.booking-cta-card:hover {
+  border-color: var(--gold);
+  background: rgba(196,149,106,0.05);
+}
+.booking-cta-card .platform {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 6px;
+}
+.booking-cta-card .label {
+  font-size: 15px;
+  color: var(--ivory);
+}
+.booking-cta-card .arrow {
+  font-family: var(--f-mono);
+  font-size: 18px;
+  color: var(--gold);
+}
+.booking-note {
+  margin-top: 32px;
+  padding: 24px;
+  border-left: 2px solid rgba(196,149,106,0.4);
+  font-size: 13px;
+  color: var(--stone-lt);
+  line-height: 1.8;
+}
+
+/* ── FOOTER ── */
+footer {
+  background: var(--ink);
+  padding: 60px clamp(20px,5vw,80px) 40px;
+}
+.footer-top {
+  display:flex; justify-content:space-between; align-items:flex-start;
+  padding-bottom: 48px;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  margin-bottom: 40px;
+  flex-wrap:wrap;
+  gap: 40px;
+}
+.footer-brand {
+  font-family: var(--f-mono);
+  font-size: 16px;
+  letter-spacing: 4px;
+  color: var(--ivory);
+  margin-bottom: 12px;
+}
+.footer-tagline {
+  font-size: 12px;
+  color: var(--stone);
+  max-width: 280px;
+  line-height: 1.7;
+}
+.footer-links {
+  display:flex; gap: 60px; flex-wrap:wrap;
+}
+.footer-col h4 {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 3px;
+  color: var(--gold);
+  margin-bottom: 16px;
+}
+.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+.footer-col ul li a {
+  font-size: 13px;
+  color: var(--stone);
+  transition: color .2s;
+}
+.footer-col ul li a:hover { color: var(--ivory); }
+.footer-bottom {
+  display:flex; justify-content:space-between; align-items:center;
+  flex-wrap:wrap; gap:16px;
+}
+.footer-copy {
+  font-family: var(--f-mono);
+  font-size: 11px;
+  color: rgba(255,255,255,0.2);
+}
+.footer-contact {
+  display:flex; gap: 32px;
+}
+.footer-contact a {
+  font-size: 12px;
+  color: var(--stone);
+  transition: color .2s;
+}
+.footer-contact a:hover { color: var(--gold); }
+
+/* ── PROTOTYPE BADGE ── */
+.proto-badge {
+  position: fixed;
+  bottom: 20px; right: 20px;
+  background: var(--gold);
+  color: var(--ink);
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  padding: 6px 14px;
+  border-radius: 20px;
+  z-index: 200;
+  font-weight: 500;
+}
+
+/* ── MOBILE ── */
+@media (max-width: 900px) {
+  .hero { grid-template-columns: 1fr; gap: 40px; }
+  .hero::before { display:none; }
+  .hero-right { display:none; }
+  .services-grid { grid-template-columns: 1fr; }
+  .method-grid { grid-template-columns: 1fr 1fr; }
+  .body-reset-layout { grid-template-columns: 1fr; }
+  .movement-grid { grid-template-columns: 1fr; }
+  .zw-layout { grid-template-columns: 1fr; }
+  .ig-categories { grid-template-columns: 1fr 1fr; }
+  .ig-embeds-grid { grid-template-columns: 1fr 1fr; }
+  .city-grid { grid-template-columns: 1fr; }
+  .city-register { flex-direction:column; align-items:flex-start; }
+  .booking-layout { grid-template-columns: 1fr; }
+  .nav-links { display:none; }
+  .footer-top { flex-direction:column; }
+  .footer-links { gap: 40px; }
+}
+@media (max-width: 600px) {
+  .method-grid { grid-template-columns: 1fr; }
+  .ig-categories { grid-template-columns: 1fr; }
+  .ig-embeds-grid { grid-template-columns: 1fr 1fr; }
+}
 </style>
 </head>
 <body>
 
-<div class="top-bar">
-  <h1 id="top-title">BodyFix｜快速記錄</h1>
-  <div class="tab-toggle">
-    <button class="tab-btn active" onclick="showTab('quick')">快速記錄</button>
-    <button class="tab-btn" onclick="showTab('files')">個案檔案</button>
-    <button class="tab-btn" onclick="showTab('feedback')">問卷反饋</button>
-  </div>
-</div>
+<!-- PROTOTYPE BADGE -->
+<div class="proto-badge">PROTOTYPE v3</div>
 
-<div id="quick-area" class="show">
-  <div class="row" style="background: var(--card-bg); padding: 12px; border-radius: 10px; margin-bottom: 14px;">
-    <div class="row-label">選擇個案 *</div>
-    <select id="f-client">
-      <option value="">-- 選擇個案編號 --</option>
-    </select>
-  </div>
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">BODYFIX</a>
+  <ul class="nav-links">
+    <li><a href="#services">服務</a></li>
+    <li><a href="#body-reset">身體整理</a></li>
+    <li><a href="#movement">動作整合</a></li>
+    <li><a href="#zwtarot">紫微塔羅</a></li>
+    <li><a href="#city">城市場次</a></li>
+  </ul>
+  <a href="#booking" class="nav-cta">預約諮詢</a>
+</nav>
 
-  <div class="row">
-    <div class="row-label">記錄標題 *</div>
-    <input type="text" id="f-name" placeholder="例：第2次回訪">
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-eyebrow">BODYFIX · BODY STATE MANAGEMENT</div>
+    <h1 class="hero-title">
+      不是只把你按鬆，<br>
+      而是從筋膜、張力與動作使用方式，<br>
+      <em>整理出更穩定、有韌性、有彈性的身體狀態。</em>
+    </h1>
+    <p class="hero-sub">
+      BodyFix 不是一般按摩，而是以筋膜與張力整理為核心，透過狀態判讀、身體整理與動作整合，協助身體回到更穩定、有韌性、有彈性的系統。
+    </p>
+    <div class="hero-actions">
+      <a href="#booking" class="btn-primary">預約前先填問卷</a>
+      <a href="#services" class="btn-ghost">了解服務</a>
+    </div>
   </div>
+  <div class="hero-right">
+    <div class="hero-spec">
+      <span class="hero-spec-label">METHOD</span>
+      <span class="hero-spec-value">筋膜鏈整理</span>
+    </div>
+    <div class="hero-spec">
+      <span class="hero-spec-label">TOOL</span>
+      <span class="hero-spec-value">張力判讀</span>
+    </div>
+    <div class="hero-spec">
+      <span class="hero-spec-label">FRAMEWORK</span>
+      <span class="hero-spec-value">四階段</span>
+    </div>
+    <div class="hero-spec">
+      <span class="hero-spec-label">DURATION</span>
+      <span class="hero-spec-value">60 分鐘</span>
+    </div>
+    <div class="hero-spec">
+      <span class="hero-spec-label">EXPERIENCE</span>
+      <span class="hero-spec-value">9 年</span>
+    </div>
+  </div>
+</section>
 
-  <div class="row">
-    <div class="row-label">客群類型 <span class="max-2">(最多選2)</span></div>
-    <div class="chips" id="f-clienttype">
-      <div class="chip" onclick="multi(this, 2)">A 久坐高壓</div>
-      <div class="chip" onclick="multi(this, 2)">B 久站負荷</div>
-      <div class="chip" onclick="multi(this, 2)">C 重訓卡關</div>
-      <div class="chip" onclick="multi(this, 2)">D 反覆不適</div>
-      <div class="chip" onclick="multi(this, 2)">E 保護性收縮高</div>
-      <div class="chip" onclick="multi(this, 2)">F 放鬆恢復</div>
-      <div class="chip" onclick="multi(this, 2)">G 45+ 維護</div>
-      <div class="chip" onclick="multi(this, 2)">H 初次體驗</div>
+<!-- 三大服務入口 -->
+<section id="services" class="section section-white">
+  <div class="section-label">SERVICES</div>
+  <h2 class="section-title">三大服務方向</h2>
+  <p class="section-sub">不同需求，有不同的整理切入點。</p>
+  <div class="services-grid">
+    <!-- A -->
+    <div class="svc-entry">
+      <div class="svc-entry-num">01</div>
+      <div class="svc-entry-en">Body Reset</div>
+      <div class="svc-entry-zh">身體整理</div>
+      <p class="svc-entry-desc">
+        以筋膜鏈整理為核心，協助身體從代償與張力失衡中整理出來，回到更穩定、有韌性、有彈性的狀態。
+      </p>
+      <div class="svc-entry-tags">
+        <span class="tag">筋膜鏈整理</span>
+        <span class="tag">骨盆核心</span>
+        <span class="tag">12 次計畫</span>
+      </div>
+      <div class="svc-entry-arrow">了解 Body Reset →</div>
+    </div>
+    <!-- B -->
+    <div class="svc-entry">
+      <div class="svc-entry-num">02</div>
+      <div class="svc-entry-en">Movement Integration</div>
+      <div class="svc-entry-zh">動作整合</div>
+      <p class="svc-entry-desc">
+        把筋膜整理的成果接回實際動作與訓練，讓身體穩定度與協調性真正接回使用。
+      </p>
+      <div class="svc-entry-tags">
+        <span class="tag">教練課</span>
+        <span class="tag">TRX</span>
+        <span class="tag">重訓整合</span>
+      </div>
+      <div class="svc-entry-arrow">了解 Movement →</div>
+    </div>
+    <!-- C -->
+    <div class="svc-entry">
+      <div class="svc-entry-num">03</div>
+      <div class="svc-entry-en">Zi Wei & Tarot</div>
+      <div class="svc-entry-zh">結構與狀態分析</div>
+      <p class="svc-entry-desc">
+        透過紫微斗數結構解析與塔羅狀態整理，協助你看清當下的節奏與決策模式。
+      </p>
+      <div class="svc-entry-tags">
+        <span class="tag">紫微解析</span>
+        <span class="tag">塔羅整理</span>
+        <span class="tag">整合諮詢</span>
+      </div>
+      <div class="svc-entry-arrow">了解 Zi Wei & Tarot →</div>
+    </div>
+  </div>
+</section>
+
+<!-- METHOD -->
+<section class="section section-dark">
+  <div class="section-label" style="color:var(--gold)">METHODOLOGY</div>
+  <h2 class="section-title">四個階段</h2>
+  <p class="section-sub">每次 60 分鐘，從判讀到整合，有清楚的脈絡。</p>
+  <div class="method-grid">
+    <div class="method-step">
+      <div class="method-num">01</div>
+      <div class="method-en">READ</div>
+      <div class="method-zh">判讀</div>
+      <p class="method-desc">先看懂身體現在的代償壓力、張力分工失衡與保護性收縮在哪裡。</p>
+    </div>
+    <div class="method-step">
+      <div class="method-num">02</div>
+      <div class="method-en">RESET</div>
+      <div class="method-zh">整理</div>
+      <p class="method-desc">透過筋膜與張力整理，降低不必要的撐住與卡住，讓身體鬆出空間。</p>
+    </div>
+    <div class="method-step">
+      <div class="method-num">03</div>
+      <div class="method-en">RECONNECT</div>
+      <div class="method-zh">整合</div>
+      <p class="method-desc">把整理後的狀態整合回呼吸、胸廓、肩帶、骨盆與動作使用方式。</p>
+    </div>
+    <div class="method-step">
+      <div class="method-num">04</div>
+      <div class="method-en">RETURN</div>
+      <div class="method-zh">接回</div>
+      <p class="method-desc">讓改善接回日常動作、訓練與恢復，而不只是停留在短暫放鬆。</p>
+    </div>
+  </div>
+</section>
+
+<!-- BODY RESET -->
+<section id="body-reset" class="section">
+  <div class="section-label">BODY RESET</div>
+  <h2 class="section-title">身體整理</h2>
+  <p class="section-sub">不是一般按摩，而是透過張力判讀、筋膜整理與動作整合，協助身體回到更穩定、有韌性、有彈性的狀態。</p>
+  <div class="body-reset-layout">
+    <div class="service-list">
+      <div class="service-item">
+        <span class="service-item-name">60 分鐘筋膜鏈整理</span>
+        <span class="service-item-price">NT$2,200</span>
+      </div>
+      <div class="service-item">
+        <span class="service-item-name">90 分鐘延長整理</span>
+        <span class="service-item-price">NT$3,200</span>
+      </div>
+      <div class="service-item">
+        <span class="service-item-name">骨盆核心整理</span>
+        <span class="service-item-price">NT$2,800</span>
+      </div>
+      <div class="service-item">
+        <span class="service-item-name">骨盆核心延長整理</span>
+        <span class="service-item-price">NT$3,800</span>
+      </div>
+      <div class="service-item">
+        <span class="service-item-name">12 次結構整合完整計畫</span>
+        <span class="service-item-price">私訊討論</span>
+      </div>
+    </div>
+    <div class="highlight-box">
+      <div class="label">12-SESSION PLAN</div>
+      <h3>完整的系統整理，<br>不是一次性放鬆</h3>
+      <p>12 次結構整合計畫，跨越六條主要筋膜線，從代償清理到動作整合，建立屬於你的身體使用地圖。</p>
+      <a href="#booking" class="btn-primary" style="display:inline-flex;">了解 12 次計畫</a>
+    </div>
+  </div>
+</section>
+
+<!-- MOVEMENT INTEGRATION -->
+<section id="movement" class="section section-beige">
+  <div class="section-label">MOVEMENT INTEGRATION</div>
+  <h2 class="section-title">動作整合</h2>
+  <p class="section-sub">把筋膜整理的改善，真正接回你的訓練與日常動作中使用。</p>
+  <div class="movement-grid">
+    <div class="movement-card">
+      <div class="movement-card-icon">COACHING</div>
+      <h3>教練課</h3>
+      <p>以身體整理為基礎，設計適合你目前張力狀態的訓練計畫。</p>
+    </div>
+    <div class="movement-card">
+      <div class="movement-card-icon">TRX</div>
+      <h3>TRX 懸吊整合</h3>
+      <p>利用懸吊系統，在不穩定環境中整合筋膜鏈的張力使用。</p>
+    </div>
+    <div class="movement-card">
+      <div class="movement-card-icon">WEIGHT TRAINING</div>
+      <h3>重訓動作整合</h3>
+      <p>針對你的重訓動作，找出代償模式，整合進更穩定的力線。</p>
+    </div>
+    <div class="movement-card">
+      <div class="movement-card-icon">PRE · POST</div>
+      <h3>訓練前後整理</h3>
+      <p>訓練前建立正確啟動路徑；訓練後清理殘留張力與代償壓力。</p>
+    </div>
+  </div>
+</section>
+
+<!-- ZI WEI & TAROT -->
+<section id="zwtarot" class="section section-dark">
+  <div class="section-label" style="color:var(--gold)">ZI WEI & TAROT</div>
+  <h2 class="section-title">結構與狀態分析</h2>
+  <div class="zw-layout">
+    <div class="zw-services">
+      <div class="zw-service-card">
+        <div class="name">紫微結構解析</div>
+        <div class="desc">以紫微斗數為框架，解析你的命盤結構、長期運行模式與節奏，協助你看清在哪些時間點做什麼決定更有力量。</div>
+      </div>
+      <div class="zw-service-card">
+        <div class="name">塔羅狀態整理</div>
+        <div class="desc">透過牌陣，整理你當下的狀態與內在張力，看清現在真正在處理的事是什麼。</div>
+      </div>
+      <div class="zw-service-card">
+        <div class="name">紫微 × 塔羅整合諮詢</div>
+        <div class="desc">結合兩個系統，從長期結構與當下狀態雙向切入，做出更清楚的分析與整理。</div>
+      </div>
+      <div class="zw-service-card">
+        <div class="name">SADM 關係決策整理</div>
+        <div class="desc">協助你在關係或重大決策裡，看清真正的需求、卡點與可行方向。</div>
+      </div>
+    </div>
+    <div class="zw-quote">
+      <blockquote>
+        「不是替你決定未來，<br>而是幫你看清現在。」
+      </blockquote>
+      <cite>BODYFIX · ZI WEI & TAROT</cite>
+    </div>
+  </div>
+</section>
+
+<!-- INSTAGRAM WORKS -->
+<section class="ig-works">
+  <div class="section-label">INSTAGRAM WORKS</div>
+  <h2 class="section-title">IG 作品與內容展示</h2>
+  <p class="section-sub" style="margin-bottom:0">筋膜知識、案例整理、骨盆核心、紫微塔羅。跟著帳號走，你會慢慢看懂身體的語言。</p>
+
+  <div class="ig-categories">
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">FASCIA NOTES</div>
+      <div class="ig-cat-zh">筋膜知識</div>
+      <div class="ig-cat-desc">看懂身體為什麼一直卡住。</div>
+    </div>
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">PELVIC CORE</div>
+      <div class="ig-cat-zh">骨盆核心</div>
+      <div class="ig-cat-desc">穩定、呼吸、核心與下背代償。</div>
+    </div>
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">CASE NOTES</div>
+      <div class="ig-cat-zh">案例整理</div>
+      <div class="ig-cat-desc">從身體變化看見整理邏輯。</div>
+    </div>
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">ZI WEI STRUCTURE</div>
+      <div class="ig-cat-zh">紫微結構解析</div>
+      <div class="ig-cat-desc">看懂長期模式與人生節奏。</div>
+    </div>
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">TAROT SPREADS</div>
+      <div class="ig-cat-zh">塔羅牌陣</div>
+      <div class="ig-cat-desc">不是預言，是整理當下狀態。</div>
+    </div>
+    <div class="ig-cat-card">
+      <div class="ig-cat-en">CITY TOUR</div>
+      <div class="ig-cat-zh">城市場次</div>
+      <div class="ig-cat-desc">台北常駐，台中高雄巡迴安排中。</div>
     </div>
   </div>
 
-  <div class="row">
-    <div class="row-label">本次服務</div>
-    <div class="chips" id="f-service">
-      <div class="chip multi" onclick="multi(this)">筋膜鏈 60min</div>
-      <div class="chip multi" onclick="multi(this)">延長 +30</div>
-      <div class="chip multi" onclick="multi(this)">12次旗艦</div>
-      <div class="chip multi" onclick="multi(this)">骨盆核心測試</div>
-      <div class="chip multi" onclick="multi(this)">45+ 續航</div>
-      <div class="chip multi" onclick="multi(this)">教練訓練</div>
-      <div class="chip multi" onclick="multi(this)">紫微解析</div>
-      <div class="chip multi" onclick="multi(this)">塔羅整理</div>
-      <div class="chip multi" onclick="multi(this)">除毛／形象管理</div>
+  <div class="ig-embeds-title">RECENT POSTS · @bodyfixgavin</div>
+  <div class="ig-embeds-grid">
+    <div class="ig-embed-placeholder">
+      <div class="icon">📸</div>
+      <div class="text">這裡可嵌入 IG 貼文<br>之後替換成單篇貼文網址</div>
+    </div>
+    <div class="ig-embed-placeholder">
+      <div class="icon">📸</div>
+      <div class="text">這裡可嵌入 IG 貼文<br>之後替換成單篇貼文網址</div>
+    </div>
+    <div class="ig-embed-placeholder">
+      <div class="icon">📸</div>
+      <div class="text">這裡可嵌入 IG 貼文<br>之後替換成單篇貼文網址</div>
+    </div>
+    <div class="ig-embed-placeholder">
+      <div class="icon">📸</div>
+      <div class="text">這裡可嵌入 IG 貼文<br>之後替換成單篇貼文網址</div>
     </div>
   </div>
 
-  <div class="row">
-    <div class="row-label">主導型</div>
-    <div class="chips" id="f-line">
-      <div class="chip multi" onclick="multi(this)">DFL</div>
-      <div class="chip multi" onclick="multi(this)">SBL</div>
-      <div class="chip multi" onclick="multi(this)">SFL</div>
-      <div class="chip multi" onclick="multi(this)">SL</div>
-      <div class="chip multi" onclick="multi(this)">FL</div>
-      <div class="chip multi" onclick="multi(this)">LL</div>
+  <div class="ig-cta">
+    <a href="https://www.instagram.com/bodyfixgavin/" target="_blank" rel="noopener">
+      看更多作品與內容 →
+    </a>
+  </div>
+</section>
+
+<!-- CITY TOUR -->
+<section id="city" class="section section-dark">
+  <div class="section-label" style="color:var(--gold)">CITY TOUR</div>
+  <h2 class="section-title">城市場次</h2>
+  <p class="section-sub">台北常駐，定期前往台中、高雄。如果你在其他城市，可以登記需求。</p>
+  <div class="city-grid">
+    <div class="city-card active">
+      <div class="city-name">台北</div>
+      <div class="city-status live">● 常駐場</div>
+      <p class="city-desc">西門、國父紀念館、六張犁，三個據點，另提供到府服務。</p>
+    </div>
+    <div class="city-card">
+      <div class="city-name">台中</div>
+      <div class="city-status coming">● 巡迴安排中</div>
+      <p class="city-desc">定期前往，日期與場地透過 IG 或 LINE 提前公告。</p>
+    </div>
+    <div class="city-card">
+      <div class="city-name">高雄</div>
+      <div class="city-status coming">● 巡迴安排中</div>
+      <p class="city-desc">定期前往，日期與場地透過 IG 或 LINE 提前公告。</p>
     </div>
   </div>
-
-  <div class="divider"></div>
-
-  <div class="row">
-    <div class="row-label">做了什麼</div>
-    <div class="chips" id="f-ops">
-      <div class="chip multi" onclick="multi(this)">枕下</div>
-      <div class="chip multi" onclick="multi(this)">頸</div>
-      <div class="chip multi" onclick="multi(this)">肩帶</div>
-      <div class="chip multi" onclick="multi(this)">胸大/小肌</div>
-      <div class="chip multi" onclick="multi(this)">前鋸</div>
-      <div class="chip multi" onclick="multi(this)">肋間</div>
-      <div class="chip multi" onclick="multi(this)">橫膈</div>
-      <div class="chip multi" onclick="multi(this)">腹壁</div>
-      <div class="chip multi" onclick="multi(this)">豎脊</div>
-      <div class="chip multi" onclick="multi(this)">腰方</div>
-      <div class="chip multi" onclick="multi(this)">髂腰</div>
-      <div class="chip multi" onclick="multi(this)">臀大</div>
-      <div class="chip multi" onclick="multi(this)">臀中</div>
-      <div class="chip multi" onclick="multi(this)">梨狀</div>
-      <div class="chip multi" onclick="multi(this)">內收</div>
-      <div class="chip multi" onclick="multi(this)">縫匠</div>
-      <div class="chip multi" onclick="multi(this)">股四</div>
-      <div class="chip multi" onclick="multi(this)">腘繩</div>
-      <div class="chip multi" onclick="multi(this)">ITB</div>
-      <div class="chip multi" onclick="multi(this)">小腿</div>
-      <div class="chip multi" onclick="multi(this)">足底</div>
-      <div class="chip multi" onclick="multi(this)">前臂</div>
-      <div class="chip multi" onclick="multi(this)">薦椎</div>
-      <div class="chip multi" onclick="multi(this)">呼吸引導</div>
-      <div class="chip multi" onclick="multi(this)">動作整合</div>
-    </div>
+  <div class="city-register">
+    <p>台南、新竹、桃園或其他城市？留下你的需求，當場次規劃到你的城市時，我會第一時間通知你。</p>
+    <a href="https://line.me/R/ti/p/@359gzxzi" target="_blank" class="btn-ghost" style="white-space:nowrap">登記城市需求</a>
   </div>
+</section>
 
-  <div class="divider"></div>
-
-  <div class="row">
-    <div class="row-label">他最有感的一句話</div>
-    <input type="text" id="f-moment" placeholder="他說了什麼 / 什麼反應">
-  </div>
-
-  <div class="row">
-    <div class="row-label">前後差異</div>
-    <div class="stars" id="f-diff">
-      <div class="star" onclick="star(this)">1</div>
-      <div class="star" onclick="star(this)">2</div>
-      <div class="star" onclick="star(this)">3</div>
-      <div class="star" onclick="star(this)">4</div>
-      <div class="star" onclick="star(this)">5</div>
-    </div>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="row">
-    <div class="row-label">延伸興趣／未來可轉換方向 <span class="max-3">(最多選3)</span></div>
-    <div class="row-label-note">記錄未來可以導向哪一條服務線</div>
-    <div class="chips" id="f-extension">
-      <div class="chip multi" onclick="multi(this, 3)">12次旗艦</div>
-      <div class="chip multi" onclick="multi(this, 3)">骨盆核心</div>
-      <div class="chip multi" onclick="multi(this, 3)">45+ 續航</div>
-      <div class="chip multi" onclick="multi(this, 3)">定期維護</div>
-      <div class="chip multi" onclick="multi(this, 3)">教練訓練</div>
-      <div class="chip multi" onclick="multi(this, 3)">紫微解析</div>
-      <div class="chip multi" onclick="multi(this, 3)">塔羅整理</div>
-      <div class="chip multi" onclick="multi(this, 3)">除毛／形象管理</div>
-      <div class="chip multi" onclick="multi(this, 3)">暫不適合</div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="row-label">轉換備註</div>
-    <textarea id="f-conversion" placeholder="例：他對紫微有興趣，但目前先做身體整理&#10;例：下次可以聊骨盆核心&#10;例：適合定期維護，但還沒準備好買方案"></textarea>
-  </div>
-
-  <div class="divider"></div>
-
-  <div class="row">
-    <div class="row-label">回訪意願</div>
-    <div class="stars" id="f-return">
-      <div class="star" onclick="star(this)">1</div>
-      <div class="star" onclick="star(this)">2</div>
-      <div class="star" onclick="star(this)">3</div>
-      <div class="star" onclick="star(this)">4</div>
-      <div class="star" onclick="star(this)">5</div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="row-label">升級潛力</div>
-    <div class="chips" id="f-upgrade">
-      <div class="chip multi" onclick="multi(this)">12次旗艦</div>
-      <div class="chip multi" onclick="multi(this)">骨盆核心</div>
-      <div class="chip multi" onclick="multi(this)">45+ 續航</div>
-      <div class="chip multi" onclick="multi(this)">定期維護</div>
-      <div class="chip multi" onclick="multi(this)">教練訓練</div>
-      <div class="chip multi" onclick="multi(this)">紫微解析</div>
-      <div class="chip multi" onclick="multi(this)">塔羅整理</div>
-      <div class="chip multi" onclick="multi(this)">除毛／形象管理</div>
-      <div class="chip multi" onclick="multi(this)">暫不適合</div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="row-label">後續安排</div>
-    <div class="chips" id="f-followup">
-      <div class="chip multi" onclick="multi(this)">已約下次</div>
-      <div class="chip multi" onclick="multi(this)">有興趣但未約</div>
-      <div class="chip multi" onclick="multi(this)">需 3 天後追蹤</div>
-      <div class="chip multi" onclick="multi(this)">需 7 天後追蹤</div>
-      <div class="chip multi" onclick="multi(this)">暫不追蹤</div>
-      <div class="chip multi" onclick="multi(this)">不適合</div>
-    </div>
-  </div>
-
-  <div class="row">
-    <div class="row-label">追蹤日期</div>
-    <input type="date" id="f-followupdate">
-  </div>
-
-  <div class="row">
-    <div class="row-label">其他備註（選填）</div>
-    <textarea id="f-note" placeholder="任何想記的"></textarea>
-  </div>
-</div>
-
-<div id="files-area">
-  <div id="files-list"></div>
-  <div id="files-empty" class="empty-hint">還沒有個案檔案<br>按下方「新增」開始建檔</div>
-</div>
-
-<div id="feedback-area">
-  <div id="feedback-content">
-    <div class="row" style="background: var(--card-bg); padding: 12px; border-radius: 10px; margin-bottom: 14px;">
-      <div class="row-label">這次服務是哪位客人的？ *</div>
-      <select id="fb-client">
-        <option value="">-- 選擇個案編號 --</option>
-      </select>
-    </div>
-
-    <div class="row">
-      <div class="row-label">做完後的改善感 *</div>
-      <div class="option-group">
-        <div class="chips">
-          <div class="chip" onclick="solo(this)">沒有感覺</div>
-          <div class="chip" onclick="solo(this)">有點改善</div>
-          <div class="chip" onclick="solo(this)">明顯改善</div>
-          <div class="chip" onclick="solo(this)">非常有改善</div>
+<!-- BOOKING -->
+<section id="booking" class="section section-dark" style="border-top:1px solid rgba(255,255,255,0.06)">
+  <div class="section-label" style="color:var(--gold)">BOOKING</div>
+  <h2 class="section-title">預約</h2>
+  <div class="booking-layout">
+    <div class="booking-steps">
+      <div class="booking-step">
+        <div class="step-num-circle">01</div>
+        <div class="booking-step-content">
+          <h4>填寫預約前問卷</h4>
+          <p>讓我在見面前先了解你的狀態，直接進入判讀，不浪費時間。</p>
         </div>
       </div>
-    </div>
-
-    <div class="row">
-      <div class="row-label">回訪意願 *</div>
-      <div class="option-group">
-        <div class="chips">
-          <div class="chip" onclick="solo(this)">沒興趣</div>
-          <div class="chip" onclick="solo(this)">可能再來</div>
-          <div class="chip" onclick="solo(this)">很想再來</div>
-          <div class="chip" onclick="solo(this)">一定會回訪</div>
+      <div class="booking-step">
+        <div class="step-num-circle">02</div>
+        <div class="booking-step-content">
+          <h4>私訊確認時段</h4>
+          <p>透過 LINE 或 IG 私訊，確認你的需求與我的可預約時段。</p>
         </div>
       </div>
-    </div>
-
-    <div class="row">
-      <div class="row-label">對方案的興趣 *</div>
-      <div class="option-group">
-        <div class="chips">
-          <div class="chip" onclick="solo(this)">暫不考慮</div>
-          <div class="chip" onclick="solo(this)">想了解一下</div>
-          <div class="chip" onclick="solo(this)">很有興趣</div>
-          <div class="chip" onclick="solo(this)">直接想簽</div>
+      <div class="booking-step">
+        <div class="step-num-circle">03</div>
+        <div class="booking-step-content">
+          <h4>收到確認通知</h4>
+          <p>預約確認後，我會傳送工作室地址與當天注意事項。</p>
         </div>
       </div>
-    </div>
-
-    <div class="row">
-      <div class="row-label">整體滿意度 *</div>
-      <div class="stars" id="fb-rating">
-        <div class="star" onclick="star(this)">1</div>
-        <div class="star" onclick="star(this)">2</div>
-        <div class="star" onclick="star(this)">3</div>
-        <div class="star" onclick="star(this)">4</div>
-        <div class="star" onclick="star(this)">5</div>
+      <div class="booking-step">
+        <div class="step-num-circle">04</div>
+        <div class="booking-step-content">
+          <h4>準時到場</h4>
+          <p>提前 5 分鐘到達，穿著輕便，準備好開始。</p>
+        </div>
+      </div>
+      <div class="booking-note">
+        請在預約日 24 小時前告知如需更改或取消。<br>
+        詳細方案與費用，歡迎私訊討論。
       </div>
     </div>
-
-    <div class="row">
-      <div class="row-label">其他感想（選填）</div>
-      <textarea id="fb-notes" placeholder="有什麼想說的都可以寫..."></textarea>
+    <div class="booking-ctas">
+      <a href="https://bodyfix-tw.netlify.app/intake.html" target="_blank" class="booking-cta-card">
+        <div>
+          <div class="platform">QUESTIONNAIRE</div>
+          <div class="label">填寫預約前問卷</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a href="https://line.me/R/ti/p/@359gzxzi" target="_blank" class="booking-cta-card">
+        <div>
+          <div class="platform">LINE OA</div>
+          <div class="label">@359gzxzi · LINE 私訊</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
+      <a href="https://www.instagram.com/bodyfixgavin/" target="_blank" class="booking-cta-card">
+        <div>
+          <div class="platform">INSTAGRAM</div>
+          <div class="label">@bodyfixgavin · IG 私訊</div>
+        </div>
+        <div class="arrow">→</div>
+      </a>
     </div>
   </div>
+</section>
 
-  <div id="feedback-success" style="display:none;">
-    <div class="success-msg">✓ 感謝回饋！已記錄</div>
-    <div style="text-align:center; padding:20px;">
-      <button class="btn btn-secondary" onclick="resetFeedback()" style="width:100%;">再填一份</button>
+<!-- FOOTER -->
+<footer>
+  <div class="footer-top">
+    <div>
+      <div class="footer-brand">BODYFIX</div>
+      <p class="footer-tagline">以筋膜與張力整理為核心，協助身體回到更穩定、有韌性、有彈性的系統。</p>
+    </div>
+    <div class="footer-links">
+      <div class="footer-col">
+        <h4>SERVICES</h4>
+        <ul>
+          <li><a href="#body-reset">身體整理 Body Reset</a></li>
+          <li><a href="#movement">動作整合 Movement</a></li>
+          <li><a href="#zwtarot">Zi Wei & Tarot</a></li>
+          <li><a href="#city">城市場次 City Tour</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>CONTACT</h4>
+        <ul>
+          <li><a href="https://www.instagram.com/bodyfixgavin/" target="_blank">IG · @bodyfixgavin</a></li>
+          <li><a href="https://line.me/R/ti/p/@359gzxzi" target="_blank">LINE · @359gzxzi</a></li>
+          <li><a href="mailto:BodyFix.Gavin@gmail.com">Email · BodyFix.Gavin@gmail.com</a></li>
+        </ul>
+      </div>
     </div>
   </div>
-</div>
-
-<div class="bottom-bar">
-  <button class="btn btn-secondary" id="btn-export" onclick="exportRecords()" style="display:none">複製</button>
-  <button class="btn btn-secondary" id="btn-add-client" onclick="showAddClient()" style="display:none">新增</button>
-  <button class="btn btn-primary" id="btn-save" onclick="saveRecord()" style="display:none">存＋下一位</button>
-  <button class="btn btn-primary" id="btn-submit-feedback" onclick="submitFeedback()" style="display:none">提交回饋</button>
-</div>
-
-<script>
-const supabaseUrl = 'https://fkjxvlxoodvqnqzmxmnnj.supabase.co';
-const supabaseKey = 'sb_publishable_VHeZpMBlfqHbIkBVp3peqg_etYaaEqi';
-const { createClient } = window.supabase;
-const supabase = createClient(supabaseUrl, supabaseKey);
-
-let clients = [];
-let records = [];
-
-async function loadData() {
-  try {
-    const { data: clientsData, error: clientsError } = await supabase.from('clients').select('*');
-    if (clientsError) throw clientsError;
-    clients = clientsData || [];
-
-    const { data: recordsData, error: recordsError } = await supabase.from('records').select('*');
-    if (recordsError) throw recordsError;
-    records = recordsData || [];
-  } catch (e) {
-    console.error('Load error:', e);
-  }
-  renderClientSelects();
-}
-
-function renderClientSelects() {
-  [document.getElementById('f-client'), document.getElementById('fb-client')].forEach(sel => {
-    if (!sel) return;
-    sel.innerHTML = '<option value="">-- 選擇個案編號 --</option>';
-    clients.forEach(c => {
-      const id = String(c.id).padStart(3, '0');
-      const opt = document.createElement('option');
-      opt.value = c.id;
-      opt.textContent = '#' + id + ' ' + c.name;
-      sel.appendChild(opt);
-    });
-  });
-}
-
-function showTab(tab) {
-  document.getElementById('quick-area').classList.remove('show');
-  document.getElementById('files-area').classList.remove('show');
-  document.getElementById('feedback-area').classList.remove('show');
-  document.getElementById('btn-save').style.display = 'none';
-  document.getElementById('btn-export').style.display = 'none';
-  document.getElementById('btn-add-client').style.display = 'none';
-  document.getElementById('btn-submit-feedback').style.display = 'none';
-  
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-  if (tab === 'quick') {
-    document.getElementById('quick-area').classList.add('show');
-    document.getElementById('btn-save').style.display = 'flex';
-    document.getElementById('btn-export').style.display = 'flex';
-    document.getElementById('top-title').textContent = 'BodyFix｜快速記錄';
-    document.querySelectorAll('.tab-btn')[0].classList.add('active');
-  } else if (tab === 'files') {
-    document.getElementById('files-area').classList.add('show');
-    document.getElementById('btn-add-client').style.display = 'flex';
-    document.getElementById('top-title').textContent = 'BodyFix｜個案檔案';
-    document.querySelectorAll('.tab-btn')[1].classList.add('active');
-    renderFilesList();
-  } else if (tab === 'feedback') {
-    document.getElementById('feedback-area').classList.add('show');
-    document.getElementById('btn-submit-feedback').style.display = 'flex';
-    document.getElementById('top-title').textContent = 'BodyFix｜問卷反饋';
-    document.querySelectorAll('.tab-btn')[2].classList.add('active');
-  }
-}
-
-function solo(el) {
-  el.parentElement.querySelectorAll('.chip').forEach(c => c.classList.remove('on'));
-  el.classList.add('on');
-}
-
-function multi(el, maxCount = null) {
-  const parent = el.parentElement;
-  const selected = parent.querySelectorAll('.chip.on');
-  
-  if (el.classList.contains('on')) {
-    el.classList.remove('on');
-  } else {
-    if (maxCount && selected.length >= maxCount) {
-      return;
-    }
-    el.classList.add('on');
-  }
-}
-
-function star(el) {
-  el.parentElement.querySelectorAll('.star').forEach(s => s.classList.remove('on'));
-  el.classList.add('on');
-}
-
-function getSelected(id) {
-  const el = document.getElementById(id);
-  const s = el.querySelector('.chip.on, .star.on');
-  return s ? s.textContent : '';
-}
-
-function getMultiSelected(id) {
-  const els = document.querySelectorAll('#' + id + ' .chip.on');
-  return Array.from(els).map(e => e.textContent);
-}
-
-async function saveRecord() {
-  const clientId = document.getElementById('f-client').value;
-  if (!clientId) { alert('請選擇個案編號'); return; }
-
-  const name = document.getElementById('f-name').value.trim();
-  if (!name) { alert('請填記錄標題'); return; }
-
-  const now = new Date();
-  const time = now.getHours().toString().padStart(2,'0') + ':' + now.getMinutes().toString().padStart(2,'0');
-
-  const rec = {
-    client_id: parseInt(clientId),
-    name: name,
-    time: time,
-    date: now.toLocaleDateString('zh-TW'),
-    clienttype: getMultiSelected('f-clienttype'),
-    service: getMultiSelected('f-service'),
-    line: getMultiSelected('f-line'),
-    ops: getMultiSelected('f-ops'),
-    moment: document.getElementById('f-moment').value.trim(),
-    diff: getSelected('f-diff'),
-    extension: getMultiSelected('f-extension'),
-    conversion: document.getElementById('f-conversion').value.trim(),
-    ret: getSelected('f-return'),
-    upgrade: getMultiSelected('f-upgrade'),
-    followup: getMultiSelected('f-followup'),
-    followupdate: document.getElementById('f-followupdate').value,
-    note: document.getElementById('f-note').value.trim()
-  };
-
-  try {
-    const { error } = await supabase.from('records').insert([rec]);
-    if (error) throw error;
-    alert('已存');
-    resetForm();
-    loadData();
-  } catch (e) {
-    alert('存檔失敗：' + e.message);
-  }
-}
-
-function resetForm() {
-  document.getElementById('f-name').value = '';
-  document.getElementById('f-moment').value = '';
-  document.getElementById('f-conversion').value = '';
-  document.getElementById('f-note').value = '';
-  document.getElementById('f-followupdate').value = '';
-  document.getElementById('f-client').value = '';
-  document.querySelectorAll('#quick-area .chip.on, #quick-area .star.on').forEach(el => el.classList.remove('on'));
-  document.getElementById('f-name').focus();
-}
-
-async function submitFeedback() {
-  const clientId = document.getElementById('fb-client').value;
-  if (!clientId) { alert('請選擇個案編號'); return; }
-
-  const chips = document.querySelectorAll('#feedback-area .option-group .chip.on');
-  if (chips.length < 3) { alert('請填完所有必填項目'); return; }
-
-  const now = new Date();
-  const feedbackData = {
-    client_id: parseInt(clientId),
-    date: now.toLocaleDateString('zh-TW'),
-    improvement: chips[0].textContent,
-    return_intention: chips[1].textContent,
-    program_interest: chips[2].textContent,
-    rating: getSelected('fb-rating'),
-    notes: document.getElementById('fb-notes').value.trim()
-  };
-
-  try {
-    const { error } = await supabase.from('feedback').insert([feedbackData]);
-    if (error) throw error;
-    
-    document.getElementById('feedback-content').style.display = 'none';
-    document.getElementById('feedback-success').style.display = 'block';
-    loadData();
-  } catch (e) {
-    alert('提交失敗：' + e.message);
-  }
-}
-
-function resetFeedback() {
-  document.getElementById('feedback-content').style.display = 'block';
-  document.getElementById('feedback-success').style.display = 'none';
-  document.getElementById('fb-client').value = '';
-  document.querySelectorAll('#feedback-area .chip.on, #feedback-area .star.on').forEach(el => el.classList.remove('on'));
-  document.getElementById('fb-notes').value = '';
-}
-
-function exportRecords() {
-  let out = '=== BodyFix 個案記錄 ===\n共 ' + records.length + ' 筆\n\n';
-  records.forEach(r => {
-    out += '──────\n【' + r.name + '】' + r.date + ' ' + r.time + '\n';
-    if (r.service && r.service.length) out += '服務：' + r.service.join('、') + '\n';
-    if (r.clienttype && r.clienttype.length) out += '客群：' + r.clienttype.join('、') + '\n';
-    if (r.line && r.line.length) out += '主導：' + r.line.join('、') + '\n';
-    if (r.ops && r.ops.length) out += '操作：' + r.ops.join('、') + '\n';
-    if (r.moment) out += '有感：' + r.moment + '\n';
-    if (r.diff) out += '差異：' + r.diff + '/5\n';
-    if (r.extension && r.extension.length) out += '延伸：' + r.extension.join('、') + '\n';
-    if (r.conversion) out += '轉換備註：' + r.conversion + '\n';
-    if (r.ret) out += '回訪：' + r.ret + '/5\n';
-    if (r.upgrade && r.upgrade.length) out += '升級：' + r.upgrade.join('、') + '\n';
-    if (r.followup && r.followup.length) out += '後續：' + r.followup.join('、') + '\n';
-    if (r.followupdate) out += '追蹤日期：' + r.followupdate + '\n';
-    if (r.note) out += '備註：' + r.note + '\n';
-  });
-  navigator.clipboard.writeText(out).then(() => {
-    alert('已複製 ' + records.length + ' 筆');
-  });
-}
-
-function renderFilesList() {
-  const list = document.getElementById('files-list');
-  const empty = document.getElementById('files-empty');
-  list.innerHTML = '';
-
-  if (clients.length === 0) {
-    empty.style.display = 'block';
-    return;
-  }
-  empty.style.display = 'none';
-
-  clients.forEach(c => {
-    const id = String(c.id).padStart(3, '0');
-    const card = document.createElement('div');
-    card.className = 'client-card';
-    card.onclick = () => showClientDetail(c.id);
-    card.innerHTML = `
-      <div class="client-id">#${id}</div>
-      <div class="client-name">${c.name}</div>
-      <div class="client-meta">
-        ${c.birthday ? '生日：' + c.birthday + ' | ' : ''}
-        ${c.job || ''}
-      </div>
-    `;
-    list.appendChild(card);
-  });
-}
-
-function showClientDetail(clientId) {
-  const c = clients.find(x => x.id === clientId);
-  if (!c) return;
-  const id = String(c.id).padStart(3, '0');
-  const clientRecords = records.filter(r => r.client_id === clientId);
-
-  let html = `
-    <div style="background:var(--card-bg); border-radius:12px; padding:14px; margin-bottom:14px; border:1px solid var(--border);">
-      <div style="font-size:11px; color:var(--text-muted);">#${id}</div>
-      <div style="font-size:20px; font-weight:900; color:var(--accent); margin:4px 0;">${c.name}</div>
-      <div style="font-size:12px; color:var(--text-muted);">${c.birthday || '─'} | ${c.job || '─'}</div>
+  <div class="footer-bottom">
+    <span class="footer-copy">© 2025 BodyFix · PROTOTYPE v3 · 非正式上線版</span>
+    <div class="footer-contact">
+      <a href="https://www.instagram.com/bodyfixgavin/" target="_blank">@bodyfixgavin</a>
+      <a href="https://line.me/R/ti/p/@359gzxzi" target="_blank">LINE @359gzxzi</a>
     </div>
-
-    <div style="background:var(--card-bg); border-radius:10px; padding:14px; margin-bottom:10px; border:1px solid var(--border);">
-      <h3 style="font-size:12px; font-weight:900; color:var(--accent); margin-bottom:10px;">基本檔案</h3>
-      <div style="margin-bottom:8px;">
-        <div style="font-size:11px; color:var(--text-muted);">聯絡 (LINE)</div>
-        <div style="font-size:14px; color:var(--text); margin-top:2px;">${c.line || '─'}</div>
-      </div>
-      <div>
-        <div style="font-size:11px; color:var(--text-muted);">身高 / 體重</div>
-        <div style="font-size:14px; color:var(--text); margin-top:2px;">${c.height || '─'} cm / ${c.weight || '─'} kg</div>
-      </div>
-    </div>
-
-    <div style="background:var(--card-bg); border-radius:10px; padding:14px; margin-bottom:10px; border:1px solid var(--border);">
-      <h3 style="font-size:12px; font-weight:900; color:var(--accent); margin-bottom:10px;">首次來訪</h3>
-      <div style="margin-bottom:8px;">
-        <div style="font-size:11px; color:var(--text-muted);">日期</div>
-        <div style="font-size:14px; color:var(--text); margin-top:2px;">${c.first_date || '─'}</div>
-      </div>
-      <div style="margin-bottom:8px;">
-        <div style="font-size:11px; color:var(--text-muted);">主訴</div>
-        <div style="font-size:14px; color:var(--text); margin-top:2px;">${c.complaint || '─'}</div>
-      </div>
-    </div>
-  `;
-
-  if (clientRecords.length > 0) {
-    html += '<div style="background:var(--card-bg); border-radius:10px; padding:14px; margin-bottom:10px; border:1px solid var(--border);"><h3 style="font-size:12px; font-weight:900; color:var(--accent); margin-bottom:10px;">回訪記錄</h3>';
-    clientRecords.forEach((v, idx) => {
-      html += `
-        <div style="background:var(--input-bg); padding:10px; border-radius:8px; margin-bottom:8px;">
-          <div style="font-size:12px; color:var(--accent); font-weight:700; margin-bottom:4px;">第 ${idx + 1} 次｜${v.date} ${v.time}</div>
-          <div style="font-size:11px; color:var(--text-muted); line-height:1.6;">
-            ${v.service && v.service.length ? '服務：' + v.service.join('、') + '<br>' : ''}
-            ${v.clienttype && v.clienttype.length ? '客群：' + v.clienttype.join('、') + '<br>' : ''}
-            ${v.line && v.line.length ? '主導：' + v.line.join('、') + '<br>' : ''}
-            ${v.moment ? '有感：' + v.moment + '<br>' : ''}
-            ${v.diff ? '差異：' + v.diff + '/5<br>' : ''}
-            ${v.extension && v.extension.length ? '延伸：' + v.extension.join('、') + '<br>' : ''}
-            ${v.ret ? '回訪：' + v.ret + '/5' : ''}
-          </div>
-        </div>
-      `;
-    });
-    html += '</div>';
-  }
-
-  html += '<div style="text-align:center; padding:20px; font-size:13px; color:var(--text-muted);"><button class="btn btn-secondary" onclick="showTab(\'files\')" style="width:100%;">返回</button></div>';
-
-  document.getElementById('files-list').innerHTML = html;
-}
-
-function showAddClient() {
-  alert('新增個案功能（待開發）');
-}
-
-loadData();
-setInterval(loadData, 30000);
-</script>
+  </div>
+</footer>
 
 </body>
 </html>
