@@ -1,8 +1,24 @@
 import { ReadingOrderCard } from "@/components/ReadingOrderCard";
-import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase/server";
+
+export const dynamic = "force-dynamic";
 
 export default async function ReadingsPage() {
+  if (!hasSupabaseEnv()) {
+    return (
+      <main className="mx-auto max-w-6xl space-y-4 p-6">
+        <h1 className="text-2xl font-bold">BodyFix OS 尚未連接 Supabase</h1>
+        <p className="text-sm text-gray-600">
+          請先在 Vercel Environment Variables 設定 NEXT_PUBLIC_SUPABASE_URL 與 NEXT_PUBLIC_SUPABASE_ANON_KEY。
+        </p>
+      </main>
+    );
+  }
+
   const supabase = createSupabaseServerClient();
+  if (!supabase) {
+    return null;
+  }
 
   const { data: unpaidOrders } = await supabase
     .from("digital_reading_orders")
