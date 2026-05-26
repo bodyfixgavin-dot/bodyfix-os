@@ -99,6 +99,13 @@
       home_visit: '到府整理'
     };
 
+    function normalizeZoneKey(zone) {
+      return String(zone || '')
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, '_');
+    }
+
     function pick(row, keys, fallback = '') {
       for (const key of keys) {
         if (row[key] !== undefined && row[key] !== null) return row[key];
@@ -128,7 +135,8 @@
     }
 
     function formatZoneName(zone) {
-      return ZONE_LABELS[zone] || zone;
+      const normalized = normalizeZoneKey(zone);
+      return ZONE_LABELS[normalized] || String(zone || '-');
     }
 
     function normalizeRow(row) {
