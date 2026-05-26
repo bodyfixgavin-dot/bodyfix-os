@@ -103,7 +103,7 @@
         <div class="options" data-group="history" data-multi="true"></div>
       </div>
 
-      <h2>狀態小測驗</h2>
+      <h2>BodyFix 狀態小測驗</h2>
       <p class="hint">不用想太多，選最接近現在的狀態就好。</p>
 
       <div class="field">
@@ -236,6 +236,20 @@
       ziweiStatusText.textContent = getZiweiStatus();
     }
 
+
+    function validateRequiredSelections() {
+      const requiredGroups = [
+        { key: 'stateRecent', label: '最近狀態' },
+        { key: 'stateImprove', label: '最想改善' },
+        { key: 'stateFeeling', label: '期待感覺' }
+      ];
+      const missing = requiredGroups.filter((item) => selected[item.key].length === 0);
+      if (!missing.length) return true;
+      const labels = missing.map((item) => item.label).join('、');
+      alert(`請先完成狀態小測驗：${labels}`);
+      return false;
+    }
+
     function buildMessage() {
       const data = new FormData(form);
       const stateTags = [];
@@ -282,6 +296,7 @@
 
     btn.addEventListener('click', async () => {
       if (!form.reportValidity()) return;
+      if (!validateRequiredSelections()) return;
       const message = buildMessage();
       try { await navigator.clipboard.writeText(message); } catch (e) {}
       const lineUrl = `https://line.me/R/msg/text/?${encodeURIComponent(message)}`;
