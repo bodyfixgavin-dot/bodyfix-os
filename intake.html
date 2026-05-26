@@ -103,6 +103,24 @@
         <div class="options" data-group="history" data-multi="true"></div>
       </div>
 
+      <h2>狀態小測驗</h2>
+      <p class="hint">不用想太多，選最接近現在的狀態就好。</p>
+
+      <div class="field">
+        <label>你最近比較像哪一種？</label>
+        <div class="options" data-group="stateRecent" data-multi="false"></div>
+      </div>
+
+      <div class="field">
+        <label>你最想改善的是什麼？</label>
+        <div class="options" data-group="stateImprove" data-multi="false"></div>
+      </div>
+
+      <div class="field">
+        <label>你希望這次整理帶給你什麼感覺？</label>
+        <div class="options" data-group="stateFeeling" data-multi="false"></div>
+      </div>
+
       <div class="field">
         <label>這次想預約哪一種？</label>
         <div class="options" data-group="service" data-multi="false"></div>
@@ -138,6 +156,9 @@
       duration: ['今天才開始','一週內','一個月內','三個月以上','半年以上','反覆很久了'],
       pain: ['0','1','2','3','4','5','6','7','8','9','10'],
       history: ['沒有','一般按摩','運動按摩','整復 / 推拿','物理治療','看醫生','自己伸展','重訓調整','滾筒 / 筋膜球','其他'],
+      stateRecent: ['腦袋停不下來','身體很緊但不知道哪裡緊','一直硬撐，不太會放鬆','運動後恢復變慢','情緒有點悶，但說不清楚','只是想整理一下身體狀態'],
+      stateImprove: ['睡得比較好','肩頸腰背不要一直卡','訓練表現更穩','身體不要那麼容易累','情緒和身體都放鬆一點','想知道自己到底怎麼了'],
+      stateFeeling: ['鬆一點','穩一點','有力量一點','呼吸順一點','頭腦安靜一點','重新整理自己'],
       service: ['筋膜鏈整理 60 分鐘','筋膜鏈延長整理 90 分鐘','骨盆核心整理 60 分鐘','骨盆核心延長整理 90 分鐘','12 次結構整合完整計畫','紫微結構解析','塔羅狀態整理','我不確定，想先讓你判斷'],
       place: ['西門','國父紀念館','六張犁','到府整理','台中場次','高雄場次','其他城市']
     };
@@ -217,6 +238,15 @@
 
     function buildMessage() {
       const data = new FormData(form);
+      const stateTags = [];
+      if (selected.stateRecent[0] === '一直硬撐，不太會放鬆') stateTags.push('硬撐');
+      if (selected.stateRecent[0] === '腦袋停不下來') stateTags.push('壓力');
+      if (selected.stateRecent[0] === '運動後恢復變慢') stateTags.push('運動恢復');
+      if (selected.stateRecent[0] === '情緒有點悶，但說不清楚') stateTags.push('狀態整理');
+      if (selected.stateImprove[0] === '睡得比較好') stateTags.push('壓力恢復');
+      if (selected.stateImprove[0] === '訓練表現更穩') stateTags.push('訓練功能');
+      if (selected.stateImprove[0] === '想知道自己到底怎麼了') stateTags.push('自我理解');
+      const stateTrend = stateTags.length ? stateTags.join(' / ') : '尚未明確';
       const lines = [
         'BodyFix 預約前問卷',
         `稱呼：${data.get('name') || ''}`,
@@ -231,6 +261,11 @@
         `持續時間：${selected.duration[0] || ''}`,
         `不舒服程度：${selected.pain[0] || ''}`,
         `過去處理方式：${selected.history.join('、')}`,
+        '狀態小測驗：',
+        `最近狀態：${selected.stateRecent[0] || ''}`,
+        `最想改善：${selected.stateImprove[0] || ''}`,
+        `期待感覺：${selected.stateFeeling[0] || ''}`,
+        `初步狀態傾向：${stateTrend}`,
         `想預約服務：${selected.service[0] || ''}`,
         `希望地點：${selected.place[0] || ''}`,
         `希望時間：${data.get('time') || ''}`,
