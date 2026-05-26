@@ -48,12 +48,34 @@
 <body>
   <main class="wrap">
     <div class="brand">BODYFIX · BOOKING INTAKE</div>
-    <h1>預約前問卷</h1>
-    <p class="lead">花 2 分鐘，用按的為主，快速整理目前狀態。</p>
+    <h1>客戶建檔入口</h1>
+    <p class="lead">BodyFix 深藍預約建檔艙：用按的為主，快速完成資料建檔與身體狀態整理。</p>
 
     <form id="intakeForm" class="card">
-      <div class="field"><label for="name">怎麼稱呼你？</label><input id="name" name="name" required placeholder="暱稱就好"></div>
+      <h2>基本資料</h2>
+      <div class="field"><label for="name">稱呼</label><input id="name" name="name" required placeholder="暱稱就好"></div>
       <div class="field"><label for="line">LINE ID</label><input id="line" name="line" placeholder="方便我確認預約"></div>
+      <div class="field">
+        <label for="birthday">生日</label>
+        <input id="birthday" name="birthday" type="date">
+        <p class="hint">用於客戶建檔、生日提醒與後續狀態分析。</p>
+        <p class="hint" id="sunSignText">你的太陽星座：＿＿座</p>
+      </div>
+      <div class="field">
+        <label for="birthTime">出生時間（選填）</label>
+        <input id="birthTime" name="birthTime" placeholder="例如：上午 9:30，不知道也可以留空">
+        <p class="hint">若未來需要紫微斗數、星盤或其他狀態分析，可作為參考資料。</p>
+      </div>
+      <div class="field">
+        <label for="birthPlace">出生地（選填）</label>
+        <input id="birthPlace" name="birthPlace" placeholder="例如：台北、台中、高雄">
+      </div>
+      <div class="field">
+        <label>紫微斗數資料狀態</label>
+        <p class="hint" id="ziweiStatusText">填寫生日後，可建立生日提醒與基本狀態資料。</p>
+      </div>
+
+      <h2>身體狀態</h2>
 
       <div class="field">
         <label>這次最想處理的問題？</label>
@@ -92,7 +114,7 @@
       </div>
 
       <div class="field"><label for="time">希望預約的時間？</label><input id="time" name="time" placeholder="例如：平日晚上、週末下午、這週三晚上"></div>
-      <div class="field"><label for="note">還有什麼想先讓我知道？</label><textarea id="note" name="note" placeholder="例如：怕痛、最近有比賽、剛開始重訓、某個動作會卡、想先聊聊方案。"></textarea></div>
+      <div class="field"><label for="note">補充說明</label><textarea id="note" name="note" placeholder="例如：怕痛、最近有比賽、剛開始重訓、某個動作會卡、想先聊聊方案。"></textarea></div>
       <p class="hint">送出後會自動複製內容，並開啟 LINE 對話讓你貼上傳送。</p>
     </form>
   </main>
@@ -104,6 +126,11 @@
   <script>
     const btn = document.getElementById('submitBtn');
     const form = document.getElementById('intakeForm');
+    const birthdayInput = document.getElementById('birthday');
+    const sunSignText = document.getElementById('sunSignText');
+    const birthTimeInput = document.getElementById('birthTime');
+    const birthPlaceInput = document.getElementById('birthPlace');
+    const ziweiStatusText = document.getElementById('ziweiStatusText');
 
     const choices = {
       goal: ['肩頸緊','胸口卡','腰背硬撐','骨盆 / 髖卡住','運動後恢復差','姿勢不對稱','睡不好 / 放鬆不了','想做筋膜鏈整理','想做骨盆核心整理','想做紫微 / 塔羅','還不確定'],
@@ -151,12 +178,54 @@
       });
     }
 
+    function getSunSign(dateText) {
+      if (!dateText) return '';
+      const date = new Date(dateText);
+      if (Number.isNaN(date.getTime())) return '';
+      const month = date.getUTCMonth() + 1;
+      const day = date.getUTCDate();
+      const md = month * 100 + day;
+
+      if (md >= 321 && md <= 419) return '牡羊座';
+      if (md >= 420 && md <= 520) return '金牛座';
+      if (md >= 521 && md <= 620) return '雙子座';
+      if (md >= 621 && md <= 722) return '巨蟹座';
+      if (md >= 723 && md <= 822) return '獅子座';
+      if (md >= 823 && md <= 922) return '處女座';
+      if (md >= 923 && md <= 1022) return '天秤座';
+      if (md >= 1023 && md <= 1121) return '天蠍座';
+      if (md >= 1122 && md <= 1221) return '射手座';
+      if (md >= 1222 || md <= 119) return '摩羯座';
+      if (md >= 120 && md <= 218) return '水瓶座';
+      return '雙魚座';
+    }
+
+    function getZiweiStatus() {
+      const birthday = birthdayInput.value.trim();
+      const birthTime = birthTimeInput.value.trim();
+      const birthPlace = birthPlaceInput.value.trim();
+      if (!birthday) return '填寫生日後，可建立生日提醒與基本狀態資料。';
+      if (birthTime && birthPlace) return '資料完整，未來可用於紫微斗數或星盤延伸分析。';
+      return '已可建立生日資料；若要紫微分析，建議補出生時間。';
+    }
+
+    function refreshProfileDerivedFields() {
+      const sign = getSunSign(birthdayInput.value);
+      sunSignText.textContent = sign ? `你的太陽星座：${sign}` : '你的太陽星座：＿＿座';
+      ziweiStatusText.textContent = getZiweiStatus();
+    }
+
     function buildMessage() {
       const data = new FormData(form);
       const lines = [
         'BodyFix 預約前問卷',
         `稱呼：${data.get('name') || ''}`,
         `LINE ID：${data.get('line') || ''}`,
+        `生日：${data.get('birthday') || ''}`,
+        `太陽星座：${getSunSign(data.get('birthday')) || ''}`,
+        `出生時間：${data.get('birthTime') || ''}`,
+        `出生地：${data.get('birthPlace') || ''}`,
+        `紫微資料狀態：${getZiweiStatus()}`,
         `這次最想處理：${selected.goal.join('、')}`,
         `主要不舒服位置：${selected.location.join('、')}`,
         `持續時間：${selected.duration[0] || ''}`,
@@ -171,6 +240,10 @@
     }
 
     renderOptions();
+    refreshProfileDerivedFields();
+    birthdayInput.addEventListener('input', refreshProfileDerivedFields);
+    birthTimeInput.addEventListener('input', refreshProfileDerivedFields);
+    birthPlaceInput.addEventListener('input', refreshProfileDerivedFields);
 
     btn.addEventListener('click', async () => {
       if (!form.reportValidity()) return;
