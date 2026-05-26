@@ -16,6 +16,7 @@
       --card: rgba(255,255,255,0.035);
       --card-border: rgba(196,149,106,0.22);
       --input-bg: rgba(26,39,68,0.58);
+      --chip-bg: rgba(255,255,255,0.03);
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--navy);color:var(--ivory);font-family:"Noto Sans TC",system-ui,sans-serif;line-height:1.6}
@@ -25,12 +26,21 @@
     .lead{color:var(--mist);margin:0 0 22px}
     .card{background:var(--card);border:1px solid var(--card-border);border-radius:8px;padding:16px;margin-bottom:16px}
     .card h2{margin:0 0 10px;font-size:18px;color:var(--gold)}
-    .field{margin-bottom:14px}
-    label{display:block;font-size:14px;margin-bottom:6px;color:var(--ivory)}
-    input,textarea,select{width:100%;background:var(--input-bg);border:1px solid var(--card-border);color:var(--ivory);padding:11px 12px;border-radius:6px;font:inherit}
-    textarea{min-height:88px;resize:vertical}
-    input:focus,textarea:focus,select:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,149,106,.15)}
-    .hint{font-size:13px;color:var(--mist)}
+    .field{margin-bottom:16px}
+    label{display:block;font-size:14px;margin-bottom:8px;color:var(--ivory)}
+    input,textarea{width:100%;background:var(--input-bg);border:1px solid var(--card-border);color:var(--ivory);padding:11px 12px;border-radius:6px;font:inherit}
+    textarea{min-height:96px;resize:vertical}
+    input:focus,textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 2px rgba(196,149,106,.15)}
+    .options{display:flex;flex-wrap:wrap;gap:8px}
+    .opt{appearance:none;border:1px solid var(--card-border);background:var(--chip-bg);color:var(--ivory);padding:9px 12px;border-radius:999px;font:inherit;font-size:14px;cursor:pointer;transition:.15s}
+    .opt:hover{border-color:var(--gold)}
+    .opt.active{background:var(--gold);color:#1A2744;border-color:var(--gold);font-weight:700}
+    .score-grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .score-grid .opt{text-align:center;padding:10px 0}
+    @media (min-width:600px){
+      .score-grid{grid-template-columns:repeat(11,minmax(0,1fr));}
+    }
+    .hint{font-size:13px;color:var(--mist);margin-top:6px}
     .sticky{position:fixed;left:0;right:0;bottom:0;background:rgba(20,30,54,.95);border-top:1px solid var(--card-border);padding:12px 16px}
     .cta{display:block;width:min(760px,100%);margin:0 auto;background:var(--gold);color:#1C1C1A;border:none;border-radius:8px;padding:14px 16px;font-size:16px;font-weight:700;cursor:pointer}
   </style>
@@ -39,21 +49,50 @@
   <main class="wrap">
     <div class="brand">BODYFIX · BOOKING INTAKE</div>
     <h1>預約前問卷</h1>
-    <p class="lead">花 2 分鐘，讓我在見面前先看懂你的身體狀態。</p>
-
-    <section class="card">
-      <h2>為什麼要先填？</h2>
-      <p>每個人的身體狀態不同。這份問卷可以讓我在你來之前先了解你的狀況，見面後不用花太多時間重複問問題，可以更快進入判讀與整理。沒有標準答案，照你的感覺寫就好。</p>
-    </section>
+    <p class="lead">花 2 分鐘，用按的為主，快速整理目前狀態。</p>
 
     <form id="intakeForm" class="card">
-      <div class="field"><label for="name">稱呼</label><input id="name" name="name" required></div>
-      <div class="field"><label for="line">LINE ID</label><input id="line" name="line"></div>
-      <div class="field"><label for="goal">這次最想處理的問題</label><textarea id="goal" name="goal" required></textarea></div>
-      <div class="field"><label for="duration">症狀持續多久？</label><input id="duration" name="duration"></div>
-      <div class="field"><label for="pain">目前不舒服程度（0-10）</label><input id="pain" name="pain" type="number" min="0" max="10"></div>
-      <div class="field"><label for="history">過去做過哪些處理？</label><textarea id="history" name="history"></textarea></div>
-      <div class="field"><label for="other">還有什麼想先讓我知道？</label><textarea id="other" name="other"></textarea></div>
+      <div class="field"><label for="name">怎麼稱呼你？</label><input id="name" name="name" required placeholder="暱稱就好"></div>
+      <div class="field"><label for="line">LINE ID</label><input id="line" name="line" placeholder="方便我確認預約"></div>
+
+      <div class="field">
+        <label>這次最想處理的問題？</label>
+        <div class="options" data-group="goal" data-multi="true"></div>
+      </div>
+
+      <div class="field">
+        <label>主要不舒服的位置？</label>
+        <div class="options" data-group="location" data-multi="true"></div>
+      </div>
+
+      <div class="field">
+        <label>這個狀況持續多久？</label>
+        <div class="options" data-group="duration" data-multi="false"></div>
+      </div>
+
+      <div class="field">
+        <label>目前不舒服程度？</label>
+        <div class="score-grid" data-group="pain" data-multi="false"></div>
+        <p class="hint">0 是沒感覺，10 是非常不舒服。</p>
+      </div>
+
+      <div class="field">
+        <label>過去做過哪些處理？</label>
+        <div class="options" data-group="history" data-multi="true"></div>
+      </div>
+
+      <div class="field">
+        <label>這次想預約哪一種？</label>
+        <div class="options" data-group="service" data-multi="false"></div>
+      </div>
+
+      <div class="field">
+        <label>希望在哪裡預約？</label>
+        <div class="options" data-group="place" data-multi="false"></div>
+      </div>
+
+      <div class="field"><label for="time">希望預約的時間？</label><input id="time" name="time" placeholder="例如：平日晚上、週末下午、這週三晚上"></div>
+      <div class="field"><label for="note">還有什麼想先讓我知道？</label><textarea id="note" name="note" placeholder="例如：怕痛、最近有比賽、剛開始重訓、某個動作會卡、想先聊聊方案。"></textarea></div>
       <p class="hint">送出後會自動複製內容，並開啟 LINE 對話讓你貼上傳送。</p>
     </form>
   </main>
@@ -66,20 +105,72 @@
     const btn = document.getElementById('submitBtn');
     const form = document.getElementById('intakeForm');
 
+    const choices = {
+      goal: ['肩頸緊','胸口卡','腰背硬撐','骨盆 / 髖卡住','運動後恢復差','姿勢不對稱','睡不好 / 放鬆不了','想做筋膜鏈整理','想做骨盆核心整理','想做紫微 / 塔羅','還不確定'],
+      location: ['頭 / 頸','肩膀','上背','胸口 / 肋骨','下背','骨盆','髖','臀腿','膝蓋','腳踝 / 足底','手臂','全身緊繃'],
+      duration: ['今天才開始','一週內','一個月內','三個月以上','半年以上','反覆很久了'],
+      pain: ['0','1','2','3','4','5','6','7','8','9','10'],
+      history: ['沒有','一般按摩','運動按摩','整復 / 推拿','物理治療','看醫生','自己伸展','重訓調整','滾筒 / 筋膜球','其他'],
+      service: ['筋膜鏈整理 60 分鐘','筋膜鏈延長整理 90 分鐘','骨盆核心整理 60 分鐘','骨盆核心延長整理 90 分鐘','12 次結構整合完整計畫','紫微結構解析','塔羅狀態整理','我不確定，想先讓你判斷'],
+      place: ['西門','國父紀念館','六張犁','到府整理','台中場次','高雄場次','其他城市']
+    };
+
+    const selected = Object.fromEntries(Object.keys(choices).map(key => [key, []]));
+
+    function renderOptions() {
+      document.querySelectorAll('[data-group]').forEach((container) => {
+        const group = container.dataset.group;
+        const isMulti = container.dataset.multi === 'true';
+        container.innerHTML = '';
+
+        choices[group].forEach((value) => {
+          const b = document.createElement('button');
+          b.type = 'button';
+          b.className = 'opt';
+          b.textContent = value;
+          b.addEventListener('click', () => {
+            if (isMulti) {
+              const idx = selected[group].indexOf(value);
+              if (idx >= 0) selected[group].splice(idx, 1);
+              else selected[group].push(value);
+            } else {
+              selected[group] = selected[group][0] === value ? [] : [value];
+            }
+            refreshActive(group);
+          });
+          container.appendChild(b);
+        });
+      });
+    }
+
+    function refreshActive(group) {
+      const container = document.querySelector(`[data-group="${group}"]`);
+      if (!container) return;
+      [...container.querySelectorAll('.opt')].forEach((btnEl) => {
+        btnEl.classList.toggle('active', selected[group].includes(btnEl.textContent));
+      });
+    }
+
     function buildMessage() {
       const data = new FormData(form);
       const lines = [
-        '【BodyFix 預約前問卷】',
+        'BodyFix 預約前問卷',
         `稱呼：${data.get('name') || ''}`,
         `LINE ID：${data.get('line') || ''}`,
-        `最想處理：${data.get('goal') || ''}`,
-        `持續時間：${data.get('duration') || ''}`,
-        `不舒服程度：${data.get('pain') || ''}`,
-        `過去處理：${data.get('history') || ''}`,
-        `補充：${data.get('other') || ''}`
+        `這次最想處理：${selected.goal.join('、')}`,
+        `主要不舒服位置：${selected.location.join('、')}`,
+        `持續時間：${selected.duration[0] || ''}`,
+        `不舒服程度：${selected.pain[0] || ''}`,
+        `過去處理方式：${selected.history.join('、')}`,
+        `想預約服務：${selected.service[0] || ''}`,
+        `希望地點：${selected.place[0] || ''}`,
+        `希望時間：${data.get('time') || ''}`,
+        `補充說明：${data.get('note') || ''}`
       ];
       return lines.join('\n');
     }
+
+    renderOptions();
 
     btn.addEventListener('click', async () => {
       if (!form.reportValidity()) return;
