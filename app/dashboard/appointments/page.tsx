@@ -1,6 +1,5 @@
-import { AppointmentCompleteButton } from "@/components/AppointmentCompleteButton";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase/server";
-import type { CompleteAppointmentInput } from "@/types/bodyfix";
+import { QuickCheckoutPage } from "@/components/QuickCheckoutPage";
 
 export const dynamic = "force-dynamic";
 
@@ -17,50 +16,35 @@ export default async function AppointmentsPage() {
   }
 
   const supabase = createSupabaseServerClient();
-  if (!supabase) {
-    return null;
-  }
+  if (!supabase) return null;
 
-  const { data: appointments } = await supabase
-    .from("appointments")
-    .select("appointment_id,customer_id,status,start_at,appointment_items(*)")
-    .order("start_at", { ascending: true })
-    .limit(30);
+  const { data: customers } = await supabase
+    .from("customer_balances")
+    .select("customer_id,customer_name")
+    .order("customer_name", { ascending: true })
+    .limit(100);
 
-  return (
-    <main className="mx-auto max-w-6xl space-y-6 p-6">
-      <h1 className="text-2xl font-bold">預約列表</h1>
-      <div className="space-y-4">
-        {(appointments ?? []).map((appointment: any) => {
-          const payload: CompleteAppointmentInput = {
-            appointment_id: appointment.appointment_id,
-            customer_id: appointment.customer_id,
-            items: (appointment.appointment_items ?? []).map((item: any) => ({
-              service_id: item.service_id,
-              billing_type: item.billing_type,
-              bucket_id: item.bucket_id,
-              entitlement_id: item.entitlement_id,
-              units_to_deduct: item.units_to_deduct,
-              unit_price: item.unit_price,
-              quantity: item.quantity,
-              note: item.note
-            }))
-          };
+  const { data: balances } = await supabase
+    .from("customer_balances")
+    .select("customer_id,service_name,credit_type,remaining_units");
 
-          return (
-            <div key={appointment.appointment_id} className="rounded-2xl border p-4 shadow-sm">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-sm text-gray-500">{appointment.start_at}</p>
-                  <p className="font-medium">預約 #{appointment.appointment_id}</p>
-                  <p className="text-sm">狀態：{appointment.status}</p>
-                </div>
-                <AppointmentCompleteButton payload={payload} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-    </main>
-  );
+  const normalized = (customers ?? []).map((c: any) => {
+    const customerRows = (balances ?? []).filter((b: any) => b.customer_id === c.customer_id);
+    const trainingRemaining = customerRows
+      .filter((b: any) => b.credit_type === "training")
+      .reduce((sum: number, row: any) => sum + Number(row.remaining_units ?? 0), 0);
+    const fasciaRemainingMinutes = customerRows
+      .filter((b: any) => b.credit_type === "fascia_time")
+      .reduce((sum: number, row: any) => sum + Number(row.remaining_units ?? 0), 0);
+
+    return {
+      customer_id: c.customer_id,
+      customer_name: c.customer_name,
+      plan_name: customerRows[0]?.service_name ?? "未設定方案",
+      training_remaining: trainingRemaining,
+      fascia_remaining_minutes: fasciaRemainingMinutes
+    };
+  });
+
+  return <QuickCheckoutPage customers={normalized} />;
 }
