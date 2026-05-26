@@ -1,16 +1,29 @@
 {
-  "name": "bodyfix-clinic",
-  "version": "1.0.0",
+  "name": "bodyfix-os-mvp",
+  "version": "0.1.0",
   "private": true,
-  "type": "module",
-  "engines": {
-    "node": "22.x"
-  },
   "scripts": {
-    "dev": "vercel dev",
-    "check": "node -c api/city-waitlist.js && node -c api/city-waitlist-stats.js && node -c api/city-sessions.js && node -c api/city-dashboard.js && node -c api/public-status.js"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@supabase/supabase-js": "^2.45.4"
+    "@supabase/supabase-js": "latest",
+    "@supabase/ssr": "latest",
+    "next": "latest",
+    "react": "latest",
+    "react-dom": "latest",
+    "zod": "latest"
+  },
+  "devDependencies": {
+    "@types/node": "latest",
+    "@types/react": "latest",
+    "@types/react-dom": "latest",
+    "typescript": "latest",
+    "eslint": "latest",
+    "eslint-config-next": "latest",
+    "tailwindcss": "latest"
   }
 }
