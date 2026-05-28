@@ -5,7 +5,7 @@ export default function HomePage() {
     <main style={{ padding: 24 }}>
       <h1>BodyFix OS MVP</h1>
       <p>系統建置中。</p>
-      <Link href="/dashboard">前往 Dashboard</Link>
+      <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}><Link href="/dashboard">前往 Dashboard</Link><Link href="/booking">前往 Booking</Link><Link href="/admin">前往 Booking Admin</Link></div>
     </main>
   );
 }
