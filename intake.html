@@ -104,7 +104,7 @@
       </div>
 
       <h2>BodyFix 狀態小測驗</h2>
-      <p class="hint">不用想太多，選最接近現在的狀態就好。</p>
+      <p class="hint">不用想太多，選最接近你現在的狀態就好。這不是心理診斷，只是幫我在見面前更快理解你的身體與壓力狀態。</p>
 
       <div class="field">
         <label>你最近比較像哪一種？</label>
@@ -236,6 +236,55 @@
       ziweiStatusText.textContent = getZiweiStatus();
     }
 
+    function getStateType(stateRecent, stateImprove, stateFeeling) {
+      const combinationRules = [
+        {
+          recent: '一直硬撐，不太會放鬆',
+          improve: '睡得比較好',
+          feeling: '頭腦安靜一點',
+          type: '硬撐 / 壓力恢復型'
+        },
+        {
+          recent: '運動後恢復變慢',
+          improve: '訓練表現更穩',
+          feeling: '有力量一點',
+          type: '訓練恢復 / 動作表現型'
+        },
+        {
+          recent: '情緒有點悶，但說不清楚',
+          improve: '想知道自己到底怎麼了',
+          feeling: '重新整理自己',
+          type: '狀態整理 / 自我覺察型'
+        },
+        {
+          recent: '身體很緊但不知道哪裡緊',
+          improve: '肩頸腰背不要一直卡',
+          feeling: '鬆一點',
+          type: '筋膜張力 / 卡住覺察型'
+        },
+        {
+          recent: '腦袋停不下來',
+          improve: '情緒和身體都放鬆一點',
+          feeling: '呼吸順一點',
+          type: '神經壓力 / 呼吸調節型'
+        }
+      ];
+      const matchedRule = combinationRules.find((rule) => (
+        rule.recent === stateRecent &&
+        rule.improve === stateImprove &&
+        rule.feeling === stateFeeling
+      ));
+      if (matchedRule) return matchedRule.type;
+
+      const fallbackTypes = {
+        '一直硬撐，不太會放鬆': '硬撐 / 壓力恢復型',
+        '運動後恢復變慢': '訓練恢復 / 動作表現型',
+        '情緒有點悶，但說不清楚': '狀態整理 / 自我覺察型',
+        '身體很緊但不知道哪裡緊': '筋膜張力 / 卡住覺察型',
+        '腦袋停不下來': '神經壓力 / 呼吸調節型'
+      };
+      return fallbackTypes[stateRecent] || '綜合狀態 / 現場判讀';
+    }
 
     function validateRequiredSelections() {
       const requiredGroups = [
@@ -252,15 +301,11 @@
 
     function buildMessage() {
       const data = new FormData(form);
-      const stateTags = [];
-      if (selected.stateRecent[0] === '一直硬撐，不太會放鬆') stateTags.push('硬撐');
-      if (selected.stateRecent[0] === '腦袋停不下來') stateTags.push('壓力');
-      if (selected.stateRecent[0] === '運動後恢復變慢') stateTags.push('運動恢復');
-      if (selected.stateRecent[0] === '情緒有點悶，但說不清楚') stateTags.push('狀態整理');
-      if (selected.stateImprove[0] === '睡得比較好') stateTags.push('壓力恢復');
-      if (selected.stateImprove[0] === '訓練表現更穩') stateTags.push('訓練功能');
-      if (selected.stateImprove[0] === '想知道自己到底怎麼了') stateTags.push('自我理解');
-      const stateTrend = stateTags.length ? stateTags.join(' / ') : '尚未明確';
+      const stateTrend = getStateType(
+        selected.stateRecent[0],
+        selected.stateImprove[0],
+        selected.stateFeeling[0]
+      );
       const lines = [
         'BodyFix 預約前問卷',
         `稱呼：${data.get('name') || ''}`,
