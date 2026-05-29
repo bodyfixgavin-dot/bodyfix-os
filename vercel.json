@@ -8,5 +8,11 @@
       "maxDuration": 10,
       "memory": 1024
     }
-  }
+  },
+  "crons": [
+    {
+      "path": "/api/cron/followup",
+      "schedule": "0 3 * * *"
+    }
+  ]
 }
