@@ -60,3 +60,38 @@ export function withoutIdentity(client: Record<string, unknown>) {
     next_followup_date: client.next_followup_date
   };
 }
+
+export const LOCATION_LEAD_FIELDS = [
+  "lead_type", "display_name", "line_id", "instagram", "phone", "privacy_consent", "privacy_consent_at",
+  "city_code", "client_area_code", "preferred_zone_code", "secondary_zone_code", "service_interest", "main_issue",
+  "preferred_time_type", "high_intent", "grooming_interest", "deposit_willing", "expected_budget_twd",
+  "expected_repeat_willingness", "repeat_potential_score", "total_time_estimate_hours", "travel_fatigue_level",
+  "source", "nurture_status", "status", "notes"
+];
+
+export const CITY_MARKET_FIELDS = [
+  "display_name_zh", "market_status", "is_pilot_city", "known_high_intent_value_twd", "default_traffic_cost",
+  "default_hotel_cost_per_night", "default_studio_cost_per_day", "default_meal_misc_cost_per_day",
+  "target_profit_per_day", "target_min_clients", "default_total_time_hours", "repeat_potential_score",
+  "travel_fatigue_level", "notes"
+];
+
+export const CITY_SESSION_FIELDS = [
+  "city_code", "session_name", "session_status", "start_date", "end_date", "location_name", "location_address",
+  "max_slots", "confirmed_slots", "estimated_revenue", "traffic_cost", "hotel_cost", "studio_cost",
+  "meal_misc_cost", "other_cost", "estimated_profit", "estimated_profit_per_day", "total_time_hours",
+  "fatigue_note", "deposit_required", "deposit_amount", "deposit_deadline", "internal_notes"
+];
+
+export const TAIPEI_ZONE_FIELDS = [
+  "display_name_zh", "area_group", "status", "is_regular_base", "is_rental_space", "requires_block_booking",
+  "default_minimum_hours", "default_room_cost", "default_travel_minutes_from_home", "default_buffer_minutes",
+  "cost_type", "notes"
+];
+
+export const STUDIO_BLOCK_FIELDS = [
+  "zone_code", "block_date", "start_time", "end_time", "room_type", "room_cost", "minimum_hours",
+  "travel_minutes", "buffer_minutes", "planned_slots", "booked_slots", "expected_revenue", "expected_room_cost",
+  "expected_opportunity_cost", "expected_profit", "cross_zone_risk", "single_client_risk", "cancellation_risk_note",
+  "block_status", "notes"
+];

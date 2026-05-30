@@ -1,0 +1,4 @@
+"use client";
+import { ClinicNotice, ClinicShell, useClinicFetch } from "@/components/clinic/ClinicShell";
+type Data={taipei_demand_areas:any[]};
+export default function TaipeiDemandAreasPage(){const{data,loading,error}=useClinicFetch<Data>("/api/clinic/taipei-demand-areas");return <ClinicShell title="台北客戶來源區分析" subtitle="來源區只用於需求與距離阻力分析，不等於服務據點。"><ClinicNotice loading={loading} error={error}/>{data&&<section className="bf-card bf-section-gap bf-table-wrap"><table className="bf-admin-table"><thead><tr><th>來源區</th><th>需求人數</th><th>高意願</th><th>距離六張犁疑慮</th><th>建議導向據點</th><th>主要服務需求</th></tr></thead><tbody>{data.taipei_demand_areas.map(a=><tr key={a.client_area_code}><td>{a.display_name_zh}</td><td>{a.request_count}</td><td>{a.high_intent_count}</td><td>{a.distance_to_liuzhangli_level}</td><td>{a.recommended_service_zone_code}</td><td>{a.top_service_interest}</td></tr>)}</tbody></table></section>}</ClinicShell>}

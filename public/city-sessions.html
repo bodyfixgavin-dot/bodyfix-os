@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>BodyFix 城市場次需求 | City Sessions</title>
+  <style>
+    :root { --bf-navy:#172333; --bf-bronze:#9b7550; --bf-cream:#f5f2ec; --bf-ivory:#fbfaf6; --bf-line:rgba(23,35,51,.16); --bf-muted:#6f6a63; }
+    * { box-sizing: border-box; }
+    body { margin:0; background: radial-gradient(circle at top left, rgba(198,170,135,.22), transparent 30%), var(--bf-cream); color:var(--bf-navy); font-family:-apple-system,BlinkMacSystemFont,"Noto Sans TC","PingFang TC","Microsoft JhengHei",sans-serif; }
+    main { width:min(960px, calc(100% - 32px)); margin:0 auto; padding:32px 0 64px; }
+    .hero,.card { border:1px solid var(--bf-line); background:rgba(251,250,246,.88); box-shadow:0 24px 60px rgba(23,35,51,.08); }
+    .hero { border-radius:28px; padding:28px; }
+    .card { border-radius:24px; padding:22px; margin-top:22px; }
+    .brand { display:inline-flex; align-items:center; gap:10px; color:var(--bf-bronze); letter-spacing:.08em; font-size:13px; text-transform:uppercase; }
+    .logo { width:28px; height:28px; background:var(--bf-navy); color:var(--bf-ivory); display:grid; place-items:center; font-weight:700; border-radius:6px; }
+    h1 { font-family:"Noto Serif TC",serif; font-size:clamp(30px, 6vw, 56px); line-height:1.08; margin:18px 0 12px; letter-spacing:-.03em; }
+    h2 { font-family:"Noto Serif TC",serif; font-size:24px; margin:0 0 14px; }
+    p { color:var(--bf-muted); line-height:1.9; }
+    .grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:22px; }
+    ul { line-height:2; margin:0; padding-left:22px; }
+    a { color:var(--bf-bronze); font-weight:700; }
+    .notice { border-left:4px solid var(--bf-bronze); background:rgba(198,170,135,.16); padding:14px 16px; border-radius:14px; line-height:1.8; }
+    @media (max-width: 760px) { .grid { grid-template-columns:1fr; } }
+  </style>
+</head>
+<body>
+  <main>
+    <section class="hero">
+      <div class="brand"><span class="logo">BF</span> BodyFix Location Demand</div>
+      <h1>BodyFix 城市場次需求<br><span lang="en">City Sessions</span></h1>
+      <p>登記頁建置中，<br>預計 6 月開始系統化登記。<br>現在可先留言或私訊：<br>城市名＋想處理的問題。</p>
+      <p>目前已收到宜蘭、高雄、台中等城市需求，歡迎繼續留言。</p>
+      <p>台北也會整理西門、國父紀念館、六張犁與新北西區的服務需求，之後會依需求集中安排時段。</p>
+      <div class="notice">目前請先私訊 IG 或 LINE。這個頁面只做需求說明，目前僅提供私訊說明。</div>
+    </section>
+    <section class="grid">
+      <div class="card">
+        <h2>可觀察城市</h2>
+        <ul>
+          <li>台中</li><li>台南</li><li>高雄</li><li>新竹</li><li>桃園</li><li>宜蘭</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h2>台北可觀察服務據點</h2>
+        <ul>
+          <li>六張犁</li><li>西門</li><li>國父紀念館</li>
+        </ul>
+      </div>
+    </section>
+    <section class="card">
+      <h2>聯絡方式</h2>
+      <p>可先透過 <a href="https://www.instagram.com/" rel="noreferrer">IG</a> 或 <a href="https://line.me/" rel="noreferrer">LINE</a> 私訊：城市名＋想處理的問題。</p>
+    </section>
+  </main>
+</body>
+</html>
