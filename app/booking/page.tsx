@@ -27,6 +27,17 @@ function cityLabel(city: AvailabilitySlot["city"]) {
   return "高雄";
 }
 
+function formatPrice(price: number | null | undefined) {
+  if (price == null) return "價格另洽";
+  return `NT$${new Intl.NumberFormat("en-US").format(price)}`;
+}
+
+function serviceLabel(service: BookingService) {
+  const name = service.display_name_zh || service.name;
+  const duration = service.duration_minutes ? `${service.duration_minutes} 分鐘` : "時間另洽";
+  return `${name}｜${duration}｜${formatPrice(service.price_twd ?? service.price)}`;
+}
+
 export default function BookingPage() {
   const [slots, setSlots] = useState<AvailabilitySlot[]>([]);
   const [services, setServices] = useState<BookingService[]>([]);
@@ -162,7 +173,7 @@ export default function BookingPage() {
               <select value={serviceId} onChange={(e) => setServiceId(e.target.value)}>
                 {services.map((service) => (
                   <option key={service.id} value={service.id}>
-                    {service.name}｜{service.duration_minutes} 分鐘{service.price ? `｜NT$${service.price}` : ""}
+                    {serviceLabel(service)}
                   </option>
                 ))}
               </select>

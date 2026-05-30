@@ -2,13 +2,30 @@ export type BookingCity = "taipei" | "taichung" | "kaohsiung";
 export type SlotType = "normal" | "late_night" | "last_minute" | "vip_hold";
 export type SlotStatus = "available" | "closed";
 export type BookingStatus = "held" | "confirmed" | "cancelled" | "completed" | "expired";
+export type ServiceStatus = "active" | "limited" | "coming_soon" | "archived" | "draft";
 
 export type BookingService = {
   id: string;
+  code: string | null;
   name: string;
-  duration_minutes: number;
+  category: string | null;
+  display_name_zh: string | null;
+  display_name_en: string | null;
+  duration_minutes: number | null;
   price: number | null;
+  price_twd: number | null;
+  cash_price_twd: number | null;
   is_active: boolean;
+  is_addon: boolean;
+  is_public_visible: boolean;
+  is_direct_booking_allowed: boolean;
+  is_city_session_allowed: boolean;
+  requires_consultation: boolean;
+  daily_limit: number | null;
+  status: ServiceStatus;
+  sort_order: number;
+  booking_note: string | null;
+  internal_note: string | null;
 };
 
 export type AvailabilitySlot = {

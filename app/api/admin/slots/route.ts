@@ -29,7 +29,7 @@ export async function GET() {
     admin.supabase
       .from("services")
       .select("*")
-      .order("duration_minutes", { ascending: true })
+      .order("sort_order", { ascending: true })
   ]);
 
   if (bookingError || slotError || serviceError) {
