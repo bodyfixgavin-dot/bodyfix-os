@@ -345,3 +345,22 @@ a { color: inherit; }
   min-height: 180px;
   width: 100%;
 }
+
+.clinic-ai-output {
+  background: #111827;
+  border-radius: 14px;
+  color: #f9fafb;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-height: 360px;
+  overflow: auto;
+  padding: 1rem;
+  white-space: pre-wrap;
+}
+
+.clinic-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+  margin-top: 1rem;
+}
