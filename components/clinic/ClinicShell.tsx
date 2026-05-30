@@ -24,6 +24,7 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
           <Link href="/clinic/conversion">方案提案 / 成交追蹤</Link>
           <Link href="/clinic/location-dashboard">地區需求中樞</Link>
           <Link href="/clinic/business-foundation">商業規則地基</Link>
+          <Link href="/clinic/ai-copilot">AI 營運副駕</Link>
           <Link href="/clinic/cases">案例素材</Link>
           <Link href="/admin">預約後台</Link>
         </nav>
