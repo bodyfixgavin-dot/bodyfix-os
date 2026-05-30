@@ -31,6 +31,10 @@ BodyFix 不培養全能員工，而是用同一套品牌主幹，培養不同分
 ## 客戶歸屬原則
 抽成可以大方，但客戶主檔、預約、收款、紀錄與 CRM 必須進 BodyFix 系統。
 
+## Part 8｜BodyFix Real Operation Pilot
+
+Part 8 是真實營運測試期：前台先用 Google 預約頁降低來回訊息與撞時段風險，後台用 BodyFix OS 手動建立客戶、服務紀錄、追蹤、方案候選與地區需求資料。詳細 SOP、手動匯入流程、AI Copilot 測試項目與驗收表見 `docs/part-8-real-operation-pilot.md`。
+
 ## BodyFix AI 接待員 v1.0
 
 這個版本新增 LINE 官方帳號的 AI 接待員流程：LINE Messaging API webhook 接收文字訊息，後端呼叫 OpenAI Responses API 產生自然回覆與分類 JSON，並把客戶狀態寫入 Google Sheet CRM。系統定位不是關鍵字自動回覆，而是先把客人整理到可預約的位置，再由 Gavin 收尾。
