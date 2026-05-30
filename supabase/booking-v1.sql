@@ -26,11 +26,49 @@ end $$;
 create table if not exists services (
   id uuid primary key default gen_random_uuid(),
   name text not null,
-  duration_minutes integer not null check (duration_minutes > 0),
+  duration_minutes integer check (duration_minutes is null or duration_minutes > 0),
   price integer,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table services alter column duration_minutes drop not null;
+alter table services drop constraint if exists services_duration_minutes_check;
+alter table services add constraint services_duration_minutes_check check (duration_minutes is null or duration_minutes > 0);
+
+alter table services add column if not exists code text;
+alter table services add column if not exists category text;
+alter table services add column if not exists display_name_zh text;
+alter table services add column if not exists display_name_en text;
+alter table services add column if not exists price_twd integer;
+alter table services add column if not exists cash_price_twd integer;
+alter table services add column if not exists is_addon boolean not null default false;
+alter table services add column if not exists is_public_visible boolean not null default true;
+alter table services add column if not exists is_direct_booking_allowed boolean not null default true;
+alter table services add column if not exists is_city_session_allowed boolean not null default false;
+alter table services add column if not exists requires_consultation boolean not null default false;
+alter table services add column if not exists daily_limit integer;
+alter table services add column if not exists status text not null default 'active';
+alter table services add column if not exists sort_order integer not null default 999;
+alter table services add column if not exists booking_note text;
+alter table services add column if not exists internal_note text;
+
+update services
+set code = coalesce(code, 'legacy_' || replace(id::text, '-', '_'))
+where code is null;
+
+update services
+set display_name_zh = coalesce(display_name_zh, name),
+    price_twd = coalesce(price_twd, price)
+where display_name_zh is null or price_twd is null;
+
+do $$ begin
+  alter table services add constraint services_code_key unique (code);
+exception when duplicate_object then null;
+end $$;
+
+alter table services drop constraint if exists services_status_check;
+alter table services add constraint services_status_check check (status in ('active', 'limited', 'coming_soon', 'archived', 'draft'));
 
 create table if not exists availability_slots (
   id uuid primary key default gen_random_uuid(),
@@ -94,6 +132,15 @@ where s.status = 'available'
       and (b.status = 'confirmed' or b.hold_expires_at > now())
   );
 
+create or replace view public_booking_services as
+select *
+from services
+where is_active = true
+  and is_public_visible = true
+  and is_addon = false
+  and is_direct_booking_allowed = true
+  and status = 'active';
+
 create or replace function expire_old_holds()
 returns void
 language plpgsql
@@ -151,7 +198,16 @@ begin
     return jsonb_build_object('success', false, 'message', '此時段目前無法預約。');
   end if;
 
-  if not exists (select 1 from services where id = p_service_id and is_active = true) then
+  if not exists (
+    select 1
+    from services
+    where id = p_service_id
+      and is_active = true
+      and is_public_visible = true
+      and is_addon = false
+      and is_direct_booking_allowed = true
+      and status = 'active'
+  ) then
     return jsonb_build_object('success', false, 'message', '此服務項目目前無法預約。');
   end if;
 
@@ -211,7 +267,7 @@ drop policy if exists "Public can read active booking services" on services;
 create policy "Public can read active booking services"
 on services
 for select
-using (is_active = true);
+using (is_active = true and is_public_visible = true);
 
 drop policy if exists "Public can read public booking slots" on availability_slots;
 create policy "Public can read public booking slots"
@@ -226,14 +282,69 @@ revoke all on blacklist from anon, authenticated;
 revoke execute on function hold_booking_slot(uuid, uuid, text, text, text, text, text) from anon, authenticated;
 revoke execute on function expire_old_holds() from anon, authenticated;
 grant select on public_available_slots to anon, authenticated;
+grant select on public_booking_services to anon, authenticated;
 
 grant execute on function hold_booking_slot(uuid, uuid, text, text, text, text, text) to service_role;
 grant execute on function expire_old_holds() to service_role;
 
-insert into services (name, duration_minutes, price)
+insert into services (
+  code,
+  name,
+  category,
+  display_name_zh,
+  display_name_en,
+  duration_minutes,
+  price,
+  price_twd,
+  cash_price_twd,
+  is_addon,
+  is_public_visible,
+  is_direct_booking_allowed,
+  requires_consultation,
+  daily_limit,
+  is_city_session_allowed,
+  status,
+  sort_order
+)
 values
-  ('Fascia Chain Reset｜筋膜鏈整理', 60, 2200),
-  ('Pelvic Core Reset｜骨盆核心整理', 60, 2500),
-  ('深度整合整理', 90, 3200),
-  ('完整身體狀態整理', 120, 4200)
-on conflict do nothing;
+  ('fascia_chain_reset_60', '筋膜鏈整理', 'body_reset', '筋膜鏈整理', 'Fascia Chain Reset', 60, 2200, 2200, null, false, true, true, false, null, false, 'active', 10),
+  ('fascia_line_selected_reset_60', '筋膜線指定整理', 'body_reset', '筋膜線指定整理', 'Selected Fascia Line Reset', 60, 2300, 2300, null, false, true, true, false, null, false, 'active', 20),
+  ('multi_line_reset_90', '多線整合整理', 'body_reset', '多線整合整理', 'Multi-Line Reset', 90, 3600, 3600, null, false, true, true, false, null, false, 'active', 30),
+  ('pelvic_core_reset_60', '骨盆核心整理', 'body_reset', '骨盆核心整理', 'Pelvic Core Reset', 60, 2500, 2500, null, false, true, true, false, null, false, 'active', 40),
+  ('ziwei_structural_analysis_90', '紫微結構解析', 'status_analysis', '紫微結構解析', 'Zi Wei Structural Analysis', 90, 3600, 3600, null, false, true, true, false, null, false, 'active', 50),
+  ('tarot_single_question_15', '塔羅單題整理', 'status_analysis', '塔羅單題整理', 'Tarot Single Question', 15, 333, 333, null, false, true, true, false, null, false, 'active', 60),
+  ('tarot_status_reading_30', '塔羅狀態整理', 'status_analysis', '塔羅狀態整理', 'Tarot Status Reading', 30, 666, 666, null, false, true, true, false, null, false, 'active', 70),
+  ('tarot_deep_reading_60', '塔羅深度整理', 'status_analysis', '塔羅深度整理', 'Tarot Deep Reading', 60, 1200, 1200, null, false, true, true, false, null, false, 'active', 80),
+  ('ziwei_tarot_integration_120', '紫微 + 塔羅整合諮詢', 'status_analysis', '紫微 + 塔羅整合諮詢', 'Zi Wei + Tarot Integration Consultation', 120, 4800, 4800, null, false, true, true, false, null, false, 'active', 90),
+  ('fascia_extension_30', '筋膜鏈延長整理', 'body_reset', '筋膜鏈延長整理', 'Fascia Extension', 30, 1000, 1000, null, true, true, false, false, null, false, 'active', 110),
+  ('pelvic_core_extension_30', '骨盆核心延長整理', 'body_reset', '骨盆核心延長整理', 'Pelvic Core Extension', 30, 1200, 1200, null, true, true, false, false, null, false, 'active', 120),
+  ('consultation_extension_30', '延長諮詢', 'status_analysis', '延長諮詢', 'Consultation Extension', 30, 1000, 1000, null, true, true, false, false, null, false, 'active', 130),
+  ('pelvic_core_advanced_120', '骨盆核心深度完整方案', 'premium_limited', '骨盆核心深度完整方案', 'Pelvic Core Advanced Full Plan', 120, 6800, 6800, null, false, true, false, true, 1, false, 'limited', 140),
+  ('training_24_plus_12_bundle', '24+12 深度整合方案', 'package_bundle', '24+12 深度整合方案', '24+12 Deep Integration Bundle', null, 62400, 62400, 60000, false, true, false, true, null, false, 'limited', 150),
+  ('grooming_interest', '熱蠟除毛', 'interest_only', '熱蠟除毛', 'Waxing Interest', null, null, null, null, false, true, false, false, null, false, 'coming_soon', 160)
+on conflict (code) do update set
+  name = excluded.name,
+  category = excluded.category,
+  display_name_zh = excluded.display_name_zh,
+  display_name_en = excluded.display_name_en,
+  duration_minutes = excluded.duration_minutes,
+  price = excluded.price,
+  price_twd = excluded.price_twd,
+  cash_price_twd = excluded.cash_price_twd,
+  is_addon = excluded.is_addon,
+  is_public_visible = excluded.is_public_visible,
+  is_direct_booking_allowed = excluded.is_direct_booking_allowed,
+  requires_consultation = excluded.requires_consultation,
+  daily_limit = excluded.daily_limit,
+  is_city_session_allowed = excluded.is_city_session_allowed,
+  status = excluded.status,
+  sort_order = excluded.sort_order;
+
+-- Legacy Booking V1 seed rows are kept for historical booking references, but hidden from new direct booking.
+update services
+set is_active = false,
+    is_public_visible = false,
+    is_direct_booking_allowed = false,
+    status = 'archived',
+    internal_note = coalesce(internal_note, 'Archived by BodyFix Service Catalog Master v1 migration.')
+where code like 'legacy_%';

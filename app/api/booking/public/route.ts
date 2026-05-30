@@ -19,9 +19,13 @@ export async function GET() {
       .order("starts_at", { ascending: true }),
     supabase
       .from("services")
-      .select("id,name,duration_minutes,price,is_active")
+      .select("id,code,name,category,display_name_zh,display_name_en,duration_minutes,price,price_twd,cash_price_twd,is_active,is_addon,is_public_visible,is_direct_booking_allowed,is_city_session_allowed,requires_consultation,daily_limit,status,sort_order,booking_note,internal_note")
       .eq("is_active", true)
-      .order("duration_minutes", { ascending: true })
+      .eq("is_public_visible", true)
+      .eq("is_addon", false)
+      .eq("is_direct_booking_allowed", true)
+      .eq("status", "active")
+      .order("sort_order", { ascending: true })
   ]);
 
   if (slotError || serviceError) {

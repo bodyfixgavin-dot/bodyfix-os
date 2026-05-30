@@ -229,7 +229,7 @@ export default function AdminPage() {
                     LINE：{booking.line_id}<br />
                     {booking.phone || ""}
                   </td>
-                  <td>{booking.services?.name || booking.service_id}</td>
+                  <td>{booking.services?.display_name_zh || booking.services?.name || booking.service_id}</td>
                   <td>{booking.body_notes}<br />{booking.message}</td>
                   <td>
                     <div className="bf-admin-actions">
