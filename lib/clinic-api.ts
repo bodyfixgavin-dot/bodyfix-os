@@ -41,7 +41,12 @@ export const RECORD_FIELDS = [
 
 export const HOMEWORK_FIELDS = ["client_id", "service_record_id", "breathing_cue", "movement_cue", "suggested_frequency", "notice", "status"];
 export const FOLLOWUP_FIELDS = ["client_id", "service_record_id", "followup_type", "scheduled_date", "sent_at", "message_template", "message_summary", "client_response", "response_status", "next_action", "is_done"];
-export const PLAN_FIELDS = ["client_id", "suggested_plan_type", "plan_score", "trigger_reason", "suggested_pitch", "status", "last_checked_at"];
+export const PLAN_FIELDS = [
+  "client_id", "suggested_plan_type", "plan_score", "trigger_reason", "suggested_pitch", "status", "last_checked_at",
+  "offer_type", "offer_title", "offer_price_twd", "internal_rationale", "client_summary", "recommended_frequency",
+  "recommended_next_step", "proposal_message", "internal_note", "sent_at", "won_at", "lost_at", "lost_reason",
+  "next_followup_at"
+];
 export const CASE_FIELDS = ["case_code", "client_id", "service_record_id", "case_type", "pain_keyword", "assessment_keyword", "before_summary", "after_summary", "client_quote", "evidence_type", "publish_permission", "content_status", "internal_value_score", "ai_summary"];
 
 export function makeClientCode() {

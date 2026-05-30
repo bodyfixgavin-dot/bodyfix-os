@@ -333,3 +333,15 @@ a { color: inherit; }
   .bf-summary-grid,
   .bf-result-grid { grid-template-columns: 1fr; }
 }
+
+.clinic-metric {
+  color: #111827;
+  font-size: 2rem;
+  font-weight: 800;
+  margin-top: 8px;
+}
+
+.clinic-copy-box {
+  min-height: 180px;
+  width: 100%;
+}
