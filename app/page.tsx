@@ -9,7 +9,7 @@ export default function HomePage() {
         <Link href="/dashboard">前往 Dashboard</Link>
         <Link href="/booking">前往 Booking</Link>
         <Link href="/admin">前往 Booking Admin</Link>
-        <Link href="/sadm">前往 SADM 關係決策整理</Link>
+        <Link href="/tarot/sadm">前往 SADM 關係決策整理</Link>
       </div>
     </main>
   );

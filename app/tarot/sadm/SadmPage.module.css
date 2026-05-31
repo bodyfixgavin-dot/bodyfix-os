@@ -1,0 +1,622 @@
+.pageShell {
+  min-height: 100vh;
+  padding: 18px min(5vw, 56px) 56px;
+  background:
+    radial-gradient(circle at 8% 4%, rgba(176, 138, 90, 0.24), transparent 30%),
+    radial-gradient(circle at 90% 8%, rgba(75, 59, 99, 0.18), transparent 28%),
+    linear-gradient(135deg, #f7f1e7 0%, #eee4d6 48%, #fbf7ef 100%);
+  color: #0d1b2a;
+}
+
+.nav,
+.hero,
+.section,
+.sectionGrid,
+.formulaSection,
+.testSection,
+.ctaSection,
+.disclaimer {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  backdrop-filter: blur(18px);
+}
+
+.brand,
+.navLinks,
+.heroActions,
+.ctaActions,
+.scoreBreakdown,
+.elementTopline,
+.sliderHeader,
+.sliderHints {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  gap: 10px;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #f7f1e7;
+  background: #0d1b2a;
+  border: 1px solid rgba(176, 138, 90, 0.55);
+  font-family: Georgia, serif;
+  letter-spacing: 0.02em;
+}
+
+.navLinks {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.navLinks a,
+.secondaryButton {
+  border: 1px solid rgba(176, 138, 90, 0.3);
+  background: rgba(255, 250, 241, 0.62);
+  color: #0d1b2a;
+}
+
+.navLinks a {
+  border-radius: 999px;
+  padding: 8px 12px;
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(280px, 0.55fr);
+  gap: 22px;
+  padding: 54px 0 36px;
+}
+
+.heroContent,
+.heroPanel,
+.explainCard,
+.elementCard,
+.formulaSection,
+.scoreCard,
+.resultCard,
+.ctaSection {
+  box-shadow: 0 24px 70px rgba(13, 27, 42, 0.1);
+}
+
+.heroContent {
+  position: relative;
+  overflow: hidden;
+  border-radius: 30px;
+  padding: clamp(32px, 6vw, 72px);
+  color: #f7f1e7;
+  background: linear-gradient(135deg, rgba(13, 27, 42, 0.98), rgba(18, 38, 63, 0.96) 54%, rgba(75, 59, 99, 0.9));
+  border: 1px solid rgba(176, 138, 90, 0.44);
+}
+
+.heroContent::after {
+  content: "";
+  position: absolute;
+  right: 8%;
+  bottom: 10%;
+  width: 160px;
+  height: 230px;
+  border: 1px solid rgba(247, 241, 231, 0.28);
+  border-radius: 18px;
+  transform: rotate(8deg);
+  background: radial-gradient(circle at center, rgba(176, 138, 90, 0.22), transparent 50%);
+}
+
+.eyebrow,
+.sectionKicker {
+  margin: 0 0 14px;
+  color: #b08a5a;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.heroContent .eyebrow {
+  color: rgba(247, 241, 231, 0.72);
+}
+
+.hero h1,
+.sectionGrid h2,
+.sectionHeader h2,
+.formulaSection h2,
+.testIntro h2,
+.ctaSection h2 {
+  margin: 0;
+  font-family: "Noto Serif TC", Georgia, serif;
+  letter-spacing: -0.03em;
+  line-height: 1.18;
+}
+
+.hero h1 {
+  position: relative;
+  z-index: 1;
+  max-width: 760px;
+  font-size: clamp(2.4rem, 6.5vw, 5.1rem);
+}
+
+.heroSubtitle {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  margin: 24px 0 0;
+  color: rgba(247, 241, 231, 0.83);
+  font-size: clamp(1rem, 2.2vw, 1.22rem);
+  line-height: 1.8;
+}
+
+.heroActions,
+.ctaActions {
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  gap: 13px;
+  margin-top: 32px;
+}
+
+.primaryButton,
+.secondaryButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border-radius: 999px;
+  padding: 12px 20px;
+  text-decoration: none;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.primaryButton:hover,
+.secondaryButton:hover,
+.navLinks a:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 14px 30px rgba(13, 27, 42, 0.14);
+}
+
+.primaryButton {
+  color: #0d1b2a;
+  background: linear-gradient(135deg, #f7dca8, #b08a5a);
+  border: 1px solid rgba(255, 250, 241, 0.44);
+}
+
+.heroPanel {
+  align-self: stretch;
+  display: grid;
+  align-content: center;
+  gap: 18px;
+  border-radius: 30px;
+  padding: 30px;
+  color: #f7f1e7;
+  background: #4b3b63;
+  border: 1px solid rgba(176, 138, 90, 0.38);
+}
+
+.heroPanel p,
+.heroPanel span,
+.explainCard p,
+.formulaCopy p,
+.formulaCopy li,
+.testIntro p,
+.resultBox p,
+.ctaSection p,
+.disclaimer {
+  line-height: 1.8;
+}
+
+.heroPanel p,
+.heroPanel strong,
+.heroPanel span {
+  margin: 0;
+}
+
+.heroPanel strong {
+  font-family: "Noto Serif TC", Georgia, serif;
+  font-size: 1.65rem;
+  line-height: 1.35;
+}
+
+.heroPanel span {
+  color: rgba(247, 241, 231, 0.78);
+}
+
+.section,
+.sectionGrid,
+.formulaSection,
+.testSection,
+.ctaSection {
+  margin-top: 28px;
+}
+
+.sectionGrid,
+.formulaSection,
+.ctaSection {
+  display: grid;
+  grid-template-columns: 0.78fr 1.22fr;
+  gap: 22px;
+  align-items: start;
+}
+
+.sectionGrid h2,
+.sectionHeader h2,
+.formulaSection h2,
+.testIntro h2,
+.ctaSection h2 {
+  font-size: clamp(1.85rem, 4vw, 3.25rem);
+}
+
+.explainCard,
+.formulaSection,
+.scoreCard,
+.resultCard,
+.ctaSection {
+  border: 1px solid rgba(176, 138, 90, 0.22);
+  border-radius: 28px;
+  background: rgba(255, 250, 241, 0.78);
+}
+
+.explainCard,
+.scoreCard,
+.resultCard,
+.ctaSection {
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.explainCard p {
+  margin: 0;
+  color: #534d47;
+}
+
+.explainCard p + p,
+.resultBox p + p {
+  margin-top: 12px;
+}
+
+.sectionHeader {
+  max-width: 760px;
+  margin-bottom: 18px;
+}
+
+.elementGrid {
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.elementCard {
+  min-height: 210px;
+  border: 1px solid rgba(176, 138, 90, 0.24);
+  border-radius: 22px;
+  padding: 18px;
+  background: rgba(255, 250, 241, 0.68);
+}
+
+.elementTopline {
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.elementTopline small {
+  color: #7b736b;
+  font-size: 0.74rem;
+}
+
+.valueBadge,
+.costBadge {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 4px 8px;
+  color: white;
+  font-weight: 900;
+  font-size: 0.75rem;
+}
+
+.valueBadge {
+  background: #536b5a;
+}
+
+.costBadge {
+  background: #8f3f3f;
+}
+
+.elementCard h3 {
+  margin: 18px 0 8px;
+  font-size: 1.08rem;
+}
+
+.elementCard p {
+  margin: 0;
+  color: #6f6a62;
+  font-size: 0.95rem;
+  line-height: 1.7;
+}
+
+.formulaSection {
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.formulaCopy ul {
+  margin: 10px 0 0;
+  padding-left: 1.2em;
+  color: #534d47;
+}
+
+.testIntro {
+  max-width: 760px;
+  margin-bottom: 18px;
+}
+
+.testLayout {
+  display: grid;
+  grid-template-columns: minmax(0, 1.05fr) minmax(320px, 0.95fr);
+  gap: 22px;
+  align-items: start;
+}
+
+.subjectLabel,
+.sliderRow {
+  display: grid;
+  gap: 8px;
+}
+
+.subjectLabel {
+  color: #6f6a62;
+  font-weight: 800;
+}
+
+.subjectLabel input {
+  width: 100%;
+  border: 1px solid rgba(176, 138, 90, 0.3);
+  border-radius: 16px;
+  padding: 13px 15px;
+  background: #fffaf1;
+  color: #0d1b2a;
+  font: inherit;
+}
+
+.subjectLabel span,
+.sliderHints small {
+  color: #8a8178;
+  font-size: 0.84rem;
+  font-weight: 500;
+}
+
+.sliderGroup {
+  display: grid;
+  gap: 16px;
+  margin-top: 28px;
+}
+
+.sliderGroup h3 {
+  margin: 0;
+}
+
+.sliderRow {
+  border: 1px solid rgba(13, 27, 42, 0.1);
+  border-radius: 18px;
+  padding: 15px;
+  background: rgba(255, 255, 255, 0.42);
+}
+
+.sliderHeader,
+.sliderHints,
+.scoreBreakdown {
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.sliderHeader b {
+  display: grid;
+  place-items: center;
+  min-width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  color: #f7f1e7;
+  background: #0d1b2a;
+}
+
+.sliderRow input[type="range"] {
+  width: 100%;
+  accent-color: #b08a5a;
+}
+
+.resultCard {
+  position: sticky;
+  top: 82px;
+}
+
+.scoreCircle {
+  width: 170px;
+  height: 170px;
+  display: grid;
+  place-items: center;
+  margin: 10px auto 18px;
+  border-radius: 50%;
+  color: #f7f1e7;
+  background: radial-gradient(circle, #4b3b63, #0d1b2a);
+  border: 1px solid rgba(176, 138, 90, 0.44);
+  box-shadow: inset 0 0 0 10px rgba(255, 250, 241, 0.08);
+}
+
+.scoreCircle span,
+.scoreCircle strong {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.scoreCircle span {
+  align-self: start;
+  margin-top: 42px;
+  color: rgba(247, 241, 231, 0.68);
+  letter-spacing: 0.22em;
+  font-size: 0.75rem;
+}
+
+.scoreCircle strong {
+  align-self: end;
+  margin-bottom: 36px;
+  font-size: 3rem;
+  font-family: Georgia, serif;
+}
+
+.scoreBreakdown {
+  margin-bottom: 18px;
+  color: #6f6a62;
+  font-weight: 800;
+}
+
+.resultBox {
+  border-radius: 22px;
+  padding: 20px;
+  border: 1px solid rgba(13, 27, 42, 0.12);
+}
+
+.resultBox h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+}
+
+.resultBox p {
+  margin: 0;
+  color: #4f4943;
+}
+
+.continue {
+  background: rgba(83, 107, 90, 0.12);
+}
+
+.adjust {
+  background: rgba(176, 138, 90, 0.14);
+}
+
+.limit {
+  background: rgba(154, 122, 50, 0.14);
+}
+
+.pause {
+  background: rgba(143, 63, 63, 0.12);
+}
+
+.resultTable {
+  display: grid;
+  gap: 8px;
+  margin-top: 18px;
+}
+
+.resultTable div {
+  display: grid;
+  grid-template-columns: 92px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #6f6a62;
+}
+
+.resultTable strong {
+  color: #0d1b2a;
+}
+
+.ctaSection {
+  align-items: center;
+  color: #f7f1e7;
+  background: linear-gradient(135deg, #0d1b2a, #4b3b63);
+  border-color: rgba(176, 138, 90, 0.42);
+}
+
+.ctaSection .sectionKicker {
+  color: rgba(247, 241, 231, 0.72);
+}
+
+.ctaSection p {
+  margin: 16px 0 0;
+  color: rgba(247, 241, 231, 0.78);
+}
+
+.disclaimer {
+  margin-top: 20px;
+  color: #786f66;
+  font-size: 0.9rem;
+  text-align: center;
+}
+
+@media (max-width: 1080px) {
+  .elementGrid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 860px) {
+  .nav,
+  .hero,
+  .sectionGrid,
+  .formulaSection,
+  .testLayout,
+  .ctaSection {
+    grid-template-columns: 1fr;
+  }
+
+  .nav {
+    align-items: flex-start;
+    position: static;
+  }
+
+  .navLinks {
+    display: none;
+  }
+
+  .resultCard {
+    position: static;
+  }
+}
+
+@media (max-width: 640px) {
+  .pageShell {
+    padding-inline: 16px;
+  }
+
+  .hero {
+    padding-top: 28px;
+  }
+
+  .elementGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .resultTable div {
+    grid-template-columns: 1fr;
+  }
+
+  .scoreBreakdown,
+  .sliderHeader,
+  .sliderHints {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
