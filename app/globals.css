@@ -1387,3 +1387,73 @@ main {
     padding: 10px;
   }
 }
+
+.calendar-backfill-intro p {
+  color: var(--bf-muted);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.calendar-backfill-form {
+  display: grid;
+  gap: 18px;
+}
+
+.calendar-backfill-card {
+  grid-template-columns: 1fr;
+}
+
+.calendar-backfill-card .bf-section-title {
+  margin-bottom: 4px;
+}
+
+.calendar-backfill-warning ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.calendar-backfill-submit {
+  min-height: 48px;
+  width: 100%;
+}
+
+.calendar-backfill-list {
+  display: grid;
+  gap: 10px;
+}
+
+.calendar-backfill-empty {
+  display: grid;
+  gap: 6px;
+  border: 1px dashed var(--bf-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .52);
+  color: var(--bf-muted);
+  line-height: 1.7;
+  padding: 16px;
+}
+
+.calendar-backfill-empty strong {
+  color: var(--bf-navy);
+}
+
+@media (max-width: 820px) {
+  .calendar-backfill-form {
+    gap: 14px;
+  }
+
+  .calendar-backfill-card {
+    border-radius: 20px;
+    padding: 18px;
+  }
+
+  .calendar-backfill-card label {
+    min-width: 0;
+  }
+
+  .calendar-backfill-card input,
+  .calendar-backfill-card select,
+  .calendar-backfill-card textarea {
+    min-width: 0;
+  }
+}

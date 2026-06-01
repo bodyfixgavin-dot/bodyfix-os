@@ -13,6 +13,7 @@ export default function ClinicDashboardPage() {
         <section className="clinic-quick bf-section-gap">
           <Link className="bf-primary" href="/clinic/clients/new">快速新增客戶</Link>
           <Link className="bf-primary" href="/clinic/records/new">快速新增服務紀錄</Link>
+          <Link className="bf-primary" href="/clinic/calendar-backfill">行事曆客戶回填</Link>
           <Link className="bf-small-btn" href="/clinic/clients">搜尋客戶入口</Link>
         </section>
         <section className="clinic-grid bf-section-gap">
