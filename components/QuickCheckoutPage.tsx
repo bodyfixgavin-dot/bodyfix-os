@@ -696,324 +696,332 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl space-y-6 overflow-x-hidden px-4 py-6 text-slate-900 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl space-y-6 overflow-x-hidden px-5 py-6 pb-28 text-slate-900 sm:px-6 lg:pb-6">
       <section className="rounded-[28px] border border-[rgba(23,35,51,.16)] bg-[rgba(251,250,246,.9)] p-5 shadow-[0_24px_60px_rgba(23,35,51,.08)] sm:p-7">
         <div className="mb-3 flex flex-wrap items-center gap-2 text-sm font-semibold uppercase tracking-[.16em] text-[#9b7550]">
           <span>BodyFix OS</span>
-          <span className="rounded-full border border-[#c6aa87] px-3 py-1 text-xs">MVP</span>
+          <span className="rounded-full border border-[#c6aa87] px-3 py-1 text-xs">Operational flow</span>
         </div>
         <h1 className="text-3xl font-bold tracking-tight text-[#172333] sm:text-4xl">服務後快速記錄 v0.2</h1>
         <p className="mt-3 max-w-3xl text-sm leading-7 text-[#6f6a63] sm:text-base">
-          Service Quick Record v0.2｜完成服務後，快速記錄本次內容、扣除餘額、確認收款與建立後續追蹤。
-        </p>
-        <p className="mt-3 text-xs leading-6 text-[#6f6a63]">
-          核心邏輯：服務項目代表本次做了什麼；扣堂方式代表從哪種餘額扣除；收款方式代表本次實際應收與已收。
+          依照現場操作順序完成：先確認客戶，再選主服務、加購、方案、扣堂 / 收款、紀錄與追蹤提醒。
         </p>
       </section>
 
       <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-        <h2 className="mb-3 text-xl font-semibold text-[#172333]">客戶資訊</h2>
-        <label className="grid gap-2 text-sm text-[#6f6a63]">
-          選擇客戶
+        <SectionHeader eyebrow="Step 1" title="客戶資訊" description="先確認餘額、未收款與最近服務，避免服務後才發現扣堂或收款狀態不對。" />
+        {customers.length === 0 ? (
+          <EmptyState title="尚無客戶資料，請先建立客戶。" description="建立客戶與餘額後，這裡會顯示剩餘教練課、身體整理、未收款與最近一次服務。" />
+        ) : (
+          <>
+            <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
+              選擇客戶
+              <select
+                className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
+                value={selectedCustomerId}
+                onChange={(event) => {
+                  setSelectedCustomerId(event.target.value);
+                  setIsPreviewOpen(false);
+                }}
+              >
+                {customers.map((customer) => (
+                  <option key={customer.customer_id} value={customer.customer_id}>{customer.customer_name}</option>
+                ))}
+              </select>
+            </label>
+
+            {flexibleRiskReminder ? (
+              <div className="mt-4 rounded-2xl border border-[#b45309] bg-[#fff7ed] p-4 text-sm leading-7 text-[#7c2d12]">
+                <strong>彈性補款提醒</strong>
+                <p>{flexibleRiskReminder.message}</p>
+                {flexibleRiskReminder.exceedsReminderThreshold ? <p>未收款已超過 NT$20,000；下次預約前建議先確認補款節奏。</p> : null}
+              </div>
+            ) : null}
+
+            <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              <SummaryTile label="剩餘教練課" value={selectedCustomer ? `${selectedCustomer.training_remaining} 堂` : "尚無紀錄"} />
+              <SummaryTile label="剩餘身體整理" value={selectedCustomer ? `${selectedCustomer.bodywork_remaining} 次` : "尚無紀錄"} />
+              <SummaryTile label="未收款" value={selectedCustomer ? money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0) : "尚無紀錄"} />
+              <SummaryTile label="最近一次服務" value={selectedCustomer?.latest_service_label ? `${formatServiceDate(selectedCustomer.latest_service_date)} / ${selectedCustomer.latest_service_label}` : "尚無紀錄"} />
+            </div>
+          </>
+        )}
+      </section>
+
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 2" title="本次主服務" description="主服務只描述今天主要完成的服務；加購與方案購買放在下一段，讓紀錄不混在一起。" />
+        <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
+          主服務
           <select
             className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
-            value={selectedCustomerId}
-            onChange={(event) => {
-              setSelectedCustomerId(event.target.value);
-              setIsPreviewOpen(false);
-            }}
+            value={form.serviceCode}
+            onChange={(event) => handleServiceChange(event.target.value)}
           >
-            {customers.length === 0 ? <option value="">尚無客戶資料</option> : null}
-            {customers.map((customer) => (
-              <option key={customer.customer_id} value={customer.customer_id}>{customer.customer_name}</option>
+            {SERVICE_CATEGORIES.map((category) => {
+              const services = SERVICE_CATALOG.filter((service) => service.category === category && service.service_type !== "add_on");
+              return services.length > 0 ? (
+                <optgroup label={category} key={category}>
+                  {services.map((service) => (
+                    <option key={service.service_code} value={service.service_code}>{service.display_name}</option>
+                  ))}
+                </optgroup>
+              ) : null;
+            })}
+          </select>
+        </label>
+        <div className="mt-4 rounded-2xl border border-[rgba(155,117,80,.24)] bg-white/75 p-4 text-sm leading-7 text-[#172333]">
+          <div className="flex flex-wrap items-center gap-2">
+            <strong className="text-base">{selectedService.display_name}</strong>
+            {selectedService.english_name ? <span className="text-[#6f6a63]">{selectedService.english_name}</span> : null}
+            {selectedService.is_premium_service ? <span className="rounded-full bg-[#172333] px-2 py-1 text-xs text-white">premium</span> : null}
+            {selectedService.is_gated ? <span className="rounded-full bg-[#6f2f2f] px-2 py-1 text-xs text-white">gated</span> : null}
+            {selectedService.is_gavin_only ? <span className="rounded-full bg-[#9b7550] px-2 py-1 text-xs text-white">Gavin only</span> : null}
+          </div>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+            <SummaryTile label="service code" value={selectedService.service_code} />
+            <SummaryTile label="大類" value={selectedService.category} />
+            <SummaryTile label="時長" value={selectedService.duration_minutes ? `${selectedService.duration_minutes} 分鐘` : "自訂"} />
+            <SummaryTile label="預設價格" value={servicePriceLabel(selectedService)} />
+          </div>
+          <p className="mt-3 font-semibold">預設扣法：{selectedService.default_balance_type ? `扣 ${selectedService.default_balance_type} ${selectedService.default_deduct_units}` : "不扣堂 / 自訂"}</p>
+          <p className="mt-1 text-[#6f6a63]">{selectedService.note}</p>
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 3" title="加購項目 add-on" description="每個 add-on 獨立勾選，清楚標示價格、時長與扣堂規則，不再用長段文字堆疊。" />
+        <div className="mt-4 grid gap-3 md:grid-cols-3">
+          {ADDON_CATALOG.map((addon) => (
+            <label key={addon.service_code} className={`grid gap-3 rounded-2xl border p-4 text-sm transition ${form.addonCodes.includes(addon.service_code) ? "border-[#9b7550] bg-[#fffaf2] shadow-sm" : "border-[rgba(23,35,51,.12)] bg-white"}`}>
+              <span className="flex items-start gap-3">
+                <input
+                  type="checkbox"
+                  className="mt-1 h-5 w-5 shrink-0"
+                  checked={form.addonCodes.includes(addon.service_code)}
+                  onChange={(event) => handleAddonToggle(addon.service_code, event.target.checked)}
+                />
+                <span className="min-w-0">
+                  <strong className="block break-words text-[#172333]">{addon.display_name}</strong>
+                  <span className="text-[#9b7550]">{money(addon.default_price ?? 0)}｜+{addon.duration_minutes} 分</span>
+                </span>
+              </span>
+              <span className="rounded-xl bg-white/75 p-3 leading-6 text-[#6f6a63]">不自動扣堂｜{addon.note}</span>
+            </label>
+          ))}
+        </div>
+      </section>
+
+      <details className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5" open={Boolean(form.packageCode)}>
+        <summary className="cursor-pointer list-none">
+          <SectionHeader eyebrow="Step 4" title="新增方案 / 購買方案" description="預設收合；只有今天有賣方案時才展開，不打斷一般服務紀錄節奏。" />
+        </summary>
+        <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
+          方案商品
+          <select
+            className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
+            value={form.packageCode}
+            onChange={(event) => patchForm({ packageCode: event.target.value })}
+          >
+            <option value="">本次沒有購買方案</option>
+            {PACKAGE_PRODUCTS.map((product) => (
+              <option key={product.package_code} value={product.package_code}>{product.display_name}｜{money(product.price)}</option>
             ))}
           </select>
         </label>
-
-        {flexibleRiskReminder ? (
-          <div className="mt-4 rounded-2xl border border-[#b45309] bg-[#fff7ed] p-4 text-sm leading-7 text-[#7c2d12]">
-            <strong>彈性補款提醒</strong>
-            <p>{flexibleRiskReminder.message}</p>
-            {flexibleRiskReminder.exceedsReminderThreshold ? <p>未收款已超過 NT$20,000；下次預約前建議先確認補款節奏。</p> : null}
+        {preview.selectedPackage ? (
+          <div className="mt-4 rounded-2xl border border-[rgba(155,117,80,.24)] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
+            <p><strong>{preview.selectedPackage.display_name}</strong></p>
+            <p>方案代碼：{preview.selectedPackage.package_code}</p>
+            <p>方案價格：{money(preview.selectedPackage.price)}{preview.selectedPackage.cash_price ? `｜一次付清 ${money(preview.selectedPackage.cash_price)}` : ""}</p>
+            {preview.selectedPackage.package_code === INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode ? <p>彈性補款：訂金 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.minimumFlexibleDeposit)} 起，總價仍為 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}。</p> : null}
+            <p>增加餘額：{preview.selectedPackage.adds_balance}</p>
+            {preview.selectedPackage.note ? <p className="text-[#6f6a63]">{preview.selectedPackage.note}</p> : null}
           </div>
         ) : null}
+      </details>
 
-        <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <SummaryTile label="剩餘教練課" value={selectedCustomer ? `${selectedCustomer.training_remaining} 堂` : "尚無紀錄"} />
-          <SummaryTile label="剩餘身體整理" value={selectedCustomer ? `${selectedCustomer.bodywork_remaining} 次` : "尚無紀錄"} />
-          <SummaryTile label="未收款" value={selectedCustomer ? money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0) : "尚無紀錄"} />
-          <SummaryTile
-            label="最近一次服務"
-            value={selectedCustomer?.latest_service_label ? `${formatServiceDate(selectedCustomer.latest_service_date)} / ${selectedCustomer.latest_service_label}` : "尚無紀錄"}
-          />
-        </div>
-      </section>
-
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_.85fr]">
-        <div className="space-y-6">
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">本次服務項目</h2>
-            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">已對齊 v0.2 service catalog；一對一教練課只保留 60 分鐘，骨盆核心延長只作為 add-on。</p>
-
-            <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
-              主服務
-              <select
-                className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
-                value={form.serviceCode}
-                onChange={(event) => handleServiceChange(event.target.value)}
-              >
-                {SERVICE_CATEGORIES.map((category) => {
-                  const services = SERVICE_CATALOG.filter((service) => service.category === category && service.service_type !== "add_on");
-                  return services.length > 0 ? (
-                    <optgroup label={category} key={category}>
-                      {services.map((service) => (
-                        <option key={service.service_code} value={service.service_code}>{service.display_name}</option>
-                      ))}
-                    </optgroup>
-                  ) : null;
-                })}
-              </select>
-            </label>
-
-            <div className="mt-4 rounded-2xl border border-[rgba(155,117,80,.24)] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
-              <div className="flex flex-wrap items-center gap-2">
-                <strong>{selectedService.display_name}</strong>
-                {selectedService.english_name ? <span className="text-[#6f6a63]">{selectedService.english_name}</span> : null}
-                {selectedService.is_premium_service ? <span className="rounded-full bg-[#172333] px-2 py-1 text-xs text-white">premium_service</span> : null}
-                {selectedService.is_gated ? <span className="rounded-full bg-[#6f2f2f] px-2 py-1 text-xs text-white">gated</span> : null}
-                {selectedService.is_gavin_only ? <span className="rounded-full bg-[#9b7550] px-2 py-1 text-xs text-white">Gavin only</span> : null}
-                {selectedService.is_recommended ? <span className="rounded-full bg-[#2f6f55] px-2 py-1 text-xs text-white">recommended</span> : null}
-              </div>
-              <p>服務代碼：{selectedService.service_code}</p>
-              <p>大類：{selectedService.category}｜時長：{selectedService.duration_minutes ? `${selectedService.duration_minutes} 分鐘` : "自訂"}｜預設價格：{servicePriceLabel(selectedService)}</p>
-              <p>預設扣法：{selectedService.default_balance_type ? `扣 ${selectedService.default_balance_type} ${selectedService.default_deduct_units}` : "不扣堂 / 自訂"}</p>
-              <p className="text-[#6f6a63]">{selectedService.note}</p>
-            </div>
-
-            <div className="mt-5 rounded-2xl border border-dashed border-[rgba(155,117,80,.34)] bg-white/60 p-4">
-              <h3 className="text-sm font-bold text-[#172333]">加購項目 add-on</h3>
-              <p className="mt-1 text-xs leading-6 text-[#6f6a63]">加購項目獨立記錄額外收入，不混入主服務選單，也不自動扣堂。</p>
-              <div className="mt-3 grid gap-3">
-                {ADDON_CATALOG.map((addon) => (
-                  <label key={addon.service_code} className="flex items-start gap-3 rounded-2xl border border-[rgba(23,35,51,.10)] bg-white p-3 text-sm text-[#172333]">
-                    <input
-                      type="checkbox"
-                      className="mt-1 h-5 w-5"
-                      checked={form.addonCodes.includes(addon.service_code)}
-                      onChange={(event) => handleAddonToggle(addon.service_code, event.target.checked)}
-                    />
-                    <span>
-                      <strong>{addon.display_name}</strong>
-                      <span className="block text-[#6f6a63]">{money(addon.default_price ?? 0)}｜{addon.duration_minutes} 分鐘｜{addon.note}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">新增方案 / 購買方案</h2>
-            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">Package product 代表客戶今天買了什麼方案；不要放入本次服務第一層。送出時會用 package item 留下金流與 balance 增加註記，不當作一般 service record 主服務。</p>
-            <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
-              方案商品
-              <select
-                className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
-                value={form.packageCode}
-                onChange={(event) => patchForm({ packageCode: event.target.value })}
-              >
-                <option value="">本次沒有購買方案</option>
-                {PACKAGE_PRODUCTS.map((product) => (
-                  <option key={product.package_code} value={product.package_code}>{product.display_name}｜{money(product.price)}</option>
-                ))}
-              </select>
-            </label>
-            {preview.selectedPackage ? (
-              <div className="mt-4 rounded-2xl border border-[rgba(155,117,80,.24)] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
-                <p><strong>{preview.selectedPackage.display_name}</strong></p>
-                <p>方案代碼：{preview.selectedPackage.package_code}</p>
-                <p>方案價格：{money(preview.selectedPackage.price)}{preview.selectedPackage.cash_price ? `｜一次付清 ${money(preview.selectedPackage.cash_price)}` : ""}</p>
-                {preview.selectedPackage.package_code === INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode ? <p>彈性補款：訂金 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.minimumFlexibleDeposit)} 起，總價仍為 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}。</p> : null}
-                <p>增加餘額：{preview.selectedPackage.adds_balance}</p>
-                {preview.selectedPackage.note ? <p className="text-[#6f6a63]">{preview.selectedPackage.note}</p> : null}
-              </div>
-            ) : null}
-          </section>
-
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">扣除 / 收款方式</h2>
-            <div className="mt-4 grid gap-3 sm:grid-cols-2">
-              {(Object.keys(PAYMENT_MODE_LABELS) as PaymentMode[]).map((mode) => (
-                <button
-                  type="button"
-                  key={mode}
-                  className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${form.paymentMode === mode ? "border-[#9b7550] bg-[#172333] text-white" : "border-[rgba(23,35,51,.14)] bg-white text-[#172333]"}`}
-                  onClick={() => patchForm({
-                    paymentMode: mode,
-                    packageCode: mode === "flexible_payment" ? INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode : form.packageCode,
-                    receivableAmount: mode === "balance" || mode === "comp" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0,
-                    paidAmount: mode === "accounts_receivable" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0
-                  })}
-                >
-                  {PAYMENT_MODE_LABELS[mode]}
-                </button>
-              ))}
-            </div>
-
-            <div className="mt-5 grid gap-4 sm:grid-cols-2">
-              {(form.paymentMode === "balance" || form.paymentMode === "comp") ? (
-                <>
-                  <NumberField label="扣除教練課堂數" value={form.trainingDeduct} onChange={(value) => patchForm({ trainingDeduct: value })} />
-                  <NumberField label="扣除身體整理次數" value={form.bodyworkDeduct} onChange={(value) => patchForm({ bodyworkDeduct: value })} />
-                </>
-              ) : null}
-
-              {form.paymentMode === "balance" ? (
-                <>
-                  <NumberField label="是否有加購 / 補差額" value={form.manualAdjustmentAmount} onChange={(value) => patchForm({ manualAdjustmentAmount: value })} />
-                  <NumberField label="本次應收（可手動調整）" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
-                </>
-              ) : null}
-
-              {form.paymentMode === "single_payment" ? (
-                <>
-                  <NumberField label="本次應收" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
-                  <NumberField label="本次已收" value={form.paidAmount} onChange={(value) => patchForm({ paidAmount: value })} />
-                  <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
-                </>
-              ) : null}
-
-              {form.paymentMode === "comp" ? (
-                <>
-                  <TextField label="折抵原因" value={form.compReason} onChange={(value) => patchForm({ compReason: value })} placeholder="例如：活動贈送 / 補償 / 體驗" />
-                  <NumberField label="本次應收（預設 0）" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
-                  <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-sm text-[#172333]">
-                    <input type="checkbox" checked={form.compDeductBalance} onChange={(event) => patchForm({ compDeductBalance: event.target.checked })} />
-                    是否扣除餘額
-                  </label>
-                </>
-              ) : null}
-
-              {form.paymentMode === "accounts_receivable" ? (
-                <>
-                  <NumberField label="應收金額" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
-                  <TextField label="預計付款日" type="date" value={form.expectedPaymentDate} onChange={(value) => patchForm({ expectedPaymentDate: value })} />
-                </>
-              ) : null}
-
-              {form.paymentMode === "flexible_payment" ? (
-                <>
-                  <NumberField label="彈性補款訂金（最低 NT$2,400）" value={form.flexibleDepositAmount} onChange={(value) => patchForm({ flexibleDepositAmount: value })} />
-                  <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
-                </>
-              ) : null}
-            </div>
-
-            {form.paymentMode === "flexible_payment" ? (
-              <div className="mt-4 rounded-2xl border border-[#c6aa87] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
-                <strong>彈性補款模式規則</strong>
-                <p>只適用 24 + 12 深度整合方案；總價固定 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}，不可套用一次付清 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.fullPaymentAmount)}。</p>
-                <p>v0.2 採信任制：建立方案後先開通教練課 24 堂與身體整理 12 次；若仍有未收款，系統只提醒、不強制阻擋服務。</p>
-              </div>
-            ) : null}
-          </section>
-
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">新增補款紀錄</h2>
-            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">每次補款都建立新的 payment_entry，不覆蓋既有付款紀錄；送出後會記錄日期、補款金額、付款方式與備註。</p>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <NumberField label="補款金額" value={form.flexibleTopupAmount} onChange={(value) => patchForm({ flexibleTopupAmount: value })} />
-              <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
-              <TextField label="備註" value={form.flexibleTopupNote} onChange={(value) => patchForm({ flexibleTopupNote: value })} placeholder="例如：第一次補款 / 下次預約前確認" />
-            </div>
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 5" title="扣除 / 收款方式" description="先選收款模式，系統只展開該模式需要填的欄位，避免所有金流欄位同時出現。" />
+        <div className="mt-4 flex gap-3 overflow-x-auto pb-2 sm:flex-wrap sm:overflow-visible">
+          {(Object.keys(PAYMENT_MODE_LABELS) as PaymentMode[]).map((mode) => (
             <button
               type="button"
-              disabled={!selectedCustomer || submitting || form.flexibleTopupAmount <= 0}
-              onClick={handleFlexibleTopupSubmit}
-              className="mt-4 min-h-12 rounded-2xl bg-[#172333] px-5 py-3 font-bold text-white disabled:opacity-50"
+              key={mode}
+              className={`min-h-12 shrink-0 rounded-full border px-4 py-3 text-left text-sm font-semibold transition ${form.paymentMode === mode ? "border-[#9b7550] bg-[#172333] text-white" : "border-[rgba(23,35,51,.14)] bg-white text-[#172333]"}`}
+              onClick={() => patchForm({
+                paymentMode: mode,
+                packageCode: mode === "flexible_payment" ? INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode : form.packageCode,
+                receivableAmount: mode === "balance" || mode === "comp" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0,
+                paidAmount: mode === "accounts_receivable" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0
+              })}
             >
-              新增補款紀錄
+              {PAYMENT_MODE_LABELS[mode]}
             </button>
-          </section>
-
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">簡短服務紀錄</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-2">
-              <TextAreaField label="今天主要處理" value={form.todayFocus} onChange={(value) => patchForm({ todayFocus: value })} placeholder={RECORD_PLACEHOLDER} />
-              <TextAreaField label="觀察到的狀態" value={form.observedStatus} onChange={(value) => patchForm({ observedStatus: value })} placeholder="右側張力較高，胸椎活動度較不足。" />
-              <TextAreaField label="下次方向" value={form.nextDirection} onChange={(value) => patchForm({ nextDirection: value })} placeholder="下次可接骨盆與髖，或安排 7 天後追蹤。" />
-              <TextAreaField label="備註" value={form.notes} onChange={(value) => patchForm({ notes: value })} placeholder="現場補充，保持簡短即可。" />
-            </div>
-          </section>
-
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">追蹤提醒</h2>
-            <div className="mt-4 grid gap-4 sm:grid-cols-3">
-              <SelectField label="是否建立追蹤提醒" value={form.followupDelay} onChange={(value) => patchForm({ followupDelay: value as FollowupDelay })} options={["none", "3", "7", "14", "custom"]} optionLabels={{ none: "不建立", "3": "3 天後", "7": "7 天後", "14": "14 天後", custom: "自訂日期" }} />
-              {form.followupDelay === "custom" ? <TextField label="自訂日期" type="date" value={form.customFollowupDate} onChange={(value) => patchForm({ customFollowupDate: value })} /> : null}
-              {form.followupDelay !== "none" ? <SelectField label="追蹤類型" value={form.followupPurpose} onChange={(value) => patchForm({ followupPurpose: value as FollowupPurpose })} options={["詢問身體狀態", "提醒下次預約", "推 3 次整理", "推 12 次計畫", "其他"]} /> : null}
-            </div>
-          </section>
+          ))}
         </div>
 
-        <aside className="space-y-4 lg:sticky lg:top-4 lg:self-start">
-          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
-            <h2 className="text-xl font-semibold text-[#172333]">送出前預覽</h2>
-            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">請先按「預覽本次紀錄」，確認後才會寫入 service_records / ledger_entries / balances 流程。</p>
-            <button
-              type="button"
-              disabled={!selectedCustomer}
-              onClick={() => setIsPreviewOpen(true)}
-              className="mt-4 min-h-12 w-full rounded-2xl bg-[#172333] px-5 py-3 font-bold text-white disabled:opacity-50"
-            >
-              預覽本次紀錄
-            </button>
-
-            {isPreviewOpen ? (
-              <div className="mt-4 space-y-3 rounded-2xl border border-[#c6aa87] bg-white p-4 text-sm leading-7 text-[#172333]">
-                <PreviewRow label="本次服務" value={[selectedService.display_name, ...preview.selectedAddons.map((addon) => `加購：${addon.display_name}`)].join(" + ")} />
-                {preview.selectedPackage ? <PreviewRow label="購買方案" value={`${preview.selectedPackage.display_name}｜增加 ${preview.selectedPackage.adds_balance}`} /> : null}
-                <PreviewRow label="服務時長" value={preview.duration} />
-                <PreviewRow label="扣除內容" value={preview.deductText} />
-                <PreviewRow label="本次應收" value={money(preview.receivable)} />
-                <PreviewRow label="本次已收" value={money(preview.paid)} />
-                {form.paymentMode === "flexible_payment" ? <PreviewRow label="剩餘應收" value={money(preview.outstanding)} /> : null}
-                <PreviewRow label="付款方式" value={form.paymentMode === "single_payment" || form.paymentMode === "flexible_payment" ? form.paymentMethod : PAYMENT_MODE_LABELS[form.paymentMode]} />
-                {form.paymentMode === "flexible_payment" && preview.outstanding > 0 ? <PreviewRow label="服務提醒" value={`此客戶尚有未收款：${money(preview.outstanding)}；請確認是否繼續安排服務。`} /> : null}
-                <PreviewRow label="服務紀錄" value={preview.serviceRecordFilled ? "已建立" : "尚未填寫"} />
-                <PreviewRow label="追蹤提醒" value={preview.followupText} />
-                <button
-                  type="button"
-                  disabled={submitting || !selectedCustomer}
-                  onClick={handleSubmit}
-                  className="min-h-12 w-full rounded-2xl bg-[#9b7550] px-5 py-3 font-bold text-white disabled:opacity-50"
-                >
-                  {submitting ? "處理中..." : "確認完成"}
-                </button>
-              </div>
-            ) : null}
-
-            {resultMessage ? <p className="mt-4 rounded-2xl bg-[rgba(198,170,135,.18)] p-4 text-sm leading-7 text-[#172333]">{resultMessage}</p> : null}
-          </section>
-
-          {selectedCustomer ? (
-            <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 text-sm leading-7 shadow-sm sm:p-5">
-              <h2 className="text-lg font-semibold text-[#172333]">送出後餘額預估</h2>
-              <p>教練課：{Math.max(selectedCustomer.training_remaining - form.trainingDeduct, 0)} 堂</p>
-              <p>身體整理：{Math.max(selectedCustomer.bodywork_remaining - form.bodyworkDeduct, 0)} 次</p>
-              <p>未收款：{form.paymentMode === "accounts_receivable" ? money((selectedCustomer.unpaid_amount ?? 0) + preview.receivable) : form.paymentMode === "flexible_payment" ? money(preview.outstanding) : money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0)}</p>
-            </section>
+        <div className="mt-5 grid gap-4 md:grid-cols-2">
+          {(form.paymentMode === "balance" || form.paymentMode === "comp") ? (
+            <>
+              <NumberField label="扣除教練課堂數" value={form.trainingDeduct} onChange={(value) => patchForm({ trainingDeduct: value })} />
+              <NumberField label="扣除身體整理次數" value={form.bodyworkDeduct} onChange={(value) => patchForm({ bodyworkDeduct: value })} />
+            </>
           ) : null}
-
-          <section className="rounded-3xl border border-dashed border-[rgba(155,117,80,.34)] bg-white/60 p-4 text-xs leading-6 text-[#6f6a63]">
-            <strong className="text-[#172333]">資料邏輯保留</strong>
-            <p>service_records = 服務故事</p>
-            <p>ledger_entries = 金流與堂數流水帳</p>
-            <p>balances = 現在剩多少</p>
-          </section>
-        </aside>
+          {form.paymentMode === "balance" ? (
+            <>
+              <NumberField label="是否有加購 / 補差額" value={form.manualAdjustmentAmount} onChange={(value) => patchForm({ manualAdjustmentAmount: value })} />
+              <NumberField label="本次應收（可手動調整）" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
+            </>
+          ) : null}
+          {form.paymentMode === "single_payment" ? (
+            <>
+              <NumberField label="本次應收" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
+              <NumberField label="本次已收" value={form.paidAmount} onChange={(value) => patchForm({ paidAmount: value })} />
+              <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
+            </>
+          ) : null}
+          {form.paymentMode === "comp" ? (
+            <>
+              <TextField label="折抵原因" value={form.compReason} onChange={(value) => patchForm({ compReason: value })} placeholder="例如：活動贈送 / 補償 / 體驗" />
+              <NumberField label="本次應收（預設 0）" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
+              <label className="flex min-h-12 items-center gap-3 rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-sm text-[#172333]">
+                <input type="checkbox" checked={form.compDeductBalance} onChange={(event) => patchForm({ compDeductBalance: event.target.checked })} />
+                是否扣除餘額
+              </label>
+            </>
+          ) : null}
+          {form.paymentMode === "accounts_receivable" ? (
+            <>
+              <NumberField label="應收金額" value={form.receivableAmount} onChange={(value) => patchForm({ receivableAmount: value })} />
+              <TextField label="預計付款日" type="date" value={form.expectedPaymentDate} onChange={(value) => patchForm({ expectedPaymentDate: value })} />
+            </>
+          ) : null}
+          {form.paymentMode === "flexible_payment" ? (
+            <>
+              <NumberField label="彈性補款訂金（最低 NT$2,400）" value={form.flexibleDepositAmount} onChange={(value) => patchForm({ flexibleDepositAmount: value })} />
+              <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
+            </>
+          ) : null}
+        </div>
+        {form.paymentMode === "flexible_payment" ? (
+          <div className="mt-4 rounded-2xl border border-[#c6aa87] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
+            <strong>彈性補款模式規則</strong>
+            <p>只適用 24 + 12 深度整合方案；總價固定 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}，不可套用一次付清 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.fullPaymentAmount)}。</p>
+            <p>v0.2 採信任制：建立方案後先開通教練課 24 堂與身體整理 12 次；若仍有未收款，系統只提醒、不強制阻擋服務。</p>
+          </div>
+        ) : null}
       </section>
+
+      {form.paymentMode === "flexible_payment" ? (
+        <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+          <SectionHeader eyebrow="Step 6" title="新增補款紀錄" description="只在彈性補款模式展開；每次補款都建立新的 payment_entry，不覆蓋既有紀錄。" />
+          <div className="mt-4 grid gap-4 md:grid-cols-2">
+            <NumberField label="補款金額" value={form.flexibleTopupAmount} onChange={(value) => patchForm({ flexibleTopupAmount: value })} />
+            <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
+            <TextField label="備註" value={form.flexibleTopupNote} onChange={(value) => patchForm({ flexibleTopupNote: value })} placeholder="例如：第一次補款 / 下次預約前確認" />
+          </div>
+          <button
+            type="button"
+            disabled={!selectedCustomer || submitting || form.flexibleTopupAmount <= 0}
+            onClick={handleFlexibleTopupSubmit}
+            className="mt-4 min-h-12 rounded-2xl bg-[#172333] px-5 py-3 font-bold text-white disabled:opacity-50"
+          >
+            新增補款紀錄
+          </button>
+        </section>
+      ) : null}
+
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 7" title="簡短服務紀錄" description="把服務後必填的四個文字欄位收成同一張卡，讓紀錄像現場筆記，不像工程表單。" />
+        <div className="mt-4 grid gap-4 md:grid-cols-2">
+          <TextAreaField label="今天主要處理" value={form.todayFocus} onChange={(value) => patchForm({ todayFocus: value })} placeholder={RECORD_PLACEHOLDER} />
+          <TextAreaField label="觀察到的狀態" value={form.observedStatus} onChange={(value) => patchForm({ observedStatus: value })} placeholder="右側張力較高，胸椎活動度較不足。" />
+          <TextAreaField label="下次方向" value={form.nextDirection} onChange={(value) => patchForm({ nextDirection: value })} placeholder="下次可接骨盆與髖，或安排 7 天後追蹤。" />
+          <TextAreaField label="備註" value={form.notes} onChange={(value) => patchForm({ notes: value })} placeholder="現場補充，保持簡短即可。" />
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 8" title="追蹤提醒" description="預設不建立；需要追蹤時再選 3 / 7 / 14 天或自訂日期。" />
+        <div className="mt-4 grid gap-4 md:grid-cols-3">
+          <SelectField label="是否建立追蹤提醒" value={form.followupDelay} onChange={(value) => patchForm({ followupDelay: value as FollowupDelay })} options={["none", "3", "7", "14", "custom"]} optionLabels={{ none: "不建立", "3": "3 天後", "7": "7 天後", "14": "14 天後", custom: "自訂日期" }} />
+          {form.followupDelay === "custom" ? <TextField label="自訂日期" type="date" value={form.customFollowupDate} onChange={(value) => patchForm({ customFollowupDate: value })} /> : null}
+          {form.followupDelay !== "none" ? <SelectField label="追蹤類型" value={form.followupPurpose} onChange={(value) => patchForm({ followupPurpose: value as FollowupPurpose })} options={["詢問身體狀態", "提醒下次預約", "推 3 次整理", "推 12 次計畫", "其他"]} /> : null}
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+        <SectionHeader eyebrow="Step 9" title="送出前預覽" description="送出前集中確認客戶、服務、加購、收款、扣堂與追蹤提醒。" />
+        <div className="mt-4 space-y-3 rounded-2xl border border-[#c6aa87] bg-white p-4 text-sm leading-7 text-[#172333]">
+          <PreviewRow label="客戶" value={selectedCustomer?.customer_name ?? "尚未選擇"} />
+          <PreviewRow label="主服務" value={selectedService.display_name} />
+          <PreviewRow label="add-on" value={preview.selectedAddons.length > 0 ? preview.selectedAddons.map((addon) => addon.display_name).join("、") : "無"} />
+          <PreviewRow label="購買方案" value={preview.selectedPackage ? preview.selectedPackage.display_name : "無"} />
+          <PreviewRow label="本次應收" value={money(preview.receivable)} />
+          <PreviewRow label="本次已收" value={money(preview.paid)} />
+          <PreviewRow label="未收金額" value={money(preview.outstanding)} />
+          <PreviewRow label="扣除教練課" value={`${form.trainingDeduct} 堂`} />
+          <PreviewRow label="扣除身體整理" value={`${form.bodyworkDeduct} 次`} />
+          <PreviewRow label="追蹤提醒" value={preview.followupText} />
+        </div>
+        {isPreviewOpen ? (
+          <div className="mt-4 rounded-2xl bg-[rgba(198,170,135,.18)] p-4 text-sm leading-7 text-[#172333]">
+            <strong>預覽已開啟</strong>
+            <p>服務時長：{preview.duration}｜扣除內容：{preview.deductText}｜付款方式：{form.paymentMode === "single_payment" || form.paymentMode === "flexible_payment" ? form.paymentMethod : PAYMENT_MODE_LABELS[form.paymentMode]}</p>
+          </div>
+        ) : null}
+        {resultMessage ? <p className="mt-4 rounded-2xl bg-[rgba(198,170,135,.18)] p-4 text-sm leading-7 text-[#172333]">{resultMessage}</p> : null}
+      </section>
+
+      {selectedCustomer ? (
+        <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 text-sm leading-7 shadow-sm sm:p-5">
+          <h2 className="text-lg font-semibold text-[#172333]">送出後餘額預估</h2>
+          <p>教練課：{Math.max(selectedCustomer.training_remaining - form.trainingDeduct, 0)} 堂</p>
+          <p>身體整理：{Math.max(selectedCustomer.bodywork_remaining - form.bodyworkDeduct, 0)} 次</p>
+          <p>未收款：{form.paymentMode === "accounts_receivable" ? money((selectedCustomer.unpaid_amount ?? 0) + preview.receivable) : form.paymentMode === "flexible_payment" ? money(preview.outstanding) : money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0)}</p>
+        </section>
+      ) : null}
+
+      <div className="fixed inset-x-0 bottom-0 z-20 border-t border-[rgba(23,35,51,.14)] bg-[#fbfaf6]/95 p-3 shadow-[0_-12px_30px_rgba(23,35,51,.10)] backdrop-blur lg:sticky lg:bottom-4 lg:rounded-3xl lg:border lg:p-4">
+        <div className="mx-auto flex max-w-6xl gap-3">
+          <button
+            type="button"
+            disabled={!selectedCustomer}
+            onClick={() => setIsPreviewOpen(true)}
+            className="min-h-12 flex-1 rounded-2xl border border-[#172333] bg-white px-4 py-3 text-sm font-bold text-[#172333] disabled:opacity-50"
+          >
+            預覽本次紀錄
+          </button>
+          <button
+            type="button"
+            disabled={submitting || !selectedCustomer || !isPreviewOpen}
+            onClick={handleSubmit}
+            className="min-h-12 flex-1 rounded-2xl bg-[#9b7550] px-4 py-3 text-sm font-bold text-white disabled:opacity-50"
+          >
+            {submitting ? "處理中..." : "完成送出"}
+          </button>
+        </div>
+      </div>
     </main>
+  );
+}
+
+function SectionHeader({ eyebrow, title, description }: { eyebrow: string; title: string; description: string }) {
+  return (
+    <div>
+      <p className="text-xs font-bold uppercase tracking-[.18em] text-[#9b7550]">{eyebrow}</p>
+      <h2 className="mt-1 text-xl font-semibold leading-tight text-[#172333]">{title}</h2>
+      <p className="mt-2 text-sm leading-6 text-[#6f6a63]">{description}</p>
+    </div>
+  );
+}
+
+function EmptyState({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mt-4 rounded-2xl border border-dashed border-[rgba(155,117,80,.34)] bg-white/70 p-4 text-sm leading-7 text-[#6f6a63]">
+      <strong className="block text-[#172333]">{title}</strong>
+      <span>{description}</span>
+    </div>
   );
 }
 
