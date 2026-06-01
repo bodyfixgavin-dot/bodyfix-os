@@ -47,6 +47,7 @@
 .brand {
   gap: 10px;
   text-decoration: none;
+  font-family: var(--font-tasa-orbiter);
   font-size: 0.82rem;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -83,6 +84,7 @@
   border-radius: 999px;
   padding: 8px 12px;
   text-decoration: none;
+  font-family: var(--font-tasa-orbiter);
   font-size: 0.86rem;
 }
 
@@ -129,6 +131,7 @@
 
 .eyebrow,
 .sectionKicker {
+  font-family: var(--font-tasa-orbiter);
   margin: 0 0 14px;
   color: #b08a5a;
   font-size: 0.78rem;
@@ -323,6 +326,7 @@
 }
 
 .elementTopline small {
+  font-family: var(--font-tasa-orbiter);
   color: #7b736b;
   font-size: 0.74rem;
 }
@@ -333,6 +337,7 @@
   border-radius: 999px;
   padding: 4px 8px;
   color: white;
+  font-family: var(--font-tasa-explorer);
   font-weight: 900;
   font-size: 0.75rem;
 }
