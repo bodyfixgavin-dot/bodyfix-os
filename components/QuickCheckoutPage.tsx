@@ -8,9 +8,10 @@ type BalanceType = "training_session" | "bodywork_session" | "consulting_session
 type ServiceCategory =
   | "教練課"
   | "雙人半私人教學"
+  | "身體整理"
   | "筋膜線指定整理"
   | "骨盆核心整理"
-  | "紫微 / 塔羅文字單"
+  | "紫微 / 塔羅狀態解析"
   | "混合服務"
   | "其他";
 type PaymentMode = "balance" | "single_payment" | "comp" | "accounts_receivable";
@@ -33,21 +34,37 @@ type ServiceCatalogItem = {
   service_code: string;
   display_name: string;
   english_name?: string;
-  category: ServiceCategory;
+  category: ServiceCategory | "加購項目";
   duration_minutes: number | null;
   default_price: number | null;
   default_balance_type: BalanceType | null;
   default_deduct_units: number;
-  service_type?: "main" | "add_on";
+  service_type: "main" | "add_on" | "limited";
   participant_count?: number;
   is_premium_service?: boolean;
+  is_gated?: boolean;
+  is_gavin_only?: boolean;
+  is_recommended?: boolean;
   bodyfix_service_id: BodyFixServiceId;
   note: string;
 };
 
+type PackageProduct = {
+  package_code: string;
+  display_name: string;
+  total_sessions?: number;
+  price: number;
+  cash_price?: number;
+  unit_type?: BalanceType;
+  adds_balance: string;
+  bodyfix_service_id: BodyFixServiceId;
+  note?: string;
+};
+
 type QuickRecordForm = {
   serviceCode: string;
-  addonEnabled: boolean;
+  addonCodes: string[];
+  packageCode: string;
   paymentMode: PaymentMode;
   trainingDeduct: number;
   bodyworkDeduct: number;
@@ -69,15 +86,16 @@ type QuickRecordForm = {
 
 const SERVICE_CATALOG: ServiceCatalogItem[] = [
   {
-    service_code: "training_60",
-    display_name: "教練課 60 分鐘",
+    service_code: "training_single_60",
+    display_name: "單堂評估訓練 / 教練課 60 分鐘",
     category: "教練課",
     duration_minutes: 60,
     default_price: 1800,
     default_balance_type: "training_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-MI-001",
-    note: "一對一教練課目前只有 60 分鐘；不提供一對一教練課 90 分鐘。"
+    note: "一對一教練課目前只有 60 分鐘。不要新增一對一教練課 90 分鐘。"
   },
   {
     service_code: "partner_training_90",
@@ -88,9 +106,47 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 3200,
     default_balance_type: null,
     default_deduct_units: 0,
+    service_type: "main",
     participant_count: 2,
     bodyfix_service_id: "BF-MI-001",
-    note: "獨立服務紀錄，v0.2 不強制自動扣兩位客戶堂數；其中一人缺席仍以雙人課時段計算。"
+    note: "這是雙人半私人教學，不是一對一 90 分鐘；v0.2 先作為獨立服務紀錄與收款項目。"
+  },
+  {
+    service_code: "fascia_chain_reset_60",
+    display_name: "筋膜鏈整理 60 分鐘",
+    category: "身體整理",
+    duration_minutes: 60,
+    default_price: 2200,
+    default_balance_type: "bodywork_session",
+    default_deduct_units: 1,
+    service_type: "main",
+    bodyfix_service_id: "BF-BR-001",
+    note: "身體整理主服務，可扣 bodywork_session 1。"
+  },
+  {
+    service_code: "fascia_line_selected_60",
+    display_name: "指定筋膜鏈整理 60 分鐘",
+    category: "身體整理",
+    duration_minutes: 60,
+    default_price: 2300,
+    default_balance_type: "bodywork_session",
+    default_deduct_units: 1,
+    service_type: "main",
+    bodyfix_service_id: "BF-BR-001",
+    note: "指定筋膜鏈整理主服務，可扣 bodywork_session 1；細項可在筋膜線指定整理子選單選 1–7。"
+  },
+  {
+    service_code: "fascia_selected_2_3_lines_90",
+    display_name: "指定 2–3 條筋膜鏈整理 90 分鐘",
+    category: "身體整理",
+    duration_minutes: 90,
+    default_price: 3600,
+    default_balance_type: "bodywork_session",
+    default_deduct_units: 1,
+    service_type: "main",
+    is_premium_service: true,
+    bodyfix_service_id: "BF-BR-002",
+    note: "90 分鐘高價服務；v0.2 可先扣 bodywork_session 1，但需允許手動補差額。"
   },
   {
     service_code: "fascia_line_sbl_60",
@@ -100,8 +156,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_sfl_60",
@@ -111,8 +168,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_ll_60",
@@ -122,8 +180,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_sl_60",
@@ -133,8 +192,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_dfl_60",
@@ -144,8 +204,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_arm_60",
@@ -155,8 +216,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_line_fl_60",
@@ -166,8 +228,9 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 2300,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-BR-001",
-    note: "官方筋膜線指定整理單線項目。"
+    note: "筋膜線指定整理子選單項目；預設扣 bodywork_session 1。"
   },
   {
     service_code: "fascia_multi_line_90",
@@ -177,71 +240,180 @@ const SERVICE_CATALOG: ServiceCatalogItem[] = [
     default_price: 3600,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     is_premium_service: true,
     bodyfix_service_id: "BF-BR-002",
-    note: "90 分鐘高價服務；v0.2 先允許扣 bodywork_session 1，並保留手動調整金額。"
+    note: "多線整合整理，屬 90 分鐘高價服務，可允許手動補差額。"
   },
   {
     service_code: "pelvic_core_reset_60",
-    display_name: "骨盆核心整理 60 分",
+    display_name: "骨盆核心整理 60 分鐘",
     category: "骨盆核心整理",
     duration_minutes: 60,
     default_price: 2500,
     default_balance_type: "bodywork_session",
     default_deduct_units: 1,
+    service_type: "main",
     bodyfix_service_id: "BF-PC-001",
-    note: "骨盆核心整理主服務。"
+    note: "骨盆核心整理主服務，可扣 bodywork_session 1。"
+  },
+  {
+    service_code: "pelvic_core_advanced_120",
+    display_name: "骨盆核心深度完整方案 120 分鐘",
+    category: "骨盆核心整理",
+    duration_minutes: 120,
+    default_price: 6800,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "limited",
+    is_gated: true,
+    is_gavin_only: true,
+    bodyfix_service_id: "BF-PC-001",
+    note: "限制型高階服務，每日限量，男性限定，需先評估；不要作為一般首次預約主選項。"
+  },
+  {
+    service_code: "ziwei_structural_analysis_90",
+    display_name: "紫微結構解析 90 分鐘",
+    category: "紫微 / 塔羅狀態解析",
+    duration_minutes: 90,
+    default_price: 3600,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "main",
+    bodyfix_service_id: "BF-SR-ZW-001",
+    note: "不扣堂，記服務紀錄與收款。"
+  },
+  {
+    service_code: "tarot_single_question",
+    display_name: "塔羅單題整理",
+    category: "紫微 / 塔羅狀態解析",
+    duration_minutes: null,
+    default_price: 333,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "main",
+    bodyfix_service_id: "BF-SR-TR-TXT-001",
+    note: "單題計價；不扣堂，記收款。"
+  },
+  {
+    service_code: "tarot_status_reading_30",
+    display_name: "塔羅狀態整理 30 分鐘",
+    category: "紫微 / 塔羅狀態解析",
+    duration_minutes: 30,
+    default_price: 666,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "main",
+    is_recommended: true,
+    bodyfix_service_id: "BF-SR-TR-TXT-001",
+    note: "不扣堂，記收款；推薦作為狀態整理入門。"
+  },
+  {
+    service_code: "tarot_deep_reading_60",
+    display_name: "塔羅深度整理 60 分鐘",
+    category: "紫微 / 塔羅狀態解析",
+    duration_minutes: 60,
+    default_price: 1200,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "main",
+    bodyfix_service_id: "BF-SR-TR-TXT-002",
+    note: "不扣堂，記收款。"
+  },
+  {
+    service_code: "ziwei_tarot_integration_120",
+    display_name: "紫微 + 塔羅整合諮詢 120 分鐘",
+    category: "紫微 / 塔羅狀態解析",
+    duration_minutes: 120,
+    default_price: 4800,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "main",
+    bodyfix_service_id: "BF-SR-ZW-001",
+    note: "不扣堂，記收款。"
+  },
+  {
+    service_code: "fascia_chain_extended_addon_30",
+    display_name: "筋膜鏈延長整理 +30 分",
+    category: "加購項目",
+    duration_minutes: 30,
+    default_price: 1000,
+    default_balance_type: null,
+    default_deduct_units: 0,
+    service_type: "add_on",
+    bodyfix_service_id: "BF-BR-EXT-001",
+    note: "這是加購項目，不是主服務；不自動扣堂。"
   },
   {
     service_code: "pelvic_core_addon_30",
-    display_name: "骨盆核心延長 +30 分",
-    category: "骨盆核心整理",
+    display_name: "骨盆核心延長整理 +30 分",
+    category: "加購項目",
     duration_minutes: 30,
     default_price: 1200,
     default_balance_type: null,
     default_deduct_units: 0,
     service_type: "add_on",
     bodyfix_service_id: "BF-PC-EXT-001",
-    note: "加購項目 add-on，通常接在主服務後使用；不作為主服務。"
+    note: "這是加購項目，不是主服務；只記加購收入。"
   },
   {
-    service_code: "ziwei_text_order",
-    display_name: "紫微文字解析",
-    category: "紫微 / 塔羅文字單",
-    duration_minutes: null,
-    default_price: null,
+    service_code: "consulting_extended_addon_30",
+    display_name: "延長諮詢 +30 分鐘",
+    category: "加購項目",
+    duration_minutes: 30,
+    default_price: 1000,
     default_balance_type: null,
     default_deduct_units: 0,
-    bodyfix_service_id: "BF-SR-ZW-TXT-001",
-    note: "自訂價格；不扣堂，記服務紀錄與收款。"
-  },
-  {
-    service_code: "tarot_text_order",
-    display_name: "塔羅文字解析",
-    category: "紫微 / 塔羅文字單",
-    duration_minutes: null,
-    default_price: null,
-    default_balance_type: null,
-    default_deduct_units: 0,
-    bodyfix_service_id: "BF-SR-TR-TXT-001",
-    note: "自訂價格；不扣堂，記服務紀錄與收款。"
-  },
-  {
-    service_code: "sadm_relationship_session",
-    display_name: "SADM 關係決策整理",
-    category: "紫微 / 塔羅文字單",
-    duration_minutes: null,
-    default_price: null,
-    default_balance_type: "consulting_session",
-    default_deduct_units: 0,
+    service_type: "add_on",
     bodyfix_service_id: "BF-SR-TR-TXT-002",
-    note: "consulting_session 先預留；v0.2 不強制扣除。"
+    note: "狀態解析加購延長；不扣堂，只記加購收入。"
   }
 ];
 
-const ADDON_SERVICE = SERVICE_CATALOG.find((service) => service.service_code === "pelvic_core_addon_30")!;
+const PACKAGE_PRODUCTS: PackageProduct[] = [
+  {
+    package_code: "training_12_foundation",
+    display_name: "12 堂基礎建立",
+    total_sessions: 12,
+    price: 20400,
+    unit_type: "training_session",
+    adds_balance: "training_session 12",
+    bodyfix_service_id: "BF-MI-PKG-001"
+  },
+  {
+    package_code: "training_24_integration",
+    display_name: "24 堂三個月整合",
+    total_sessions: 24,
+    price: 38400,
+    unit_type: "training_session",
+    adds_balance: "training_session 24",
+    bodyfix_service_id: "BF-MI-PKG-002"
+  },
+  {
+    package_code: "training_36_progression",
+    display_name: "36 堂長期進階",
+    total_sessions: 36,
+    price: 54000,
+    unit_type: "training_session",
+    adds_balance: "training_session 36",
+    bodyfix_service_id: "BF-MI-PKG-003",
+    note: "此價格請保留可調整，Gavin 可能後續確認正式價。"
+  },
+  {
+    package_code: "training_24_plus_12_integrated",
+    display_name: "24 + 12 深度整合方案",
+    price: 62400,
+    cash_price: 60000,
+    adds_balance: "training_session 24 / bodywork_session 12",
+    bodyfix_service_id: "BF-MI-PKG-004",
+    note: "教練課 24 堂 + 筋膜 / 身體整理 12 次；價格請保留可調整。"
+  }
+];
+
 const SERVICE_BY_CODE = new Map(SERVICE_CATALOG.map((service) => [service.service_code, service]));
-const SERVICE_CATEGORIES: ServiceCategory[] = ["教練課", "雙人半私人教學", "筋膜線指定整理", "骨盆核心整理", "紫微 / 塔羅文字單", "混合服務", "其他"];
+const PACKAGE_BY_CODE = new Map(PACKAGE_PRODUCTS.map((product) => [product.package_code, product]));
+const ADDON_CATALOG = SERVICE_CATALOG.filter((service) => service.service_type === "add_on");
+const SERVICE_CATEGORIES: ServiceCategory[] = ["教練課", "雙人半私人教學", "身體整理", "筋膜線指定整理", "骨盆核心整理", "紫微 / 塔羅狀態解析", "混合服務", "其他"];
 const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {
   balance: "使用套票 / 餘額扣除",
   single_payment: "單次現金 / 轉帳收款",
@@ -260,11 +432,12 @@ function dateAfterDays(days: number) {
   return date.toISOString().slice(0, 10);
 }
 
-function getDefaultForm(serviceCode = "training_60"): QuickRecordForm {
+function getDefaultForm(serviceCode = "training_single_60"): QuickRecordForm {
   const service = SERVICE_BY_CODE.get(serviceCode) ?? SERVICE_CATALOG[0];
   return {
     serviceCode: service.service_code,
-    addonEnabled: false,
+    addonCodes: [],
+    packageCode: "",
     paymentMode: service.default_balance_type ? "balance" : "single_payment",
     trainingDeduct: service.default_balance_type === "training_session" ? service.default_deduct_units : 0,
     bodyworkDeduct: service.default_balance_type === "bodywork_session" ? service.default_deduct_units : 0,
@@ -333,18 +506,23 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
   const followupDate = buildFollowupDate(form);
 
   const preview = useMemo(() => {
-    const addonAmount = form.addonEnabled ? ADDON_SERVICE.default_price ?? 0 : 0;
-    const receivable = Math.max(0, form.receivableAmount + form.manualAdjustmentAmount + addonAmount);
-    const paid = form.paymentMode === "accounts_receivable" ? 0 : Math.max(0, form.paidAmount);
+    const selectedAddons = form.addonCodes.map((code) => SERVICE_BY_CODE.get(code)).filter((service): service is ServiceCatalogItem => Boolean(service));
+    const selectedPackage = form.packageCode ? PACKAGE_BY_CODE.get(form.packageCode) ?? null : null;
+    const addonAmount = selectedAddons.reduce((sum, service) => sum + (service.default_price ?? 0), 0);
+    const packageAmount = selectedPackage?.price ?? 0;
+    const receivable = Math.max(0, form.receivableAmount + form.manualAdjustmentAmount + addonAmount + packageAmount);
+    const paid = form.paymentMode === "accounts_receivable" ? 0 : Math.max(0, form.paidAmount + packageAmount);
     const serviceRecordFilled = Boolean(form.todayFocus || form.observedStatus || form.nextDirection || form.notes);
-    const duration = (selectedService.duration_minutes ?? 0) + (form.addonEnabled ? ADDON_SERVICE.duration_minutes ?? 0 : 0);
+    const duration = (selectedService.duration_minutes ?? 0) + selectedAddons.reduce((sum, service) => sum + (service.duration_minutes ?? 0), 0);
     const deductParts = [
       form.trainingDeduct > 0 ? `教練課 ${form.trainingDeduct} 堂` : null,
       form.bodyworkDeduct > 0 ? `身體整理 ${form.bodyworkDeduct} 次` : null
     ].filter(Boolean);
 
     return {
-      duration: duration > 0 ? `${duration} 分鐘` : "依文字單內容",
+      selectedAddons,
+      selectedPackage,
+      duration: duration > 0 ? `${duration} 分鐘` : "依單題 / 自訂內容",
       receivable,
       paid,
       serviceRecordFilled,
@@ -364,6 +542,8 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
       const next = getDefaultForm(serviceCode);
       return {
         ...next,
+        addonCodes: current.addonCodes,
+        packageCode: current.packageCode,
         todayFocus: current.todayFocus,
         observedStatus: current.observedStatus,
         nextDirection: current.nextDirection,
@@ -373,6 +553,15 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
         followupPurpose: current.followupPurpose
       };
     });
+    setIsPreviewOpen(false);
+    setResultMessage(null);
+  }
+
+  function handleAddonToggle(addonCode: string, checked: boolean) {
+    setForm((current) => ({
+      ...current,
+      addonCodes: checked ? Array.from(new Set([...current.addonCodes, addonCode])) : current.addonCodes.filter((code) => code !== addonCode)
+    }));
     setIsPreviewOpen(false);
     setResultMessage(null);
   }
@@ -396,14 +585,25 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
       note: buildLedgerNote(form, selectedService)
     });
 
-    if (form.addonEnabled) {
+    preview.selectedAddons.forEach((addon) => {
       items.push({
-        service_id: ADDON_SERVICE.bodyfix_service_id,
+        service_id: addon.bodyfix_service_id,
         billing_type: "cash",
         units_to_deduct: 0,
         quantity: 1,
-        unit_price: ADDON_SERVICE.default_price ?? 0,
-        note: buildLedgerNote({ ...form, trainingDeduct: 0, bodyworkDeduct: 0 }, ADDON_SERVICE)
+        unit_price: addon.default_price ?? 0,
+        note: buildLedgerNote({ ...form, trainingDeduct: 0, bodyworkDeduct: 0 }, addon)
+      });
+    });
+
+    if (preview.selectedPackage) {
+      items.push({
+        service_id: preview.selectedPackage.bodyfix_service_id,
+        billing_type: "package",
+        units_to_deduct: 0,
+        quantity: 1,
+        unit_price: preview.selectedPackage.price,
+        note: `package_code=${preview.selectedPackage.package_code}；package_name=${preview.selectedPackage.display_name}；adds_balance=${preview.selectedPackage.adds_balance}；package_product=true；not_service_record=true`
       });
     }
 
@@ -498,6 +698,9 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
                 <strong>{selectedService.display_name}</strong>
                 {selectedService.english_name ? <span className="text-[#6f6a63]">{selectedService.english_name}</span> : null}
                 {selectedService.is_premium_service ? <span className="rounded-full bg-[#172333] px-2 py-1 text-xs text-white">premium_service</span> : null}
+                {selectedService.is_gated ? <span className="rounded-full bg-[#6f2f2f] px-2 py-1 text-xs text-white">gated</span> : null}
+                {selectedService.is_gavin_only ? <span className="rounded-full bg-[#9b7550] px-2 py-1 text-xs text-white">Gavin only</span> : null}
+                {selectedService.is_recommended ? <span className="rounded-full bg-[#2f6f55] px-2 py-1 text-xs text-white">recommended</span> : null}
               </div>
               <p>服務代碼：{selectedService.service_code}</p>
               <p>大類：{selectedService.category}｜時長：{selectedService.duration_minutes ? `${selectedService.duration_minutes} 分鐘` : "自訂"}｜預設價格：{servicePriceLabel(selectedService)}</p>
@@ -505,18 +708,53 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
               <p className="text-[#6f6a63]">{selectedService.note}</p>
             </div>
 
-            <label className="mt-4 flex items-start gap-3 rounded-2xl border border-dashed border-[rgba(155,117,80,.34)] bg-white/60 p-4 text-sm text-[#172333]">
-              <input
-                type="checkbox"
-                className="mt-1 h-5 w-5"
-                checked={form.addonEnabled}
-                onChange={(event) => patchForm({ addonEnabled: event.target.checked })}
-              />
-              <span>
-                <strong>加購：{ADDON_SERVICE.display_name}</strong>
-                <span className="block text-[#6f6a63]">{money(ADDON_SERVICE.default_price ?? 0)}，add-on，不扣堂，只記加購收入。</span>
-              </span>
+            <div className="mt-5 rounded-2xl border border-dashed border-[rgba(155,117,80,.34)] bg-white/60 p-4">
+              <h3 className="text-sm font-bold text-[#172333]">加購項目 add-on</h3>
+              <p className="mt-1 text-xs leading-6 text-[#6f6a63]">加購項目獨立記錄額外收入，不混入主服務選單，也不自動扣堂。</p>
+              <div className="mt-3 grid gap-3">
+                {ADDON_CATALOG.map((addon) => (
+                  <label key={addon.service_code} className="flex items-start gap-3 rounded-2xl border border-[rgba(23,35,51,.10)] bg-white p-3 text-sm text-[#172333]">
+                    <input
+                      type="checkbox"
+                      className="mt-1 h-5 w-5"
+                      checked={form.addonCodes.includes(addon.service_code)}
+                      onChange={(event) => handleAddonToggle(addon.service_code, event.target.checked)}
+                    />
+                    <span>
+                      <strong>{addon.display_name}</strong>
+                      <span className="block text-[#6f6a63]">{money(addon.default_price ?? 0)}｜{addon.duration_minutes} 分鐘｜{addon.note}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          </section>
+
+          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+            <h2 className="text-xl font-semibold text-[#172333]">新增方案 / 購買方案</h2>
+            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">Package product 代表客戶今天買了什麼方案；不要放入本次服務第一層。送出時會用 package item 留下金流與 balance 增加註記，不當作一般 service record 主服務。</p>
+            <label className="mt-4 grid gap-2 text-sm text-[#6f6a63]">
+              方案商品
+              <select
+                className="min-h-12 w-full rounded-2xl border border-[rgba(23,35,51,.16)] bg-white p-3 text-base text-[#172333]"
+                value={form.packageCode}
+                onChange={(event) => patchForm({ packageCode: event.target.value })}
+              >
+                <option value="">本次沒有購買方案</option>
+                {PACKAGE_PRODUCTS.map((product) => (
+                  <option key={product.package_code} value={product.package_code}>{product.display_name}｜{money(product.price)}</option>
+                ))}
+              </select>
             </label>
+            {preview.selectedPackage ? (
+              <div className="mt-4 rounded-2xl border border-[rgba(155,117,80,.24)] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
+                <p><strong>{preview.selectedPackage.display_name}</strong></p>
+                <p>方案代碼：{preview.selectedPackage.package_code}</p>
+                <p>方案價格：{money(preview.selectedPackage.price)}{preview.selectedPackage.cash_price ? `｜一次付清 ${money(preview.selectedPackage.cash_price)}` : ""}</p>
+                <p>增加餘額：{preview.selectedPackage.adds_balance}</p>
+                {preview.selectedPackage.note ? <p className="text-[#6f6a63]">{preview.selectedPackage.note}</p> : null}
+              </div>
+            ) : null}
           </section>
 
           <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
@@ -612,7 +850,8 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
 
             {isPreviewOpen ? (
               <div className="mt-4 space-y-3 rounded-2xl border border-[#c6aa87] bg-white p-4 text-sm leading-7 text-[#172333]">
-                <PreviewRow label="本次服務" value={`${selectedService.display_name}${form.addonEnabled ? ` + ${ADDON_SERVICE.display_name}` : ""}`} />
+                <PreviewRow label="本次服務" value={[selectedService.display_name, ...preview.selectedAddons.map((addon) => `加購：${addon.display_name}`)].join(" + ")} />
+                {preview.selectedPackage ? <PreviewRow label="購買方案" value={`${preview.selectedPackage.display_name}｜增加 ${preview.selectedPackage.adds_balance}`} /> : null}
                 <PreviewRow label="服務時長" value={preview.duration} />
                 <PreviewRow label="扣除內容" value={preview.deductText} />
                 <PreviewRow label="本次應收" value={money(preview.receivable)} />
