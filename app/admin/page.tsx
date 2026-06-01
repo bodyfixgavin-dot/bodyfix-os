@@ -150,7 +150,7 @@ export default function AdminPage() {
 
   if (!authed) {
     return (
-      <main className="bf-container">
+      <main className="bf-container bf-admin-login-shell">
         <section className="bf-hero">
           <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Admin</div>
           <h1>管理後台登入</h1>
