@@ -1458,6 +1458,15 @@ main {
   }
 }
 
+.calendar-backfill-upload label,
+.calendar-backfill-upload input[type="file"],
+.calendar-backfill-details,
+.calendar-backfill-problems .clinic-item,
+.calendar-backfill-list .clinic-item {
+  max-width: 100%;
+  min-width: 0;
+}
+
 .calendar-backfill-upload input[type="file"] {
   width: 100%;
 }

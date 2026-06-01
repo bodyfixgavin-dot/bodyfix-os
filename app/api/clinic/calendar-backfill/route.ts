@@ -114,6 +114,20 @@ function contactValues(row: CsvRow) {
     .map((value) => value.toLowerCase());
 }
 
+function clientNames(client: ExistingClient) {
+  return [client.display_name, client.client_name, client.nickname]
+    .filter(Boolean)
+    .map((value) => String(value).trim())
+    .filter(Boolean);
+}
+
+function rememberClient(client: Pick<ExistingClient, "id"> & Partial<Pick<ExistingClient, "client_code" | "display_name" | "client_name" | "nickname">>, clientByCode: Map<string, string>, clientByName: Map<string, string>) {
+  if (client.client_code) clientByCode.set(client.client_code, client.id);
+  [client.display_name, client.client_name, client.nickname]
+    .filter(Boolean)
+    .forEach((name) => clientByName.set(String(name).trim(), client.id));
+}
+
 function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
   const code = getValue(row, columnAliases.clientCode);
   const name = getValue(row, columnAliases.displayName);
@@ -122,7 +136,7 @@ function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
   if (byCode) return { client: byCode, reason: "client_code 相同" };
   const byContact = contacts.length ? existing.find((client) => [client.line_id, client.instagram, client.phone].filter(Boolean).map((value) => String(value).toLowerCase()).some((value) => contacts.includes(value))) : null;
   if (byContact) return { client: byContact, reason: "聯絡方式相同" };
-  const byName = name ? existing.find((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).some((value) => String(value).trim() === name)) : null;
+  const byName = name ? existing.find((client) => clientNames(client).some((value) => value === name)) : null;
   if (byName) return { client: byName, reason: "display_name 完全相同" };
   return null;
 }
@@ -222,10 +236,16 @@ function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: Csv
     if (existing?.reason === "display_name 完全相同" && !getValue(row, columnAliases.clientCode)) reviewList.push({ file: "clients", row: rowNumber, reason: "只有姓名相同，正式匯入會先略過並列入 review list", value: name });
   });
 
-  [...serviceRows.map((row) => ["service_records", row] as const), ...followupRows.map((row) => ["followups", row] as const)].forEach(([file, row], index) => {
+  serviceRows.forEach((row, index) => {
     const name = getValue(row, columnAliases.displayName);
     const code = getValue(row, columnAliases.clientCode);
-    if (!name && !code) issues.push({ file, row: index + 2, reason: "缺少姓名或 client_code" });
+    if (!name && !code) issues.push({ file: "service_records", row: index + 2, reason: "缺少姓名或 client_code" });
+  });
+
+  followupRows.forEach((row, index) => {
+    const name = getValue(row, columnAliases.displayName);
+    const code = getValue(row, columnAliases.clientCode);
+    if (!name && !code) issues.push({ file: "followups", row: index + 2, reason: "缺少姓名或 client_code" });
   });
 
   return {
@@ -276,8 +296,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ mode, ...dryRun });
   }
 
-  const clientByCode = new Map(existingClients.filter((client) => client.client_code).map((client) => [client.client_code as string, client.id]));
-  const clientByName = new Map(existingClients.flatMap((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).map((name) => [String(name), client.id] as const)));
+  const clientByCode = new Map<string, string>();
+  const clientByName = new Map<string, string>();
+  existingClients.forEach((client) => rememberClient(client, clientByCode, clientByName));
   const importReview: Review[] = [...dryRun.review_list];
   const result = { clients_created: 0, clients_updated: 0, clients_skipped: 0, service_records_created: 0, followups_created: 0, failed: 0 };
 
@@ -289,24 +310,32 @@ export async function POST(req: Request) {
       continue;
     }
     const payload = buildClientPayload(row);
-    const existingByCode = code ? existingClients.find((client) => client.client_code === code) : null;
-    const existingByNameOnly = !existingByCode && existingClients.find((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).some((value) => String(value).trim() === name));
-    if (existingByCode) {
-      const { error } = await auth.supabase.from("clients").update({ internal_notes: [existingByCode.internal_notes, payload.internal_notes].filter(Boolean).join("\n---\n"), priority: payload.priority, updated_at: new Date().toISOString() }).eq("id", existingByCode.id);
-      if (error) result.failed += 1; else result.clients_updated += 1;
-      clientByCode.set(existingByCode.client_code as string, existingByCode.id);
-      clientByName.set(name, existingByCode.id);
-    } else if (existingByNameOnly) {
+    const existingMatch = findExistingClient(row, existingClients);
+    if (existingMatch?.reason === "display_name 完全相同" && !code) {
       result.clients_skipped += 1;
-      importReview.push({ file: "clients", row: index + 2, reason: "姓名相同但無 client_code 佐證，已略過避免重複新增", value: name });
+      importReview.push({ file: "clients", row: index + 2, reason: "姓名相同但無 client_code / 聯絡方式佐證，已略過避免重複新增", value: name });
+    } else if (existingMatch) {
+      const { error } = await auth.supabase
+        .from("clients")
+        .update({
+          internal_notes: [existingMatch.client.internal_notes, payload.internal_notes].filter(Boolean).join("\n---\n"),
+          priority: payload.priority,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", existingMatch.client.id);
+      if (error) {
+        result.failed += 1;
+      } else {
+        result.clients_updated += 1;
+        rememberClient({ ...existingMatch.client, display_name: name || existingMatch.client.display_name }, clientByCode, clientByName);
+      }
     } else {
       const { data, error } = await auth.supabase.from("clients").insert(payload).select("id, client_code, display_name").single();
       if (error || !data) {
         result.failed += 1;
       } else {
         result.clients_created += 1;
-        clientByCode.set(String(data.client_code), data.id);
-        clientByName.set(String(data.display_name), data.id);
+        rememberClient(data, clientByCode, clientByName);
       }
     }
   }
