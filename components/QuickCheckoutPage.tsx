@@ -2,6 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { completeAppointmentAndDeductItems } from "@/app/actions/appointments";
+import { createPayment } from "@/app/actions/payments";
+import { INTEGRATED_24_PLUS_12_PAYMENT_RULE, getFlexiblePaymentRiskReminder } from "@/lib/bodyfix/flexible-payment";
 import type { AppointmentItemInput, BodyFixServiceId, CompleteAppointmentInput } from "@/types/bodyfix";
 
 type BalanceType = "training_session" | "bodywork_session" | "consulting_session";
@@ -14,7 +16,7 @@ type ServiceCategory =
   | "紫微 / 塔羅狀態解析"
   | "混合服務"
   | "其他";
-type PaymentMode = "balance" | "single_payment" | "comp" | "accounts_receivable";
+type PaymentMode = "balance" | "single_payment" | "comp" | "accounts_receivable" | "flexible_payment";
 type PaymentMethod = "現金" | "轉帳" | "Line Pay" | "其他";
 type FollowupDelay = "none" | "3" | "7" | "14" | "custom";
 type FollowupPurpose = "詢問身體狀態" | "提醒下次預約" | "推 3 次整理" | "推 12 次計畫" | "其他";
@@ -26,6 +28,9 @@ type CustomerOption = {
   training_remaining: number;
   bodywork_remaining: number;
   unpaid_amount?: number;
+  flexible_payment_outstanding?: number;
+  flexible_payment_total_paid?: number;
+  flexible_payment_status?: "payment_in_progress" | "paid" | null;
   latest_service_label?: string | null;
   latest_service_date?: string | null;
 };
@@ -72,6 +77,9 @@ type QuickRecordForm = {
   receivableAmount: number;
   paidAmount: number;
   paymentMethod: PaymentMethod;
+  flexibleDepositAmount: number;
+  flexibleTopupAmount: number;
+  flexibleTopupNote: string;
   compReason: string;
   compDeductBalance: boolean;
   expectedPaymentDate: string;
@@ -418,7 +426,8 @@ const PAYMENT_MODE_LABELS: Record<PaymentMode, string> = {
   balance: "使用套票 / 餘額扣除",
   single_payment: "單次現金 / 轉帳收款",
   comp: "贈送 / 活動折抵",
-  accounts_receivable: "未收款，先記帳"
+  accounts_receivable: "未收款，先記帳",
+  flexible_payment: "彈性補款模式"
 };
 const RECORD_PLACEHOLDER = "今天主要處理肩頸與胸椎活動度，右側張力較高，下次可接骨盆與髖。";
 
@@ -445,6 +454,9 @@ function getDefaultForm(serviceCode = "training_single_60"): QuickRecordForm {
     receivableAmount: service.default_balance_type ? 0 : service.default_price ?? 0,
     paidAmount: service.default_balance_type ? 0 : service.default_price ?? 0,
     paymentMethod: "現金",
+    flexibleDepositAmount: INTEGRATED_24_PLUS_12_PAYMENT_RULE.minimumFlexibleDeposit,
+    flexibleTopupAmount: 0,
+    flexibleTopupNote: "",
     compReason: "",
     compDeductBalance: false,
     expectedPaymentDate: todayDate(),
@@ -483,6 +495,7 @@ function buildLedgerNote(form: QuickRecordForm, service: ServiceCatalogItem) {
     `service_name=${service.display_name}`,
     `balance_type=${service.default_balance_type ?? "none"}`,
     `payment_mode=${PAYMENT_MODE_LABELS[form.paymentMode]}`,
+    form.paymentMode === "flexible_payment" ? "flexible_payment=true" : null,
     `manual_adjustment_amount=${form.manualAdjustmentAmount}`,
     `service_record_today_focus=${form.todayFocus || "未填"}`,
     `service_record_observed_status=${form.observedStatus || "未填"}`,
@@ -502,6 +515,7 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
   const [resultMessage, setResultMessage] = useState<string | null>(null);
 
   const selectedCustomer = customers.find((customer) => customer.customer_id === selectedCustomerId);
+  const flexibleRiskReminder = selectedCustomer ? getFlexiblePaymentRiskReminder(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0) : null;
   const selectedService = SERVICE_BY_CODE.get(form.serviceCode) ?? SERVICE_CATALOG[0];
   const followupDate = buildFollowupDate(form);
 
@@ -509,9 +523,25 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
     const selectedAddons = form.addonCodes.map((code) => SERVICE_BY_CODE.get(code)).filter((service): service is ServiceCatalogItem => Boolean(service));
     const selectedPackage = form.packageCode ? PACKAGE_BY_CODE.get(form.packageCode) ?? null : null;
     const addonAmount = selectedAddons.reduce((sum, service) => sum + (service.default_price ?? 0), 0);
-    const packageAmount = selectedPackage?.price ?? 0;
-    const receivable = Math.max(0, form.receivableAmount + form.manualAdjustmentAmount + addonAmount + packageAmount);
-    const paid = form.paymentMode === "accounts_receivable" ? 0 : Math.max(0, form.paidAmount + packageAmount);
+    const isIntegratedPackage = selectedPackage?.package_code === INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode;
+    const packageAmount = selectedPackage
+      ? form.paymentMode === "flexible_payment" && isIntegratedPackage
+        ? INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount
+        : form.paymentMode === "single_payment" && selectedPackage.cash_price
+          ? selectedPackage.cash_price
+          : selectedPackage.price
+      : 0;
+    const flexibleDeposit = form.paymentMode === "flexible_payment" && isIntegratedPackage
+      ? Math.max(INTEGRATED_24_PLUS_12_PAYMENT_RULE.minimumFlexibleDeposit, form.flexibleDepositAmount)
+      : 0;
+    const serviceReceivable = Math.max(0, form.receivableAmount + form.manualAdjustmentAmount);
+    const receivable = Math.max(0, serviceReceivable + addonAmount + packageAmount);
+    const paid = form.paymentMode === "accounts_receivable"
+      ? 0
+      : form.paymentMode === "flexible_payment" && isIntegratedPackage
+        ? flexibleDeposit
+        : Math.max(0, form.paidAmount + packageAmount);
+    const outstanding = Math.max(0, receivable - paid);
     const serviceRecordFilled = Boolean(form.todayFocus || form.observedStatus || form.nextDirection || form.notes);
     const duration = (selectedService.duration_minutes ?? 0) + selectedAddons.reduce((sum, service) => sum + (service.duration_minutes ?? 0), 0);
     const deductParts = [
@@ -524,7 +554,12 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
       selectedPackage,
       duration: duration > 0 ? `${duration} 分鐘` : "依單題 / 自訂內容",
       receivable,
+      serviceReceivable,
+      packageAmount,
       paid,
+      outstanding,
+      flexibleDeposit,
+      isIntegratedPackage,
       serviceRecordFilled,
       deductText: deductParts.length > 0 ? deductParts.join("、") : "不扣餘額",
       followupText: followupDate ? `${followupDate}｜${form.followupPurpose}` : "不建立"
@@ -566,6 +601,32 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
     setResultMessage(null);
   }
 
+  async function handleFlexibleTopupSubmit() {
+    if (!selectedCustomer || form.flexibleTopupAmount <= 0) return;
+    setSubmitting(true);
+    setResultMessage(null);
+
+    const result = await createPayment({
+      customer_id: selectedCustomer.customer_id,
+      amount: form.flexibleTopupAmount,
+      payment_method: form.paymentMethod === "轉帳" ? "transfer" : form.paymentMethod === "Line Pay" ? "linepay" : form.paymentMethod === "其他" ? "other" : "cash",
+      note: [
+        "payment_entry_type=flexible_payment_topup",
+        `payment_mode=${PAYMENT_MODE_LABELS.flexible_payment}`,
+        `payment_method=${form.paymentMethod}`,
+        form.flexibleTopupNote ? `note=${form.flexibleTopupNote}` : null
+      ].filter(Boolean).join("；")
+    });
+
+    setSubmitting(false);
+    if (result.success) {
+      setForm((current) => ({ ...current, flexibleTopupAmount: 0, flexibleTopupNote: "" }));
+      setResultMessage("已新增補款紀錄；請重新整理確認未收款更新。");
+    } else {
+      setResultMessage(`補款失敗：${result.message}`);
+    }
+  }
+
   async function handleSubmit() {
     if (!selectedCustomer || !isPreviewOpen) return;
     setSubmitting(true);
@@ -581,7 +642,7 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
       billing_type: billingType,
       units_to_deduct: form.paymentMode === "balance" || (form.paymentMode === "comp" && form.compDeductBalance) ? totalDeductUnits : 0,
       quantity: 1,
-      unit_price: preview.receivable,
+      unit_price: preview.serviceReceivable,
       note: buildLedgerNote(form, selectedService)
     });
 
@@ -602,8 +663,21 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
         billing_type: "package",
         units_to_deduct: 0,
         quantity: 1,
-        unit_price: preview.selectedPackage.price,
-        note: `package_code=${preview.selectedPackage.package_code}；package_name=${preview.selectedPackage.display_name}；adds_balance=${preview.selectedPackage.adds_balance}；package_product=true；not_service_record=true`
+        unit_price: form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? preview.outstanding : preview.packageAmount,
+        note: [
+          `package_code=${preview.selectedPackage.package_code}`,
+          `package_name=${preview.selectedPackage.display_name}`,
+          `adds_balance=${preview.selectedPackage.adds_balance}`,
+          "package_product=true",
+          "not_service_record=true",
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? "payment_mode=彈性補款模式" : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? `contract_amount=${INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount}` : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? `payment_entry=${preview.flexibleDeposit}` : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? `total_paid=${preview.flexibleDeposit}` : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? `outstanding_amount=${preview.outstanding}` : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? `payment_status=${preview.outstanding === 0 ? "paid" : "payment_in_progress"}` : null,
+          form.paymentMode === "flexible_payment" && preview.isIntegratedPackage ? "v0_2_unlock=trust_full_balance" : null
+        ].filter(Boolean).join("；")
       });
     }
 
@@ -656,10 +730,18 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
           </select>
         </label>
 
+        {flexibleRiskReminder ? (
+          <div className="mt-4 rounded-2xl border border-[#b45309] bg-[#fff7ed] p-4 text-sm leading-7 text-[#7c2d12]">
+            <strong>彈性補款提醒</strong>
+            <p>{flexibleRiskReminder.message}</p>
+            {flexibleRiskReminder.exceedsReminderThreshold ? <p>未收款已超過 NT$20,000；下次預約前建議先確認補款節奏。</p> : null}
+          </div>
+        ) : null}
+
         <div className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <SummaryTile label="剩餘教練課" value={selectedCustomer ? `${selectedCustomer.training_remaining} 堂` : "尚無紀錄"} />
           <SummaryTile label="剩餘身體整理" value={selectedCustomer ? `${selectedCustomer.bodywork_remaining} 次` : "尚無紀錄"} />
-          <SummaryTile label="未收款" value={selectedCustomer ? money(selectedCustomer.unpaid_amount ?? 0) : "尚無紀錄"} />
+          <SummaryTile label="未收款" value={selectedCustomer ? money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0) : "尚無紀錄"} />
           <SummaryTile
             label="最近一次服務"
             value={selectedCustomer?.latest_service_label ? `${formatServiceDate(selectedCustomer.latest_service_date)} / ${selectedCustomer.latest_service_label}` : "尚無紀錄"}
@@ -751,6 +833,7 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
                 <p><strong>{preview.selectedPackage.display_name}</strong></p>
                 <p>方案代碼：{preview.selectedPackage.package_code}</p>
                 <p>方案價格：{money(preview.selectedPackage.price)}{preview.selectedPackage.cash_price ? `｜一次付清 ${money(preview.selectedPackage.cash_price)}` : ""}</p>
+                {preview.selectedPackage.package_code === INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode ? <p>彈性補款：訂金 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.minimumFlexibleDeposit)} 起，總價仍為 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}。</p> : null}
                 <p>增加餘額：{preview.selectedPackage.adds_balance}</p>
                 {preview.selectedPackage.note ? <p className="text-[#6f6a63]">{preview.selectedPackage.note}</p> : null}
               </div>
@@ -765,7 +848,12 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
                   type="button"
                   key={mode}
                   className={`min-h-12 rounded-2xl border px-4 py-3 text-left text-sm font-semibold transition ${form.paymentMode === mode ? "border-[#9b7550] bg-[#172333] text-white" : "border-[rgba(23,35,51,.14)] bg-white text-[#172333]"}`}
-                  onClick={() => patchForm({ paymentMode: mode, receivableAmount: mode === "balance" || mode === "comp" ? 0 : selectedService.default_price ?? 0, paidAmount: mode === "accounts_receivable" ? 0 : selectedService.default_price ?? 0 })}
+                  onClick={() => patchForm({
+                    paymentMode: mode,
+                    packageCode: mode === "flexible_payment" ? INTEGRATED_24_PLUS_12_PAYMENT_RULE.packageCode : form.packageCode,
+                    receivableAmount: mode === "balance" || mode === "comp" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0,
+                    paidAmount: mode === "accounts_receivable" || mode === "flexible_payment" ? 0 : selectedService.default_price ?? 0
+                  })}
                 >
                   {PAYMENT_MODE_LABELS[mode]}
                 </button>
@@ -812,7 +900,40 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
                   <TextField label="預計付款日" type="date" value={form.expectedPaymentDate} onChange={(value) => patchForm({ expectedPaymentDate: value })} />
                 </>
               ) : null}
+
+              {form.paymentMode === "flexible_payment" ? (
+                <>
+                  <NumberField label="彈性補款訂金（最低 NT$2,400）" value={form.flexibleDepositAmount} onChange={(value) => patchForm({ flexibleDepositAmount: value })} />
+                  <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
+                </>
+              ) : null}
             </div>
+
+            {form.paymentMode === "flexible_payment" ? (
+              <div className="mt-4 rounded-2xl border border-[#c6aa87] bg-white/70 p-4 text-sm leading-7 text-[#172333]">
+                <strong>彈性補款模式規則</strong>
+                <p>只適用 24 + 12 深度整合方案；總價固定 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount)}，不可套用一次付清 {money(INTEGRATED_24_PLUS_12_PAYMENT_RULE.fullPaymentAmount)}。</p>
+                <p>v0.2 採信任制：建立方案後先開通教練課 24 堂與身體整理 12 次；若仍有未收款，系統只提醒、不強制阻擋服務。</p>
+              </div>
+            ) : null}
+          </section>
+
+          <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
+            <h2 className="text-xl font-semibold text-[#172333]">新增補款紀錄</h2>
+            <p className="mt-2 text-sm leading-6 text-[#6f6a63]">每次補款都建立新的 payment_entry，不覆蓋既有付款紀錄；送出後會記錄日期、補款金額、付款方式與備註。</p>
+            <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <NumberField label="補款金額" value={form.flexibleTopupAmount} onChange={(value) => patchForm({ flexibleTopupAmount: value })} />
+              <SelectField label="付款方式" value={form.paymentMethod} onChange={(value) => patchForm({ paymentMethod: value as PaymentMethod })} options={["現金", "轉帳", "Line Pay", "其他"]} />
+              <TextField label="備註" value={form.flexibleTopupNote} onChange={(value) => patchForm({ flexibleTopupNote: value })} placeholder="例如：第一次補款 / 下次預約前確認" />
+            </div>
+            <button
+              type="button"
+              disabled={!selectedCustomer || submitting || form.flexibleTopupAmount <= 0}
+              onClick={handleFlexibleTopupSubmit}
+              className="mt-4 min-h-12 rounded-2xl bg-[#172333] px-5 py-3 font-bold text-white disabled:opacity-50"
+            >
+              新增補款紀錄
+            </button>
           </section>
 
           <section className="rounded-3xl border border-[rgba(23,35,51,.14)] bg-[#fbfaf6] p-4 shadow-sm sm:p-5">
@@ -856,7 +977,9 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
                 <PreviewRow label="扣除內容" value={preview.deductText} />
                 <PreviewRow label="本次應收" value={money(preview.receivable)} />
                 <PreviewRow label="本次已收" value={money(preview.paid)} />
-                <PreviewRow label="付款方式" value={form.paymentMode === "single_payment" ? form.paymentMethod : PAYMENT_MODE_LABELS[form.paymentMode]} />
+                {form.paymentMode === "flexible_payment" ? <PreviewRow label="剩餘應收" value={money(preview.outstanding)} /> : null}
+                <PreviewRow label="付款方式" value={form.paymentMode === "single_payment" || form.paymentMode === "flexible_payment" ? form.paymentMethod : PAYMENT_MODE_LABELS[form.paymentMode]} />
+                {form.paymentMode === "flexible_payment" && preview.outstanding > 0 ? <PreviewRow label="服務提醒" value={`此客戶尚有未收款：${money(preview.outstanding)}；請確認是否繼續安排服務。`} /> : null}
                 <PreviewRow label="服務紀錄" value={preview.serviceRecordFilled ? "已建立" : "尚未填寫"} />
                 <PreviewRow label="追蹤提醒" value={preview.followupText} />
                 <button
@@ -878,7 +1001,7 @@ export function QuickCheckoutPage({ customers }: { customers: CustomerOption[] }
               <h2 className="text-lg font-semibold text-[#172333]">送出後餘額預估</h2>
               <p>教練課：{Math.max(selectedCustomer.training_remaining - form.trainingDeduct, 0)} 堂</p>
               <p>身體整理：{Math.max(selectedCustomer.bodywork_remaining - form.bodyworkDeduct, 0)} 次</p>
-              <p>未收款：{form.paymentMode === "accounts_receivable" ? money((selectedCustomer.unpaid_amount ?? 0) + preview.receivable) : money(selectedCustomer.unpaid_amount ?? 0)}</p>
+              <p>未收款：{form.paymentMode === "accounts_receivable" ? money((selectedCustomer.unpaid_amount ?? 0) + preview.receivable) : form.paymentMode === "flexible_payment" ? money(preview.outstanding) : money(selectedCustomer.flexible_payment_outstanding ?? selectedCustomer.unpaid_amount ?? 0)}</p>
             </section>
           ) : null}
 
