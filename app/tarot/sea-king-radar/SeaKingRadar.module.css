@@ -1,0 +1,668 @@
+.pageShell {
+  min-height: 100vh;
+  padding: 18px min(5vw, 56px) 64px;
+  color: #f8f1e5;
+  background:
+    radial-gradient(circle at 12% 5%, rgba(191, 146, 79, 0.24), transparent 30%),
+    radial-gradient(circle at 86% 14%, rgba(74, 116, 145, 0.2), transparent 32%),
+    linear-gradient(135deg, #071522 0%, #0d1b2a 48%, #10243a 100%);
+}
+
+.nav,
+.hero,
+.startPanel,
+.questionGrid,
+.resultSection,
+.radarCard,
+.zodiacCard,
+.ctaGrid,
+.consentCard {
+  width: min(1120px, 100%);
+  margin-inline: auto;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 14px 0;
+  backdrop-filter: blur(18px);
+}
+
+.brand,
+.navLinks,
+.heroActions,
+.questionTopline,
+.questionTitleRow,
+.sliderMeta,
+.sectionHeadingRow,
+.zodiacPills {
+  display: flex;
+  align-items: center;
+}
+
+.brand {
+  gap: 10px;
+  color: #f8f1e5;
+  text-decoration: none;
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brandMark {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border-radius: 10px;
+  color: #071522;
+  background: #d4af6a;
+  border: 1px solid rgba(248, 241, 229, 0.5);
+  font-family: Georgia, serif;
+}
+
+.navLinks {
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.navLinks a,
+.navLinks :global(a) {
+  border: 1px solid rgba(212, 175, 106, 0.36);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: #f8f1e5;
+  background: rgba(248, 241, 229, 0.08);
+  text-decoration: none;
+  font-size: 0.86rem;
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.35fr) minmax(280px, 0.65fr);
+  gap: 22px;
+  padding: 54px 0 30px;
+}
+
+.heroContent,
+.principleCard,
+.startPanel,
+.questionCard,
+.scorePanel,
+.resultPanel,
+.radarCard,
+.zodiacCard,
+.ctaCard,
+.consentCard {
+  border: 1px solid rgba(212, 175, 106, 0.28);
+  box-shadow: 0 26px 70px rgba(0, 0, 0, 0.24);
+}
+
+.heroContent {
+  position: relative;
+  overflow: hidden;
+  border-radius: 32px;
+  padding: clamp(34px, 6vw, 76px);
+  background:
+    linear-gradient(135deg, rgba(9, 24, 38, 0.98), rgba(14, 39, 63, 0.94)),
+    radial-gradient(circle at 82% 40%, rgba(212, 175, 106, 0.24), transparent 34%);
+}
+
+.heroContent::after {
+  content: "";
+  position: absolute;
+  right: 7%;
+  bottom: 10%;
+  width: 165px;
+  height: 165px;
+  border: 1px solid rgba(212, 175, 106, 0.32);
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(212, 175, 106, 0.16), transparent 62%);
+}
+
+.kicker {
+  margin: 0 0 14px;
+  color: #d4af6a;
+  font-size: 0.78rem;
+  font-weight: 850;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.heroContent h1,
+.startPanel h2,
+.resultPanel h2,
+.radarCard h2,
+.zodiacCard h2,
+.ctaCard h2 {
+  margin: 0;
+  line-height: 1.08;
+  letter-spacing: -0.04em;
+}
+
+.heroContent h1 {
+  font-size: clamp(3rem, 9vw, 6.8rem);
+}
+
+.heroLead {
+  position: relative;
+  z-index: 1;
+  max-width: 720px;
+  color: rgba(248, 241, 229, 0.82);
+  font-size: clamp(1.04rem, 2vw, 1.28rem);
+  line-height: 1.8;
+}
+
+.heroActions {
+  position: relative;
+  z-index: 1;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 26px;
+}
+
+.primaryButton,
+.secondaryButton,
+.textButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  text-decoration: none;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+.primaryButton {
+  border: 1px solid rgba(248, 241, 229, 0.3);
+  padding: 13px 18px;
+  color: #071522;
+  background: linear-gradient(135deg, #f0d59b, #d4af6a);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(212, 175, 106, 0.38);
+  padding: 13px 18px;
+  color: #f8f1e5;
+  background: rgba(248, 241, 229, 0.08);
+}
+
+.principleCard,
+.startPanel,
+.questionCard,
+.scorePanel,
+.resultPanel,
+.radarCard,
+.zodiacCard,
+.ctaCard,
+.consentCard {
+  border-radius: 26px;
+  background: rgba(248, 241, 229, 0.07);
+  backdrop-filter: blur(18px);
+}
+
+.principleCard {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  gap: 14px;
+  padding: 28px;
+}
+
+.principleCard strong {
+  color: #f0d59b;
+  font-size: 1.35rem;
+  line-height: 1.35;
+}
+
+.principleCard p,
+.startPanel p,
+.questionCard p,
+.scorePanel p,
+.resultPanel p,
+.radarCard p,
+.zodiacCard p,
+.ctaCard p,
+.consentCard p {
+  color: rgba(248, 241, 229, 0.75);
+  line-height: 1.75;
+}
+
+.startPanel {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr);
+  gap: 24px;
+  padding: clamp(24px, 4vw, 38px);
+}
+
+.birthdayGrid {
+  display: grid;
+  gap: 14px;
+}
+
+.birthdayGrid label {
+  display: grid;
+  gap: 8px;
+  color: #f8f1e5;
+  font-weight: 780;
+}
+
+.birthdayGrid input {
+  width: 100%;
+  border: 1px solid rgba(212, 175, 106, 0.35);
+  border-radius: 16px;
+  padding: 12px 14px;
+  color: #f8f1e5;
+  background: rgba(7, 21, 34, 0.68);
+}
+
+.birthdayGrid span {
+  color: rgba(248, 241, 229, 0.64);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+.questionGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+  padding: 22px 0;
+}
+
+.questionCard {
+  padding: 22px;
+}
+
+.questionTopline,
+.questionTitleRow,
+.sliderMeta,
+.sectionHeadingRow {
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.questionTopline span,
+.levelBadge,
+.zodiacPills span {
+  border: 1px solid rgba(212, 175, 106, 0.34);
+  border-radius: 999px;
+  padding: 7px 10px;
+  color: #f0d59b;
+  background: rgba(212, 175, 106, 0.1);
+  font-size: 0.82rem;
+  font-weight: 820;
+}
+
+.questionTopline small {
+  color: rgba(248, 241, 229, 0.56);
+}
+
+.questionTitleRow {
+  align-items: flex-start;
+  margin-top: 14px;
+}
+
+.questionTitleRow h3 {
+  margin: 0;
+  font-size: 1.4rem;
+}
+
+.questionTitleRow strong {
+  min-width: 56px;
+  min-height: 56px;
+  display: grid;
+  place-items: center;
+  border-radius: 18px;
+  color: #071522;
+  background: #d4af6a;
+  font-size: 1.75rem;
+}
+
+.slider {
+  width: 100%;
+  margin-top: 18px;
+  accent-color: #d4af6a;
+}
+
+.sliderMeta {
+  margin-top: 4px;
+  color: rgba(248, 241, 229, 0.6);
+  font-size: 0.86rem;
+}
+
+.currentDescription {
+  border-left: 3px solid #d4af6a;
+  margin-top: 16px;
+  padding: 10px 0 10px 13px;
+  background: rgba(7, 21, 34, 0.24);
+}
+
+.currentDescription span {
+  color: #f0d59b;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.currentDescription p {
+  margin: 4px 0 0;
+}
+
+.textButton {
+  border: 0;
+  margin-top: 12px;
+  padding: 0;
+  color: #f0d59b;
+  background: transparent;
+}
+
+.scaleList {
+  display: grid;
+  gap: 8px;
+  margin: 16px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.scaleList li {
+  display: grid;
+  grid-template-columns: 30px 1fr;
+  gap: 8px;
+  border: 1px solid rgba(248, 241, 229, 0.12);
+  border-radius: 14px;
+  padding: 8px 10px;
+  color: rgba(248, 241, 229, 0.7);
+  background: rgba(7, 21, 34, 0.18);
+}
+
+.activeScale {
+  border-color: rgba(212, 175, 106, 0.52) !important;
+  color: #f8f1e5 !important;
+  background: rgba(212, 175, 106, 0.14) !important;
+}
+
+.resultSection {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.72fr) minmax(0, 1fr);
+  gap: 18px;
+  padding: 16px 0 22px;
+}
+
+.scorePanel,
+.resultPanel,
+.radarCard,
+.zodiacCard,
+.ctaCard,
+.consentCard {
+  padding: clamp(22px, 4vw, 34px);
+}
+
+.scoreValue {
+  color: #f0d59b;
+  font-size: clamp(4rem, 10vw, 7rem);
+  font-weight: 900;
+  letter-spacing: -0.08em;
+}
+
+.scoreValue span {
+  color: rgba(248, 241, 229, 0.62);
+  font-size: 1.4rem;
+  letter-spacing: 0;
+}
+
+.meter {
+  overflow: hidden;
+  height: 14px;
+  border: 1px solid rgba(212, 175, 106, 0.34);
+  border-radius: 999px;
+  background: rgba(7, 21, 34, 0.66);
+}
+
+.meter span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #b7d7cc, #d4af6a, #d56f54);
+}
+
+.levelBadge {
+  display: inline-flex;
+  margin-top: 14px;
+}
+
+.topRiskList {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.topRiskList article,
+.redFlag,
+.actionBox,
+.legendItem {
+  border: 1px solid rgba(212, 175, 106, 0.22);
+  border-radius: 18px;
+  padding: 14px;
+  background: rgba(7, 21, 34, 0.32);
+}
+
+.topRiskList article {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 3px 14px;
+}
+
+.topRiskList span,
+.actionBox span,
+.legendItem span {
+  color: #d4af6a;
+  font-size: 0.84rem;
+  font-weight: 850;
+}
+
+.topRiskList h3 {
+  grid-column: 1;
+  margin: 0;
+}
+
+.topRiskList strong {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  color: #f0d59b;
+  font-size: 1.35rem;
+}
+
+.redFlag {
+  margin-top: 16px;
+  border-color: rgba(213, 111, 84, 0.6);
+  background: rgba(213, 111, 84, 0.12);
+}
+
+.redFlag strong {
+  color: #ffb29e;
+}
+
+.actionBox {
+  margin-top: 16px;
+}
+
+.radarCard,
+.zodiacCard,
+.ctaGrid,
+.consentCard {
+  margin-top: 18px;
+}
+
+.radarWrap {
+  display: grid;
+  grid-template-columns: minmax(280px, 0.92fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: center;
+}
+
+.radarWrap svg {
+  width: 100%;
+  max-width: 520px;
+  margin-inline: auto;
+  overflow: visible;
+}
+
+.radarGrid {
+  fill: none;
+  stroke: rgba(248, 241, 229, 0.32);
+  stroke-width: 1;
+}
+
+.radarAxis {
+  stroke: rgba(248, 241, 229, 0.22);
+  stroke-width: 1;
+}
+
+.radarFill {
+  fill: rgba(212, 175, 106, 0.3);
+}
+
+.radarLine {
+  fill: none;
+  stroke: #d4af6a;
+  stroke-linejoin: round;
+  stroke-width: 3;
+}
+
+.radarDot {
+  fill: #f0d59b;
+  stroke: #071522;
+  stroke-width: 2;
+}
+
+.radarLabel {
+  fill: #f8f1e5;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.radarLegend {
+  display: grid;
+  gap: 10px;
+}
+
+.legendItem {
+  display: grid;
+  gap: 4px;
+}
+
+.legendItem small {
+  color: rgba(248, 241, 229, 0.62);
+  line-height: 1.5;
+}
+
+.zodiacPills {
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 18px 0;
+}
+
+.ctaGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.ctaCard {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.ctaCard p {
+  flex: 1;
+}
+
+.consentCard label {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: #f8f1e5;
+  line-height: 1.6;
+}
+
+.consentCard input {
+  margin-top: 5px;
+  accent-color: #d4af6a;
+}
+
+@media (max-width: 860px) {
+  .nav {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .hero,
+  .startPanel,
+  .questionGrid,
+  .resultSection,
+  .radarWrap,
+  .ctaGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .hero {
+    padding-top: 26px;
+  }
+
+  .questionCard {
+    padding: 18px;
+  }
+
+  .scaleList li {
+    grid-template-columns: 26px 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .pageShell {
+    padding-inline: 14px;
+  }
+
+  .navLinks {
+    justify-content: flex-start;
+  }
+
+  .heroContent,
+  .principleCard,
+  .startPanel,
+  .scorePanel,
+  .resultPanel,
+  .radarCard,
+  .zodiacCard,
+  .ctaCard,
+  .consentCard {
+    border-radius: 22px;
+  }
+
+  .heroContent {
+    padding: 28px 22px;
+  }
+
+  .questionTitleRow {
+    flex-direction: column;
+  }
+
+  .questionTitleRow strong {
+    min-width: 50px;
+    min-height: 50px;
+  }
+
+  .radarLabel {
+    font-size: 8px;
+  }
+}
