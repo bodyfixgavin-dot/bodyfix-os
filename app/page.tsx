@@ -10,6 +10,7 @@ export default function HomePage() {
         <Link href="/booking">前往 Booking</Link>
         <Link href="/admin">前往 Booking Admin</Link>
         <Link href="/tarot/sadm">前往 SADM 關係決策整理</Link>
+        <Link href="/tarot/sea-king-radar">前往海王雷達 v2</Link>
       </div>
     </main>
   );
