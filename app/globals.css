@@ -1457,3 +1457,86 @@ main {
     min-width: 0;
   }
 }
+
+.calendar-backfill-upload input[type="file"] {
+  width: 100%;
+}
+
+.calendar-backfill-stats {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  margin-top: 16px;
+}
+
+.calendar-backfill-stat {
+  display: grid;
+  gap: 6px;
+  min-width: 0;
+  border: 1px solid var(--bf-line);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, .58);
+  padding: 14px;
+}
+
+.calendar-backfill-stat span {
+  color: var(--bf-muted);
+  font-size: 13px;
+}
+
+.calendar-backfill-stat strong {
+  font-size: 28px;
+  line-height: 1;
+}
+
+.calendar-backfill-details {
+  border: 1px solid var(--bf-line);
+  border-radius: 18px;
+  margin-top: 12px;
+  overflow: hidden;
+}
+
+.calendar-backfill-details summary {
+  cursor: pointer;
+  font-weight: 700;
+  padding: 14px 16px;
+}
+
+.calendar-backfill-details p,
+.calendar-backfill-details small {
+  color: var(--bf-muted);
+  margin: 0;
+  padding: 0 16px 16px;
+}
+
+.calendar-backfill-problems {
+  display: grid;
+  gap: 10px;
+  padding: 0 16px 16px;
+}
+
+.calendar-backfill-note {
+  color: var(--bf-muted);
+  line-height: 1.8;
+}
+
+.calendar-backfill-danger {
+  background: #7f1d1d;
+}
+
+.calendar-backfill-result .calendar-backfill-stat:last-child strong {
+  color: #7f1d1d;
+}
+
+@media (max-width: 640px) {
+  .calendar-backfill-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-backfill-details summary,
+  .calendar-backfill-details p,
+  .calendar-backfill-details small,
+  .calendar-backfill-problems {
+    overflow-wrap: anywhere;
+  }
+}

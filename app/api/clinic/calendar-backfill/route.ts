@@ -1,53 +1,248 @@
 import { NextResponse } from "next/server";
-import { cleanPayload, FOLLOWUP_FIELDS, makeClientCode, readJson, requireClinicAdmin } from "@/lib/clinic-api";
+import { cleanPayload, CLIENT_FIELDS, FOLLOWUP_FIELDS, makeClientCode, readJson, RECORD_FIELDS, requireClinicAdmin } from "@/lib/clinic-api";
 
-const CALENDAR_BACKFILL_SOURCE = "google_calendar_backfill";
-const BACKFILL_NOTE_MARKER = "來源：Google Calendar 回填";
+const BACKFILL_NOTE_MARKER = "來源：A 完整客戶總表 / Calendar Backfill";
+const CREATED_FROM_MARKER = "created_from：calendar_backfill";
+const DEFAULT_CLIENT_STATUS = "未判斷";
+const DEFAULT_CONTACT_METHOD = "unknown";
 
-const statusToStage: Record<string, string> = {
-  熟客: "repeat",
-  觀察: "followup",
-  新客: "first_done",
-  流失: "lost",
-  未判斷: "followup"
+type CsvRow = Record<string, string>;
+type ExistingClient = {
+  id: string;
+  client_code: string | null;
+  display_name: string | null;
+  client_name: string | null;
+  nickname: string | null;
+  line_id: string | null;
+  instagram: string | null;
+  phone: string | null;
+  internal_notes: string | null;
+  priority: string | null;
+};
+type ImportPayload = {
+  mode?: "dry_run" | "confirm";
+  clientsCsv?: string;
+  serviceRecordsCsv?: string;
+  followupsCsv?: string;
 };
 
-const contactFieldByMethod: Record<string, "line_id" | "instagram" | "phone" | null> = {
-  LINE: "line_id",
-  IG: "instagram",
-  電話: "phone",
-  其他: null,
-  未知: null
+type Issue = { file: string; row: number; reason: string; value?: string };
+type Duplicate = { file: string; row: number; reason: string; incoming: string; existing?: string };
+type Review = { file: string; row: number; reason: string; value: string };
+
+const columnAliases = {
+  clientCode: ["client_code", "客戶編號", "原始客戶編號", "編號", "id", "client_id"],
+  displayName: ["display_name", "客戶姓名", "姓名", "暱稱", "客戶稱呼", "client_name", "nickname", "name"],
+  priority: ["priority", "優先級", "追蹤優先級", "分級"],
+  status: ["client_status", "客戶狀態", "狀態"],
+  contactMethod: ["contact_method", "聯絡方式", "聯絡方式類型", "contact_type"],
+  contactValue: ["contact_value", "聯絡方式內容", "電話", "line", "line_id", "ig", "instagram", "phone"],
+  serviceDate: ["service_date", "服務日期", "日期", "date"],
+  serviceType: ["service_type", "服務類型", "類型"],
+  serviceName: ["service_name", "服務名稱", "項目", "課程名稱"],
+  duration: ["duration_min", "duration_minutes", "服務時長", "分鐘", "時長"],
+  location: ["location", "服務地點", "地點"],
+  note: ["note", "notes", "備註", "record_note", "內容"],
+} as const;
+
+const priorityText: Record<string, string> = {
+  P1: "高潛力客戶，建議優先追蹤。",
+  P2: "中潛力客戶，可安排後續關懷。",
+  P3: "低潛力或資料不足，暫時保留。"
 };
 
-const followupTypeByDelay: Record<string, string> = {
-  "3d": "day3",
-  "7d": "day7",
-  "14d": "day14",
-  custom: "other"
-};
-
-function addDays(date: Date, days: number) {
-  const next = new Date(date);
-  next.setDate(next.getDate() + days);
-  return next.toISOString().slice(0, 10);
+function normalize(value: unknown) {
+  return String(value ?? "").trim();
 }
 
-function buildFollowupDate(delay: unknown, customDate: unknown) {
-  if (delay === "custom" && typeof customDate === "string" && customDate) return customDate;
-  if (delay === "3d") return addDays(new Date(), 3);
-  if (delay === "7d") return addDays(new Date(), 7);
-  if (delay === "14d") return addDays(new Date(), 14);
+function normalizeKey(value: string) {
+  return value.trim().replace(/^\uFEFF/, "").toLowerCase();
+}
+
+function getValue(row: CsvRow, aliases: readonly string[]) {
+  for (const alias of aliases) {
+    const direct = row[alias];
+    if (direct !== undefined && direct.trim()) return direct.trim();
+    const normalizedAlias = normalizeKey(alias);
+    const foundKey = Object.keys(row).find((key) => normalizeKey(key) === normalizedAlias);
+    if (foundKey && row[foundKey].trim()) return row[foundKey].trim();
+  }
+  return "";
+}
+
+function parseCsv(input: string | undefined) {
+  const content = normalize(input);
+  if (!content) return [];
+  const rows: string[][] = [];
+  let field = "";
+  let row: string[] = [];
+  let quoted = false;
+
+  for (let index = 0; index < content.length; index += 1) {
+    const char = content[index];
+    const next = content[index + 1];
+    if (char === '"') {
+      if (quoted && next === '"') {
+        field += '"';
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (char === "," && !quoted) {
+      row.push(field);
+      field = "";
+    } else if ((char === "\n" || char === "\r") && !quoted) {
+      if (char === "\r" && next === "\n") index += 1;
+      row.push(field);
+      if (row.some((cell) => cell.trim())) rows.push(row);
+      row = [];
+      field = "";
+    } else {
+      field += char;
+    }
+  }
+  row.push(field);
+  if (row.some((cell) => cell.trim())) rows.push(row);
+  const [headers = [], ...dataRows] = rows;
+  return dataRows.map((cells) => Object.fromEntries(headers.map((header, index) => [header.trim().replace(/^\uFEFF/, ""), normalize(cells[index])])));
+}
+
+function contactValues(row: CsvRow) {
+  const generic = getValue(row, columnAliases.contactValue);
+  return [generic, getValue(row, ["line_id", "LINE", "Line"]), getValue(row, ["instagram", "IG", "ig"]), getValue(row, ["phone", "電話", "手機"])]
+    .filter(Boolean)
+    .map((value) => value.toLowerCase());
+}
+
+function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
+  const code = getValue(row, columnAliases.clientCode);
+  const name = getValue(row, columnAliases.displayName);
+  const contacts = contactValues(row);
+  const byCode = code ? existing.find((client) => client.client_code === code) : null;
+  if (byCode) return { client: byCode, reason: "client_code 相同" };
+  const byContact = contacts.length ? existing.find((client) => [client.line_id, client.instagram, client.phone].filter(Boolean).map((value) => String(value).toLowerCase()).some((value) => contacts.includes(value))) : null;
+  if (byContact) return { client: byContact, reason: "聯絡方式相同" };
+  const byName = name ? existing.find((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).some((value) => String(value).trim() === name)) : null;
+  if (byName) return { client: byName, reason: "display_name 完全相同" };
   return null;
 }
 
-function buildRecordNote(body: Record<string, unknown>) {
-  const recordNote = typeof body.record_note === "string" && body.record_note.trim()
-    ? body.record_note.trim()
-    : "行事曆回填，詳細內容未補。";
-  const paymentLine = `付款狀態：${body.payment_status ?? "不確定"}${body.amount ? `｜金額：${body.amount}` : ""}`;
-  const locationLine = `服務地點：${body.location ?? "未知"}`;
-  return [BACKFILL_NOTE_MARKER, paymentLine, locationLine, recordNote].join("\n");
+function buildClientPayload(row: CsvRow) {
+  const displayName = getValue(row, columnAliases.displayName);
+  const clientCode = getValue(row, columnAliases.clientCode) || makeClientCode();
+  const priority = ["P1", "P2", "P3"].includes(getValue(row, columnAliases.priority)) ? getValue(row, columnAliases.priority) : "P3";
+  const contactMethod = getValue(row, columnAliases.contactMethod) || DEFAULT_CONTACT_METHOD;
+  const contactValue = getValue(row, columnAliases.contactValue);
+  const status = getValue(row, columnAliases.status) || DEFAULT_CLIENT_STATUS;
+  const notes = [
+    BACKFILL_NOTE_MARKER,
+    CREATED_FROM_MARKER,
+    `client_status：${status}`,
+    `contact_method：${contactMethod}`,
+    getValue(row, columnAliases.note)
+  ].filter(Boolean).join("\n");
+  const payload: Record<string, unknown> = {
+    client_code: clientCode,
+    client_name: displayName,
+    display_name: displayName,
+    nickname: displayName,
+    source: "other",
+    priority,
+    current_stage: status === "流失" ? "lost" : status === "熟客" ? "repeat" : "followup",
+    first_contact_date: new Date().toISOString().slice(0, 10),
+    first_pain_point: "Calendar Backfill",
+    internal_notes: notes,
+    updated_at: new Date().toISOString()
+  };
+  const method = contactMethod.toLowerCase();
+  if (contactValue && (method.includes("line") || method === "line")) payload.line_id = contactValue;
+  if (contactValue && (method.includes("ig") || method.includes("instagram"))) payload.instagram = contactValue;
+  if (contactValue && (method.includes("電話") || method.includes("phone") || method.includes("手機"))) payload.phone = contactValue;
+  if (!payload.line_id) payload.line_id = `clinic-${clientCode}`;
+  return cleanPayload(payload, CLIENT_FIELDS);
+}
+
+function buildRecordPayload(row: CsvRow, clientId: string) {
+  const serviceType = getValue(row, columnAliases.serviceType) || "其他";
+  const serviceName = getValue(row, columnAliases.serviceName) || serviceType;
+  const duration = Number(getValue(row, columnAliases.duration));
+  return cleanPayload({
+    client_id: clientId,
+    service_date: getValue(row, columnAliases.serviceDate) || new Date().toISOString().slice(0, 10),
+    record_mode: "quick",
+    service_code: serviceType,
+    service_name_snapshot: serviceName,
+    duration_minutes: Number.isFinite(duration) && duration > 0 ? duration : null,
+    main_complaint: "行事曆 / 客戶總表回填",
+    processed_area: serviceType,
+    body_region: getValue(row, columnAliases.location) || "未知",
+    followup_needed: false,
+    internal_notes: [BACKFILL_NOTE_MARKER, "source：calendar_backfill", getValue(row, columnAliases.note) || "行事曆 / 客戶總表回填，詳細內容未補。", "歷史回填紀錄，不自動扣 balances。"].join("\n")
+  }, RECORD_FIELDS);
+}
+
+function buildFollowupPayload(row: CsvRow, clientId: string) {
+  const priority = ["P1", "P2", "P3"].includes(getValue(row, columnAliases.priority)) ? getValue(row, columnAliases.priority) : "P3";
+  return cleanPayload({
+    client_id: clientId,
+    followup_type: "other",
+    scheduled_date: new Date().toISOString().slice(0, 10),
+    message_summary: priorityText[priority],
+    next_action: `${priority}｜Calendar Backfill followup candidate`,
+    response_status: "not_sent",
+    is_done: false
+  }, FOLLOWUP_FIELDS);
+}
+
+async function loadExistingClients(supabase: Awaited<ReturnType<typeof requireClinicAdmin>>["supabase"]) {
+  const { data, error } = await supabase
+    .from("clients")
+    .select("id, client_code, display_name, client_name, nickname, line_id, instagram, phone, internal_notes, priority")
+    .limit(10000);
+  if (error) throw new Error(error.message);
+  return (data ?? []) as ExistingClient[];
+}
+
+function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: CsvRow[], existingClients: ExistingClient[]) {
+  const issues: Issue[] = [];
+  const duplicates: Duplicate[] = [];
+  const reviewList: Review[] = [];
+  const namesInFile = new Set<string>();
+  let newClients = 0;
+
+  clientsRows.forEach((row, index) => {
+    const rowNumber = index + 2;
+    const name = getValue(row, columnAliases.displayName);
+    if (!name) issues.push({ file: "clients", row: rowNumber, reason: "缺少姓名" });
+    const existing = findExistingClient(row, existingClients);
+    if (existing) duplicates.push({ file: "clients", row: rowNumber, reason: existing.reason, incoming: name || getValue(row, columnAliases.clientCode), existing: `${existing.client.client_code ?? "無編號"}｜${existing.client.display_name ?? existing.client.client_name ?? "未命名"}` });
+    if (name && namesInFile.has(name)) duplicates.push({ file: "clients", row: rowNumber, reason: "匯入檔內姓名重複", incoming: name });
+    if (name) namesInFile.add(name);
+    if (name && !existing) newClients += 1;
+    if (existing?.reason === "display_name 完全相同" && !getValue(row, columnAliases.clientCode)) reviewList.push({ file: "clients", row: rowNumber, reason: "只有姓名相同，正式匯入會先略過並列入 review list", value: name });
+  });
+
+  [...serviceRows.map((row) => ["service_records", row] as const), ...followupRows.map((row) => ["followups", row] as const)].forEach(([file, row], index) => {
+    const name = getValue(row, columnAliases.displayName);
+    const code = getValue(row, columnAliases.clientCode);
+    if (!name && !code) issues.push({ file, row: index + 2, reason: "缺少姓名或 client_code" });
+  });
+
+  return {
+    summary: {
+      clients_rows: clientsRows.length,
+      service_records_rows: serviceRows.length,
+      followup_rows: followupRows.length,
+      planned_new_clients: newClients,
+      planned_service_records: serviceRows.length,
+      planned_followups: followupRows.length,
+      missing_names: issues.filter((issue) => issue.reason.includes("缺少姓名")).length,
+      possible_duplicates: duplicates.length
+    },
+    issues,
+    duplicates,
+    review_list: reviewList
+  };
 }
 
 export async function GET() {
@@ -69,126 +264,80 @@ export async function POST(req: Request) {
   const auth = await requireClinicAdmin();
   if (!auth.ok) return auth.response;
 
-  const body = await readJson(req) as Record<string, unknown>;
-  const clientName = String(body.client_name ?? "").trim();
-  const existingClientId = String(body.existing_client_id ?? "").trim();
+  const body = await readJson(req) as ImportPayload;
+  const mode = body.mode === "confirm" ? "confirm" : "dry_run";
+  const clientsRows = parseCsv(body.clientsCsv);
+  const serviceRows = parseCsv(body.serviceRecordsCsv);
+  const followupRows = parseCsv(body.followupsCsv);
+  const existingClients = await loadExistingClients(auth.supabase);
+  const dryRun = analyze(clientsRows, serviceRows, followupRows, existingClients);
 
-  if (!existingClientId && !clientName) {
-    return NextResponse.json({ error: "client_name is required" }, { status: 400 });
+  if (mode === "dry_run") {
+    return NextResponse.json({ mode, ...dryRun });
   }
 
-  let duplicateCandidates: unknown[] = [];
-  if (!existingClientId && clientName) {
-    const { data } = await auth.supabase
-      .from("clients")
-      .select("id, client_code, display_name, nickname, client_name")
-      .or(`display_name.eq.${clientName},nickname.eq.${clientName},client_name.eq.${clientName}`)
-      .limit(5);
-    duplicateCandidates = data ?? [];
+  const clientByCode = new Map(existingClients.filter((client) => client.client_code).map((client) => [client.client_code as string, client.id]));
+  const clientByName = new Map(existingClients.flatMap((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).map((name) => [String(name), client.id] as const)));
+  const importReview: Review[] = [...dryRun.review_list];
+  const result = { clients_created: 0, clients_updated: 0, clients_skipped: 0, service_records_created: 0, followups_created: 0, failed: 0 };
+
+  for (const [index, row] of clientsRows.entries()) {
+    const name = getValue(row, columnAliases.displayName);
+    const code = getValue(row, columnAliases.clientCode);
+    if (!name) {
+      result.clients_skipped += 1;
+      continue;
+    }
+    const payload = buildClientPayload(row);
+    const existingByCode = code ? existingClients.find((client) => client.client_code === code) : null;
+    const existingByNameOnly = !existingByCode && existingClients.find((client) => [client.display_name, client.client_name, client.nickname].filter(Boolean).some((value) => String(value).trim() === name));
+    if (existingByCode) {
+      const { error } = await auth.supabase.from("clients").update({ internal_notes: [existingByCode.internal_notes, payload.internal_notes].filter(Boolean).join("\n---\n"), priority: payload.priority, updated_at: new Date().toISOString() }).eq("id", existingByCode.id);
+      if (error) result.failed += 1; else result.clients_updated += 1;
+      clientByCode.set(existingByCode.client_code as string, existingByCode.id);
+      clientByName.set(name, existingByCode.id);
+    } else if (existingByNameOnly) {
+      result.clients_skipped += 1;
+      importReview.push({ file: "clients", row: index + 2, reason: "姓名相同但無 client_code 佐證，已略過避免重複新增", value: name });
+    } else {
+      const { data, error } = await auth.supabase.from("clients").insert(payload).select("id, client_code, display_name").single();
+      if (error || !data) {
+        result.failed += 1;
+      } else {
+        result.clients_created += 1;
+        clientByCode.set(String(data.client_code), data.id);
+        clientByName.set(String(data.display_name), data.id);
+      }
+    }
   }
 
-  let clientId = existingClientId;
-  let client = null;
-
-  if (!clientId) {
-    const contactMethod = String(body.contact_method ?? "未知");
-    const contactValue = typeof body.contact_value === "string" ? body.contact_value.trim() : "";
-    const contactField = contactFieldByMethod[contactMethod] ?? null;
-    const note = typeof body.note === "string" ? body.note.trim() : "";
-    const preferredLocation = String(body.preferred_location ?? "未知");
-    const clientStatus = String(body.client_status ?? "未判斷");
-    const clientPayload: Record<string, unknown> = {
-      client_code: makeClientCode(),
-      client_name: clientName,
-      display_name: clientName,
-      nickname: clientName,
-      source: CALENDAR_BACKFILL_SOURCE,
-      city: preferredLocation,
-      home_city: preferredLocation,
-      preferred_city: preferredLocation,
-      service_mode_preference: preferredLocation,
-      current_stage: statusToStage[clientStatus] ?? "followup",
-      priority: clientStatus === "熟客" ? "P1" : clientStatus === "觀察" ? "P2" : "P3",
-      first_contact_date: body.service_date || new Date().toISOString().slice(0, 10),
-      first_pain_point: body.service_type || "行事曆回填",
-      last_session_date: body.service_date || null,
-      internal_notes: [
-        BACKFILL_NOTE_MARKER,
-        `回填客戶狀態：${clientStatus}`,
-        `常見地點：${preferredLocation}`,
-        contactMethod !== "未知" ? `聯絡方式：${contactMethod}${contactValue ? `｜${contactValue}` : ""}` : null,
-        note || null
-      ].filter(Boolean).join("\n"),
-      updated_at: new Date().toISOString()
-    };
-    if (contactField && contactValue) clientPayload[contactField] = contactValue;
-    if (!contactPayloadHasLineId(clientPayload)) clientPayload.line_id = `clinic-${clientPayload.client_code}`;
-
-    const { data, error } = await auth.supabase.from("clients").insert(clientPayload).select("*").single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    client = data;
-    clientId = data.id;
-  }
-
-  const serviceType = String(body.service_type ?? "其他");
-  const serviceName = String(body.service_name || serviceType);
-  const paymentStatus = String(body.payment_status ?? "不確定");
-  const amount = body.amount ? Number(body.amount) : null;
-  const recordPayload = {
-    client_id: clientId,
-    service_date: body.service_date || new Date().toISOString().slice(0, 10),
-    record_mode: "quick",
-    service_code: serviceType,
-    service_name_snapshot: serviceName,
-    duration_minutes: body.duration_min ? Number(body.duration_min) : null,
-    price_twd: amount,
-    main_complaint: "Google Calendar 回填",
-    processed_area: serviceType,
-    body_region: String(body.location ?? "未知"),
-    followup_needed: body.followup_delay !== "none",
-    internal_notes: buildRecordNote(body)
+  const resolveClientId = (row: CsvRow) => {
+    const code = getValue(row, columnAliases.clientCode);
+    const name = getValue(row, columnAliases.displayName);
+    return (code && clientByCode.get(code)) || (name && clientByName.get(name)) || "";
   };
 
-  const { data: serviceRecord, error: recordError } = await auth.supabase
-    .from("service_records")
-    .insert(recordPayload)
-    .select("*")
-    .single();
-  if (recordError) return NextResponse.json({ error: recordError.message }, { status: 400 });
-
-  await auth.supabase
-    .from("clients")
-    .update({ last_session_date: recordPayload.service_date, updated_at: new Date().toISOString() })
-    .eq("id", clientId);
-
-  let followup = null;
-  const followupDate = buildFollowupDate(body.followup_delay, body.custom_followup_date);
-  if (followupDate) {
-    const followupPayload = cleanPayload({
-      client_id: clientId,
-      service_record_id: serviceRecord.id,
-      followup_type: followupTypeByDelay[String(body.followup_delay)] ?? "other",
-      scheduled_date: followupDate,
-      message_summary: body.followup_action || "行事曆回填追蹤",
-      next_action: body.followup_action || "確認是否需要下一次服務",
-      response_status: "not_sent",
-      is_done: false
-    }, FOLLOWUP_FIELDS);
-    const { data, error } = await auth.supabase.from("followups").insert(followupPayload).select("*").single();
-    if (error) return NextResponse.json({ error: error.message }, { status: 400 });
-    followup = data;
+  for (const [index, row] of serviceRows.entries()) {
+    const clientId = resolveClientId(row);
+    if (!clientId) {
+      result.failed += 1;
+      importReview.push({ file: "service_records", row: index + 2, reason: "找不到可對應 client，未建立服務紀錄", value: getValue(row, columnAliases.displayName) || getValue(row, columnAliases.clientCode) });
+      continue;
+    }
+    const { error } = await auth.supabase.from("service_records").insert(buildRecordPayload(row, clientId));
+    if (error) result.failed += 1; else result.service_records_created += 1;
   }
 
-  return NextResponse.json({
-    client,
-    client_id: clientId,
-    service_record: serviceRecord,
-    followup,
-    duplicate_candidates: duplicateCandidates,
-    ledger_entry_reserved: ["已收", "未收", "套票扣除"].includes(paymentStatus)
-  }, { status: 201 });
-}
+  for (const [index, row] of followupRows.entries()) {
+    const clientId = resolveClientId(row);
+    if (!clientId) {
+      result.failed += 1;
+      importReview.push({ file: "followups", row: index + 2, reason: "找不到可對應 client，未建立追蹤候選", value: getValue(row, columnAliases.displayName) || getValue(row, columnAliases.clientCode) });
+      continue;
+    }
+    const { error } = await auth.supabase.from("followups").insert(buildFollowupPayload(row, clientId));
+    if (error) result.failed += 1; else result.followups_created += 1;
+  }
 
-function contactPayloadHasLineId(payload: Record<string, unknown>) {
-  return typeof payload.line_id === "string" && payload.line_id.trim().length > 0;
+  return NextResponse.json({ mode, ...dryRun, result, review_list: importReview });
 }
