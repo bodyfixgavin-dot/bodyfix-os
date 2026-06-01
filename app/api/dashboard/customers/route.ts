@@ -137,12 +137,10 @@ export async function GET() {
     const client = clientById.get(customerId);
     const customerBalances = balances.filter((row) => row.customer_id === customerId);
     const customerPackages = packagePurchases.filter((row) => row.client_id === customerId || row.customer_id === customerId);
-    const trainingRemaining = customerBalances
-      .filter((row) => row.credit_type === "training" || row.credit_type === "training_session")
-      .reduce((sum, row) => sum + toNumber(row.remaining_units), 0);
-    const bodyworkRemaining = customerBalances
-      .filter((row) => ["fascia_time", "pelvic_time", "bodywork_session"].includes(row.credit_type ?? ""))
-      .reduce((sum, row) => sum + toNumber(row.remaining_units), 0);
+    const trainingBalances = customerBalances.filter((row) => row.credit_type === "training" || row.credit_type === "training_session");
+    const bodyworkBalances = customerBalances.filter((row) => ["fascia_time", "pelvic_time", "bodywork_session"].includes(row.credit_type ?? ""));
+    const trainingRemaining = trainingBalances.reduce((sum, row) => sum + toNumber(row.remaining_units), 0);
+    const bodyworkRemaining = bodyworkBalances.reduce((sum, row) => sum + toNumber(row.remaining_units), 0);
     const unpaidLedgerAmount = ledgerRows
       .filter((row) => row.customer_id === customerId && (row.payment_status === "unpaid" || row.entry_type === "accounts_receivable"))
       .reduce((sum, row) => sum + toNumber(row.amount), 0);
@@ -161,6 +159,8 @@ export async function GET() {
       current_plan: planNames.length > 0 ? planNames.join("、") : "未設定方案",
       training_remaining: trainingRemaining,
       bodywork_remaining: bodyworkRemaining,
+      has_training_balance: trainingBalances.length > 0,
+      has_bodywork_balance: bodyworkBalances.length > 0,
       outstanding_amount: Math.max(0, packageOutstanding + unpaidLedgerAmount),
       latest_service_label: latestService?.service_name_snapshot ?? latestService?.service_code ?? null,
       latest_service_date: latestService?.service_date ?? client?.last_session_date ?? null

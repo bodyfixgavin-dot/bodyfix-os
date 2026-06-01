@@ -11,6 +11,8 @@ type CustomerOverview = {
   current_plan: string;
   training_remaining: number;
   bodywork_remaining: number;
+  has_training_balance: boolean;
+  has_bodywork_balance: boolean;
   outstanding_amount: number;
   latest_service_label: string | null;
   latest_service_date: string | null;
@@ -58,6 +60,10 @@ function money(amount: number) {
 
 function formatDate(date: string | null) {
   return date || "—";
+}
+
+function formatRemaining(hasBalance: boolean, remaining: number) {
+  return hasBalance ? String(remaining) : "—";
 }
 
 function EmptyState({ activeTab }: { activeTab: TabKey }) {
@@ -113,8 +119,8 @@ function CustomerTable({ rows }: { rows: CustomerOverview[] }) {
               </td>
               <td>{customer.line_id ?? "—"}</td>
               <td>{customer.current_plan}</td>
-              <td>{customer.training_remaining}</td>
-              <td>{customer.bodywork_remaining}</td>
+              <td>{formatRemaining(customer.has_training_balance, customer.training_remaining)}</td>
+              <td>{formatRemaining(customer.has_bodywork_balance, customer.bodywork_remaining)}</td>
               <td>{money(customer.outstanding_amount)}</td>
               <td>{customer.latest_service_label ?? "—"}<br /><span className="bf-table-muted">{formatDate(customer.latest_service_date)}</span></td>
             </tr>
@@ -219,7 +225,10 @@ export function CustomerBalanceOverview() {
   }, []);
 
   const lowBalanceRows = useMemo(() => {
-    return (payload?.customers ?? []).filter((customer) => customer.training_remaining <= 3 || customer.bodywork_remaining <= 3);
+    return (payload?.customers ?? []).filter((customer) =>
+      (customer.has_training_balance && customer.training_remaining <= 3) ||
+      (customer.has_bodywork_balance && customer.bodywork_remaining <= 3)
+    );
   }, [payload]);
 
   const activeRowsCount = activeTab === "all"
