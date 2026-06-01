@@ -274,7 +274,16 @@ const ziWeiFieldPlan = [
   "解析主題：職涯 / 關係 / 財務 / 流年 / 個人品牌 / 重大選擇",
 ];
 
+function isCosmicModule(module: HubModule) {
+  const cosmicKeywords = ["SADM", "Tarot", "Sea King", "Radar", "ZI WEI", "Zi Wei", "紫微", "海王", "星圖", "Cosmic"];
+  return cosmicKeywords.some((keyword) =>
+    [module.title, module.eyebrow, module.description].some((value) => value?.includes(keyword))
+  );
+}
+
 function ModuleCard({ module }: { module: HubModule }) {
+  const isCosmic = isCosmicModule(module);
+  const cardClassName = `hub-module-card${isCosmic ? " cosmic-module-card" : ""}${module.href ? " hub-module-card-link" : " hub-module-card-disabled"}`;
   const cardContent = (
     <>
       <div className="hub-card-topline">
@@ -282,7 +291,7 @@ function ModuleCard({ module }: { module: HubModule }) {
           {module.status}
         </span>
       </div>
-      {module.eyebrow ? <p className="hub-card-eyebrow">{module.eyebrow}</p> : null}
+      {module.eyebrow ? <p className={`hub-card-eyebrow${isCosmic ? " cosmic-meta" : ""}`}>{module.eyebrow}</p> : null}
       <h3>{module.title}</h3>
       <p>{module.description}</p>
       <span className={module.href ? "hub-card-cta" : "hub-card-cta hub-card-cta-disabled"}>
@@ -293,14 +302,14 @@ function ModuleCard({ module }: { module: HubModule }) {
 
   if (module.href) {
     return (
-      <Link className="hub-module-card hub-module-card-link" href={module.href}>
+      <Link className={cardClassName} href={module.href}>
         {cardContent}
       </Link>
     );
   }
 
   return (
-    <article className="hub-module-card hub-module-card-disabled">
+    <article className={cardClassName}>
       {cardContent}
     </article>
   );
@@ -400,7 +409,7 @@ export default function HomePage() {
           </div>
           <div className="hub-ziwei-plan" aria-labelledby="ziwei-part-9-title">
             <div>
-              <p className="hub-card-eyebrow">Part 9 Planned</p>
+              <p className="hub-card-eyebrow cosmic-meta">Part 9 Planned</p>
               <h3 id="ziwei-part-9-title">Part 9｜Zi Wei Structural Analysis Intake</h3>
               <p>
                 紫微結構解析的第一版不會製作完整自動排盤引擎。系統會先負責收集出生資料、提問主題與命盤截圖，Gavin 使用文墨天機等外部工具完成排盤後，再將命盤重點與解析紀錄整理回 BodyFix OS。
@@ -415,7 +424,7 @@ export default function HomePage() {
               ))}
             </ol>
             <div className="hub-field-plan">
-              <p className="hub-card-eyebrow">Future intake fields</p>
+              <p className="hub-card-eyebrow cosmic-meta">Future intake fields</p>
               <div>
                 {ziWeiFieldPlan.map((field) => (
                   <span key={field}>{field}</span>
