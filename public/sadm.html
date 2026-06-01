@@ -357,9 +357,14 @@
     .question {
       max-width: 650px;
       margin: 20px auto 0;
+      padding: 18px clamp(16px, 4vw, 26px);
+      border: 1px solid rgba(161,123,69,0.32);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.42);
       color: var(--navy-soft);
       text-align: center;
-      font-size: clamp(1.02rem, 2.6vw, 1.3rem);
+      font-size: clamp(1.08rem, 2.6vw, 1.35rem);
+      font-weight: 700;
       letter-spacing: 0.05em;
     }
 
@@ -370,6 +375,8 @@
       gap: 8px;
       margin: 18px 0 0;
     }
+
+    .measure[hidden] { display: none; }
 
     .measure span,
     .metric-name {
@@ -509,8 +516,18 @@
       font-size: clamp(2.05rem, 7vw, 4.2rem);
     }
 
+    .result-translation {
+      margin: 18px auto 0;
+      max-width: 680px;
+      color: var(--navy);
+      font-size: clamp(1.18rem, 3vw, 1.6rem);
+      font-weight: 800;
+      letter-spacing: 0.05em;
+      text-align: center;
+    }
+
     .insight {
-      margin: 20px auto 0;
+      margin: 18px auto 0;
       max-width: 680px;
       color: var(--navy-soft);
       font-size: clamp(1.02rem, 2.4vw, 1.2rem);
@@ -518,41 +535,64 @@
       text-align: center;
     }
 
-    .metrics {
+    .insight p { margin: 0; }
+    .insight p + p { margin-top: 8px; }
+
+    .stuck-panel {
       margin: 30px 0 0;
+      padding: 20px;
+      border: 1px solid rgba(161,123,69,0.34);
+      border-radius: 22px;
+      background: rgba(255,255,255,0.34);
+    }
+
+    .stuck-panel h3 {
+      margin: 0;
+      color: var(--bronze);
+      letter-spacing: 0.12em;
+      font-size: 1rem;
+    }
+
+    .metrics {
+      margin: 16px 0 0;
       display: grid;
       gap: 13px;
     }
 
     .metric {
       display: grid;
-      grid-template-columns: minmax(116px, 168px) 1fr auto;
-      gap: 10px;
+      grid-template-columns: 1fr auto;
+      gap: 14px;
       align-items: center;
+      padding: 14px;
+      border: 1px solid rgba(161,123,69,0.22);
+      border-radius: 18px;
+      background: rgba(248,241,230,0.58);
     }
 
-    .meter {
-      height: 10px;
-      overflow: hidden;
-      border-radius: 999px;
-      background: rgba(161, 123, 69, 0.14);
-      border: 1px solid rgba(161, 123, 69, 0.18);
-    }
-
-    .meter span {
-      display: block;
-      height: 100%;
-      border-radius: inherit;
-      background: linear-gradient(90deg, var(--navy), var(--bronze));
-      width: 0%;
-    }
-
-    .metric-value {
-      min-width: 46px;
+    .metric p {
+      margin: 8px 0 0;
       color: var(--ink-muted);
-      font-size: 0.9rem;
-      text-align: right;
+      font-size: 0.94rem;
+      line-height: 1.65;
+      letter-spacing: 0.04em;
     }
+
+    .metric-level {
+      min-width: 52px;
+      min-height: 52px;
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      color: #fffaf0;
+      font-weight: 900;
+      letter-spacing: 0.12em;
+      background: var(--bronze);
+    }
+
+    .metric-level.high { background: var(--navy); }
+    .metric-level.medium { background: var(--bronze); }
+    .metric-level.low { background: rgba(7,22,48,0.52); }
 
     .advice {
       margin: 30px 0 0;
@@ -630,8 +670,8 @@
       .nav-row { align-items: stretch; flex-direction: column; }
       .ghost-btn, .primary-btn { width: 100%; min-height: 54px; }
       .status-text { text-align: center; }
-      .metric { grid-template-columns: 1fr; gap: 6px; }
-      .metric-value { text-align: left; }
+      .metric { grid-template-columns: 1fr; gap: 10px; }
+      .metric-level { justify-self: start; width: 48px; height: 48px; }
       .pause-card, .result-card { padding: 26px 16px; border-radius: 24px; }
     }
   </style>
@@ -689,8 +729,12 @@
         <article class="result-card" id="shareCard">
           <p class="result-kicker">你的關係狀態：</p>
           <h2 class="result-name" id="resultName"></h2>
-          <p class="insight" id="resultInsight"></p>
-          <div class="metrics" id="metrics" aria-label="主要指標"></div>
+          <p class="result-translation" id="resultTranslation"></p>
+          <div class="insight" id="resultInsight"></div>
+          <section class="stuck-panel" aria-labelledby="stuckTitle">
+            <h3 id="stuckTitle">你主要卡在這裡</h3>
+            <div class="metrics" id="metrics" aria-label="主要指標"></div>
+          </section>
           <div class="advice">
             <h3>前額葉建議</h3>
             <p id="resultAdvice"></p>
@@ -706,18 +750,18 @@
 
   <script>
     const cards = [
-      { id: "01", measureLabel: "UA，不確定性上癮", title: "他有時很熱，有時又像消失？", question: "你們的互動是不是常常一下很靠近，一下又突然冷掉，讓你一直猜他到底在想什麼？", note: "不穩定的溫柔，最容易讓人誤以為是心動。", weights: { UA: 1, PR: 0.5 } },
-      { id: "02", measureLabel: "PR，海王雷達", title: "你們一直卡在「不知道算什麼」？", question: "你們好像有曖昧、有親密、有期待，但一問到關係定位，就變得模糊不清？", note: "模糊不是浪漫，模糊有時是讓你繼續等的空間。", weights: { PR: 1, TC: 0.5 } },
-      { id: "03", measureLabel: "BC，麵包屑訊號", title: "他是不是每次你快放下時，又剛好出現？", question: "當你開始想放棄、想冷掉、想離開，他就突然變溫柔、突然關心、突然回來找你？", note: "麵包屑不是愛，是剛好不讓你走的訊號。", weights: { BC: 1, UA: 0.5 } },
-      { id: "04", measureLabel: "PR，海王雷達；BC，麵包屑訊號", title: "他講過很多以後，但很少真的做到？", question: "他是不是說過很多「之後」、「有一天」、「等我忙完」，但真正落地的行動很少？", note: "承諾如果沒有行動，就只是讓你繼續等的劇本。", weights: { PR: 1, BC: 0.5 } },
-      { id: "05", measureLabel: "GL，煤氣燈", title: "你常常懷疑自己是不是太敏感？", question: "你明明感覺不舒服，但他總讓你覺得是你太愛想、太難搞、太容易受傷？", note: "當你開始不相信自己的感覺，這段互動就已經影響你了。", weights: { GL: 1, SC: 0.5 } },
-      { id: "06", measureLabel: "GL，煤氣燈；CC，溝通成本", title: "你提出需求後，最後反而變成你在道歉？", question: "你本來只是想說出不安或需求，但聊到最後，卻變成你在安撫他、解釋自己、甚至跟他道歉？", note: "健康的溝通，不會讓提出需求的人變成罪人。", weights: { GL: 1, CC: 1 } },
-      { id: "07", measureLabel: "NA，被需要上癮", title: "他情緒不好時，你會覺得自己有責任讓他好起來？", question: "只要他低落、崩潰、脆弱，你就會自動進入照顧模式，覺得自己不能離開？", note: "你可以關心他，但你不是他的情緒急救站。", weights: { NA: 1, SC: 0.5 } },
-      { id: "08", measureLabel: "NA，被需要上癮；AV，吸引力價值陷阱", title: "你享受他只對你示弱的感覺？", question: "當他說「只有你懂我」、「我只會跟你講這些」，你是不是會覺得自己很特別、很重要？", note: "被當成例外很迷人，但不等於被真正選擇。", weights: { NA: 1, AV: 1 } },
-      { id: "09", measureLabel: "TC，時間成本；UA，不確定性上癮", title: "你常常等他的訊息等到生活亂掉？", question: "你會不自覺一直看手機、猜他為什麼沒回、因為他的訊息影響整天心情？", note: "如果你的一天被他的訊息控制，那成本已經開始變高。", weights: { TC: 1, UA: 0.5 } },
-      { id: "10", measureLabel: "SC，自我成本", title: "這段關係讓你越來越不像自己？", question: "你是不是變得更焦慮、更小心、更常自責，也越來越不敢直接表達自己？", note: "一段關係最貴的成本，是你慢慢失去自己。", weights: { SC: 1, GL: 0.5 } },
-      { id: "11", measureLabel: "EMV，情感收益", title: "跟他互動後，你有感覺被珍惜嗎？", question: "不是只有心動、刺激或曖昧，而是你真的覺得自己被尊重、被在乎、被好好對待嗎？", note: "真正的喜歡，不只讓你心跳，也會讓你感到安定。", weights: { EMV: 1 } },
-      { id: "12", measureLabel: "AV，吸引力價值陷阱；UA，不確定性上癮", title: "你是真的喜歡他，還是被刺激感綁住？", question: "你放不下的，是他的穩定陪伴，還是那種忽冷忽熱、時好時壞、讓你一直想確認的刺激？", note: "有些心動，不是愛變深，而是不確定性變高。", weights: { AV: 1, UA: 0.5 } }
+      { id: "01", hookTitle: "他有時很熱，有時又像消失？", answerStatement: "他的忽冷忽熱，常常讓我忍不住一直猜他到底在想什麼。", microCopy: "不穩定的溫柔，最容易讓人誤以為是心動。", weights: { UA: 1, PR: 0.5 } },
+      { id: "02", hookTitle: "你們一直卡在「不知道算什麼」？", answerStatement: "我們之間有曖昧、有親密、有期待，但關係定位一直很模糊。", microCopy: "模糊不是浪漫，模糊有時是讓你繼續等的空間。", weights: { PR: 1, TC: 0.5 } },
+      { id: "03", hookTitle: "他是不是每次你快放下時，又剛好出現？", answerStatement: "每次我快要放下，他就會突然變溫柔、突然關心，讓我又捨不得走。", microCopy: "麵包屑不是愛，是剛好不讓你走的訊號。", weights: { BC: 1, UA: 0.5 } },
+      { id: "04", hookTitle: "他講過很多以後，但很少真的做到？", answerStatement: "他說過很多之後、有一天、等我忙完，但真正落地的行動很少。", microCopy: "承諾如果沒有行動，就只是讓你繼續等的劇本。", weights: { PR: 1, BC: 0.5 } },
+      { id: "05", hookTitle: "你常常懷疑自己是不是太敏感？", answerStatement: "我明明感覺不舒服，卻常常被他說到懷疑是不是自己太敏感、太愛想。", microCopy: "當你開始不相信自己的感覺，這段互動就已經影響你了。", weights: { GL: 1, SC: 0.5 } },
+      { id: "06", hookTitle: "你提出需求後，最後反而變成你在道歉？", answerStatement: "我本來只是想說出不安或需求，但聊到最後，常常變成我在解釋、安撫，甚至道歉。", microCopy: "健康的溝通，不會讓提出需求的人變成罪人。", weights: { GL: 1, CC: 1 } },
+      { id: "07", hookTitle: "他情緒不好時，你會覺得自己有責任讓他好起來？", answerStatement: "只要他低落、崩潰或脆弱，我就會自動進入照顧模式，覺得自己不能離開。", microCopy: "你可以關心他，但你不是他的情緒急救站。", weights: { NA: 1, SC: 0.5 } },
+      { id: "08", hookTitle: "你享受他只對你示弱的感覺？", answerStatement: "當他說只有我懂他、只會跟我講這些時，我會覺得自己很特別、很重要。", microCopy: "被當成例外很迷人，但不等於被真正選擇。", weights: { NA: 1, AV: 1 } },
+      { id: "09", hookTitle: "你常常等他的訊息等到生活亂掉？", answerStatement: "我會一直看手機、猜他為什麼沒回，也會因為他的訊息影響整天心情。", microCopy: "如果你的一天被他的訊息控制，那成本已經開始變高。", weights: { TC: 1, UA: 0.5 } },
+      { id: "10", hookTitle: "這段關係讓你越來越不像自己？", answerStatement: "在這段關係裡，我變得更焦慮、更小心、更常自責，也越來越不敢直接表達自己。", microCopy: "一段關係最貴的成本，是你慢慢失去自己。", weights: { SC: 1, GL: 0.5 } },
+      { id: "11", hookTitle: "跟他互動後，你有感覺被珍惜嗎？", answerStatement: "跟他互動後，我真的有感覺自己被尊重、被在乎、被好好對待。", microCopy: "真正的喜歡，不只讓你心跳，也會讓你感到安定。", weights: { EMV: 1 } },
+      { id: "12", hookTitle: "你是真的喜歡他，還是被刺激感綁住？", answerStatement: "我放不下的，更多是那種忽冷忽熱、時好時壞、讓我一直想確認的刺激感。", microCopy: "有些心動，不是愛變深，而是不確定性變高。", weights: { AV: 1, UA: 0.5 } }
     ];
 
     const options = [
@@ -729,42 +773,100 @@
 
     const resultCopy = {
       "穩定滋養型": {
-        insight: "你在這段關係裡不只是心動，也有被穩定對待的感覺。這不代表完全沒有問題，而是目前的互動比較能讓你感到安心、被尊重，也比較不需要靠猜測維持連結。",
+        translation: "你在這段關係裡，不只是心動，也有被穩定對待。",
+        insights: [
+          "你不需要一直猜，也不需要一直證明自己值得被愛。",
+          "這段互動目前比較能讓你感到安心、被尊重，也比較不會讓你失去自己。"
+        ],
         advice: "保持觀察，也保持自己的生活節奏。穩定的關係不需要讓你失去自己。"
       },
       "可修正低谷型": {
-        insight: "這段關係目前有壓力，但不一定是死巷。真正的重點不是他說了什麼，而是接下來有沒有穩定、具體、可持續的改變。",
+        translation: "這段關係有壓力，但還不一定是死巷。",
+        insights: [
+          "目前的問題不一定代表完全沒救，但需要看見具體行動，而不是只聽承諾。",
+          "真正的重點是，接下來有沒有穩定、具體、可持續的改善。"
+        ],
         advice: "設定 14 到 30 天觀察期，只看行動，不看情緒承諾。"
       },
       "高消耗牽引型": {
-        insight: "你不是沒有感覺，而是這段關係讓你付出的時間、情緒與自我成本已經偏高。你可能一直在想，再努力一點是不是就會變好。",
+        translation: "你不是沒有感覺，而是這段關係讓你付出的成本已經偏高。",
+        insights: [
+          "你可能一直在想，再努力一點是不是就會變好。",
+          "但如果一段關係長期讓你等、猜、自責、生活變亂，那就不是單純的愛，而是消耗正在變高。"
+        ],
         advice: "先降低投入，不要再用更多消耗證明自己值得被愛。"
       },
       "不確定性上癮型": {
-        insight: "你放不下的可能不是愛本身，而是大腦一直在等下一次回溫。有時很甜，有時消失，這種不穩定很容易讓人誤以為是強烈心動。",
-        advice: "停止解碼每一則訊息，先觀察對方是否有穩定行動。"
+        translation: "你放不下的，可能不是愛本身，而是下一次回溫的期待。",
+        insights: [
+          "有時很甜，有時消失；有時靠近，有時又讓你猜。",
+          "這種不穩定會讓大腦一直等待下一次獎賞，久了就容易把焦慮誤認成心動。"
+        ],
+        advice: "接下來 7 天，先停止解碼每一則訊息，只觀察對方是否有穩定行動。"
       },
       "被需要上癮型": {
-        insight: "你可能把「被需要」誤認成「被愛」。你很會照顧人，也很容易因為自己對他很重要，就忽略自己其實也需要被照顧。",
+        translation: "你可能把「被需要」誤認成「被愛」。",
+        insights: [
+          "你很會照顧人，也很容易因為自己對他很重要，就忽略自己其實也需要被照顧。",
+          "被需要很迷人，但如果只有你在承接他，這段關係就會慢慢失衡。"
+        ],
         advice: "問自己一句：這段關係有沒有也照顧到我？"
       },
       "煤氣燈覺察型": {
-        insight: "你可能正在慢慢失去對自己感受的信任。當你每次提出不安，最後都變成你在懷疑自己，這段互動就已經開始影響你的判斷。",
+        translation: "你可能正在慢慢失去對自己感受的信任。",
+        insights: [
+          "當你每次提出不安，最後都變成你在懷疑自己，這段互動就已經開始影響你的判斷。",
+          "你不是一定太敏感，你可能只是太常被否定。"
+        ],
         advice: "先把事實寫下來，不要只靠當下情緒判斷。你需要的是重新相信自己的感覺。"
       },
       "海王雷達高警示型": {
-        insight: "這段互動出現明顯高風險訊號。對方不一定是故意傷害你，但目前的模式可能正在讓你一直猜、一直等、一直消耗。",
+        translation: "這段互動出現明顯高風險訊號。",
+        insights: [
+          "對方不一定是故意傷害你，但目前的模式可能正在讓你一直猜、一直等、一直消耗。",
+          "這不是要你立刻判他有罪，而是提醒你先保護自己的時間、情緒和自我價值。"
+        ],
         advice: "先停止加碼投入，觀察對方是否有穩定、具體、可持續的行動。"
       }
     };
 
     const metricLabels = {
-      PR: "海王雷達",
-      BC: "麵包屑訊號",
-      GL: "煤氣燈覺察",
-      NA: "被需要上癮",
-      SC: "自我成本",
-      EMV: "情感收益"
+      PR: "關係模糊與高風險訊號",
+      BC: "麵包屑與回溫牽引",
+      GL: "自我懷疑與感受被否定",
+      NA: "被需要感與照顧者模式",
+      UA: "不確定性與忽冷忽熱牽引",
+      TC: "等待與時間消耗",
+      SC: "自我流失與情緒消耗",
+      CC: "溝通壓力與反覆解釋",
+      AV: "刺激感與吸引力陷阱",
+      EMV: "被珍惜與情感收益"
+    };
+
+    const metricMax = {
+      PR: 6,
+      BC: 4.5,
+      GL: 6,
+      NA: 6,
+      UA: 6,
+      TC: 4.5,
+      SC: 6,
+      CC: 3,
+      AV: 6,
+      EMV: 3
+    };
+
+    const metricDescriptions = {
+      PR: "關係定位越模糊，越容易讓你一直等待對方表態。",
+      BC: "對方偶爾回溫，可能剛好勾住你快放下的地方。",
+      GL: "你可能太常被帶到懷疑自己的感覺。",
+      NA: "你容易進入照顧者模式，把被需要當成被愛。",
+      UA: "忽冷忽熱正在牽動你，讓你一直想確認下一次回溫。",
+      TC: "你的時間與注意力，可能已經被等待訊息佔走太多。",
+      SC: "這段互動正在消耗你的自我感與情緒穩定。",
+      CC: "你可能花很多力氣解釋需求、安撫對方或修復對話。",
+      AV: "你放不下的可能是起伏感，而不一定是穩定的愛。",
+      EMV: "這代表你感受到被珍惜、被尊重、被好好對待的程度。"
     };
 
     const allScores = ["UA", "PR", "BC", "GL", "NA", "TC", "SC", "CC", "AV", "EMV"];
@@ -794,15 +896,11 @@
       const card = cards[current];
       cardCount.textContent = `狀態卡 ${card.id} / ${String(cards.length).padStart(2, "0")}`;
       progressFill.style.width = `${((current + 1) / cards.length) * 100}%`;
-      cardTitle.textContent = card.title;
-      cardQuestion.textContent = card.question;
-      cardNote.textContent = card.note;
+      cardTitle.textContent = card.hookTitle;
+      cardQuestion.textContent = card.answerStatement;
+      cardNote.textContent = card.microCopy;
       cardMeasure.innerHTML = "";
-      card.measureLabel.split("；").forEach((label) => {
-        const chip = document.createElement("span");
-        chip.textContent = label;
-        cardMeasure.appendChild(chip);
-      });
+      cardMeasure.hidden = true;
       optionsEl.innerHTML = "";
       options.forEach((option, index) => {
         const button = document.createElement("button");
@@ -824,6 +922,7 @@
         if (current < cards.length - 1) {
           current += 1;
           renderCard();
+          document.querySelector(".card").scrollIntoView({ block: "start", behavior: "smooth" });
         } else {
           showScreen(pauseScreen);
         }
@@ -857,24 +956,34 @@
       const resultName = decideResult(scores);
       const copy = resultCopy[resultName];
       document.getElementById("resultName").textContent = resultName;
-      document.getElementById("resultInsight").textContent = copy.insight;
+      document.getElementById("resultTranslation").textContent = copy.translation;
+      document.getElementById("resultInsight").innerHTML = copy.insights.map((line) => `<p>${line}</p>`).join("");
       document.getElementById("resultAdvice").textContent = copy.advice;
 
       const metrics = document.getElementById("metrics");
       metrics.innerHTML = "";
-      Object.entries(metricLabels).forEach(([key, label]) => {
-        const max = key === "EMV" ? 3 : 6;
-        const value = Math.round(scores[key] * 10) / 10;
-        const percent = Math.min(100, (value / max) * 100);
-        const row = document.createElement("div");
-        row.className = "metric";
-        row.innerHTML = `
-          <span class="metric-name">${label}</span>
-          <span class="meter" aria-hidden="true"><span style="width: ${percent}%"></span></span>
-          <span class="metric-value">${value} / ${max}</span>
-        `;
-        metrics.appendChild(row);
-      });
+      Object.keys(metricLabels)
+        .map((key) => ({ key, value: Math.round(scores[key] * 10) / 10, max: metricMax[key] }))
+        .sort((a, b) => {
+          const aSignal = a.key === "EMV" ? 1 - (a.value / a.max) : a.value / a.max;
+          const bSignal = b.key === "EMV" ? 1 - (b.value / b.max) : b.value / b.max;
+          return bSignal - aSignal;
+        })
+        .slice(0, 3)
+        .forEach(({ key, value, max }) => {
+          const signal = key === "EMV" ? 1 - (value / max) : value / max;
+          const level = signal >= 0.66 ? "高" : signal >= 0.34 ? "中" : "低";
+          const row = document.createElement("div");
+          row.className = "metric";
+          row.innerHTML = `
+            <div>
+              <span class="metric-name">${metricLabels[key]}</span>
+              <p>${metricDescriptions[key]}</p>
+            </div>
+            <span class="metric-level ${level === "高" ? "high" : level === "中" ? "medium" : "low"}">${level}</span>
+          `;
+          metrics.appendChild(row);
+        });
       showScreen(resultScreen);
     }
 
@@ -888,6 +997,7 @@
       if (current > 0) {
         current -= 1;
         renderCard();
+        document.querySelector(".card").scrollIntoView({ block: "start", behavior: "smooth" });
       }
     });
 
