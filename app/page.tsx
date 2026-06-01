@@ -188,8 +188,9 @@ const roadmapSections: HubSection[] = [
       },
       {
         title: "Zi Wei Structural Analysis 紫微結構解析",
-        eyebrow: "Zi Wei Structural Analysis",
-        description: "用紫微斗數協助使用者理解人生節奏、關係模式與職涯結構",
+        eyebrow: "ZI WEI STRUCTURAL ANALYSIS",
+        description:
+          "收集出生資料與提問主題，使用文墨天機作為外部排盤工具，由 Gavin 進行命盤結構、四化流動、時間節奏與當前課題整理。",
         status: "Future",
         cta: "規劃中",
       },
@@ -244,8 +245,33 @@ const phases = [
   {
     label: "Phase 5",
     title: "Public Growth",
-    items: ["BF Knowledge", "BF Tarot 工具集", "Zi Wei 分析工具", "城市場次", "客戶入口", "App Prototype"],
+    items: ["BF Knowledge", "BF Tarot 工具集", "Zi Wei Structural Analysis Intake", "城市場次", "客戶入口", "App Prototype"],
   },
+];
+
+const ziWeiSteps = [
+  "使用者填寫出生資料與想問主題",
+  "Gavin 使用文墨天機等外部工具排盤",
+  "Gavin 手動補入命盤重點與解析方向",
+  "BodyFix OS 保存紫微個案紀錄",
+  "導向預約、私訊或付費解析",
+];
+
+const ziWeiFieldPlan = [
+  "稱呼",
+  "出生年月日",
+  "出生時間",
+  "出生地",
+  "性別",
+  "是否知道真太陽時",
+  "想問主題",
+  "目前卡住的問題",
+  "是否已有文墨天機命盤截圖",
+  "命盤截圖上傳，可選",
+  "命盤來源：文墨天機 / 其他 / 尚未排盤",
+  "排盤狀態：待排盤 / 已排盤 / 已解析 / 已完成",
+  "命盤重點，Gavin 手動輸入",
+  "解析主題：職涯 / 關係 / 財務 / 流年 / 個人品牌 / 重大選擇",
 ];
 
 function ModuleCard({ module }: { module: HubModule }) {
@@ -372,6 +398,32 @@ export default function HomePage() {
               </article>
             ))}
           </div>
+          <div className="hub-ziwei-plan" aria-labelledby="ziwei-part-9-title">
+            <div>
+              <p className="hub-card-eyebrow">Part 9 Planned</p>
+              <h3 id="ziwei-part-9-title">Part 9｜Zi Wei Structural Analysis Intake</h3>
+              <p>
+                紫微結構解析的第一版不會製作完整自動排盤引擎。系統會先負責收集出生資料、提問主題與命盤截圖，Gavin 使用文墨天機等外部工具完成排盤後，再將命盤重點與解析紀錄整理回 BodyFix OS。
+              </p>
+              <div className="bf-notice">
+                目前不串接文墨天機 API。若未來有正式 API 或授權方式，再評估是否進行自動化整合。
+              </div>
+            </div>
+            <ol className="hub-step-list">
+              {ziWeiSteps.map((step) => (
+                <li key={step}>{step}</li>
+              ))}
+            </ol>
+            <div className="hub-field-plan">
+              <p className="hub-card-eyebrow">Future intake fields</p>
+              <div>
+                {ziWeiFieldPlan.map((field) => (
+                  <span key={field}>{field}</span>
+                ))}
+              </div>
+            </div>
+          </div>
+
         </section>
 
         <footer className="hub-footer">
