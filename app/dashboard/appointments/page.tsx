@@ -1,6 +1,7 @@
 import { SupabaseNotConnectedState } from "@/components/SupabaseNotConnectedState";
 import { createSupabaseServerClient, hasSupabaseEnv } from "@/lib/supabase/server";
 import { QuickCheckoutPage } from "@/components/QuickCheckoutPage";
+import { INTEGRATED_24_PLUS_12_PAYMENT_RULE } from "@/lib/bodyfix/flexible-payment";
 
 export const dynamic = "force-dynamic";
 
@@ -17,6 +18,14 @@ type LedgerRow = {
   amount?: number | string | null;
   payment_status?: string | null;
   entry_type?: string | null;
+  note?: string | null;
+};
+
+type PaymentRow = {
+  customer_id?: string | null;
+  amount?: number | string | null;
+  payment_status?: string | null;
+  note?: string | null;
 };
 
 type ServiceRecordRow = {
@@ -43,10 +52,14 @@ export default async function AppointmentsPage() {
 
   const customerIds = Array.from(new Set(((balances ?? []) as BalanceRow[]).map((row) => row.customer_id).filter(Boolean)));
 
-  const [{ data: ledgerRows }, { data: serviceRecords }] = await Promise.all([
+  const [{ data: ledgerRows }, { data: paymentRows }, { data: serviceRecords }] = await Promise.all([
     supabase
       .from("ledger_entries")
-      .select("customer_id,amount,payment_status,entry_type")
+      .select("customer_id,amount,payment_status,entry_type,note")
+      .in("customer_id", customerIds.length > 0 ? customerIds : ["00000000-0000-0000-0000-000000000000"]),
+    supabase
+      .from("payments")
+      .select("customer_id,amount,payment_status,note")
       .in("customer_id", customerIds.length > 0 ? customerIds : ["00000000-0000-0000-0000-000000000000"]),
     supabase
       .from("service_records")
@@ -65,9 +78,18 @@ export default async function AppointmentsPage() {
     const bodyworkRemaining = customerRows
       .filter((row) => row.credit_type === "fascia_time" || row.credit_type === "pelvic_time" || row.credit_type === "bodywork_session")
       .reduce((sum, row) => sum + Number(row.remaining_units ?? 0), 0);
-    const unpaidAmount = ((ledgerRows ?? []) as LedgerRow[])
-      .filter((row) => row.customer_id === customerId && (row.payment_status === "unpaid" || row.entry_type === "accounts_receivable"))
+    const customerLedgerRows = ((ledgerRows ?? []) as LedgerRow[]).filter((row) => row.customer_id === customerId);
+    const unpaidAmount = customerLedgerRows
+      .filter((row) => row.payment_status === "unpaid" || row.entry_type === "accounts_receivable")
       .reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
+    const hasFlexiblePaymentPlan = customerLedgerRows.some((row) => row.note?.includes("payment_mode=彈性補款模式"));
+    const flexibleTopupPaid = ((paymentRows ?? []) as PaymentRow[])
+      .filter((row) => row.customer_id === customerId && row.payment_status === "paid" && row.note?.includes("payment_entry_type=flexible_payment_topup"))
+      .reduce((sum, row) => sum + Number(row.amount ?? 0), 0);
+    const flexibleOutstanding = hasFlexiblePaymentPlan ? Math.max(0, unpaidAmount - flexibleTopupPaid) : null;
+    const flexiblePaymentStatus = hasFlexiblePaymentPlan
+      ? (flexibleOutstanding === 0 ? "paid" as const : "payment_in_progress" as const)
+      : null;
     const latestService = ((serviceRecords ?? []) as ServiceRecordRow[]).find((row) => row.customer_id === customerId || row.client_id === customerId);
 
     return {
@@ -77,6 +99,9 @@ export default async function AppointmentsPage() {
       training_remaining: trainingRemaining,
       bodywork_remaining: bodyworkRemaining,
       unpaid_amount: unpaidAmount,
+      flexible_payment_outstanding: flexibleOutstanding,
+      flexible_payment_total_paid: hasFlexiblePaymentPlan ? INTEGRATED_24_PLUS_12_PAYMENT_RULE.contractAmount - (flexibleOutstanding ?? 0) : null,
+      flexible_payment_status: flexiblePaymentStatus,
       latest_service_label: latestService?.service_name_snapshot ?? latestService?.service_code ?? null,
       latest_service_date: latestService?.service_date ?? null
     };
