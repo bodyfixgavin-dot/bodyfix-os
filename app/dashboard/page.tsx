@@ -8,8 +8,8 @@ const dashboardEntries = [
     status: "MVP",
   },
   {
-    title: "下課後快速扣堂 v0.1",
-    description: "服務後快速記錄與扣除堂數",
+    title: "服務後快速記錄 v0.2",
+    description: "完成服務後快速記錄、扣除餘額、確認收款",
     href: "/dashboard/appointments",
     status: "MVP",
   },
