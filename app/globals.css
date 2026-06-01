@@ -30,6 +30,11 @@
 
 * { box-sizing: border-box; }
 
+html,
+body {
+  overflow-x: hidden;
+}
+
 body {
   margin: 0;
   background: radial-gradient(circle at top left, rgba(198, 170, 135, .22), transparent 30%), var(--bf-cream);
@@ -1246,16 +1251,30 @@ main {
 }
 
 .bf-tab {
+  align-items: center;
   border: 1px solid var(--bf-line);
   border-radius: 999px;
   background: rgba(255, 255, 255, .78);
   color: var(--bf-navy);
   cursor: pointer;
+  display: inline-flex;
   flex: 0 0 auto;
   font-weight: 800;
+  gap: 8px;
   padding: 10px 14px;
   transition: .18s ease;
   white-space: nowrap;
+}
+
+.bf-tab-count {
+  align-items: center;
+  background: rgba(23, 35, 51, .08);
+  border-radius: 999px;
+  display: inline-flex;
+  font-size: .82em;
+  justify-content: center;
+  min-width: 1.8em;
+  padding: 2px 7px;
 }
 
 .bf-tab:hover,

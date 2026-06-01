@@ -231,13 +231,13 @@ export function CustomerBalanceOverview() {
     );
   }, [payload]);
 
-  const activeRowsCount = activeTab === "all"
-    ? payload?.customers.length ?? 0
-    : activeTab === "low"
-      ? lowBalanceRows.length
-      : activeTab === "unpaid"
-        ? payload?.unpaid.length ?? 0
-        : payload?.flexiblePayments.length ?? 0;
+  const tabCounts: Record<TabKey, number> = {
+    all: payload?.customers.length ?? 0,
+    low: lowBalanceRows.length,
+    unpaid: payload?.unpaid.length ?? 0,
+    flexible: payload?.flexiblePayments.length ?? 0
+  };
+  const activeRowsCount = tabCounts[activeTab];
 
   return (
     <main className="bf-container bf-os-page bf-client-balance-page">
@@ -264,7 +264,8 @@ export function CustomerBalanceOverview() {
                   role="tab"
                   type="button"
                 >
-                  {tab.label}
+                  <span>{tab.label}</span>
+                  <span className="bf-tab-count" aria-label={`${tab.label} ${tabCounts[tab.key]} 筆`}>{tabCounts[tab.key]}</span>
                 </button>
               ))}
             </div>
