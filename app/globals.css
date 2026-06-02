@@ -1572,3 +1572,111 @@ main {
   line-height: 1.7;
   padding: 12px;
 }
+
+.calendar-backfill-actions {
+  display: grid;
+  gap: 12px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.calendar-backfill-status,
+.calendar-backfill-helper {
+  color: var(--bf-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.calendar-backfill-preview {
+  border: 1px solid var(--bf-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .54);
+  margin-top: 4px;
+  padding: 16px;
+}
+
+.calendar-backfill-preview h3 {
+  margin: 0;
+}
+
+.calendar-backfill-upload-panel {
+  display: block;
+}
+
+.calendar-backfill-upload-panel > summary {
+  cursor: pointer;
+  font-weight: 800;
+  list-style-position: inside;
+}
+
+.calendar-backfill-upload-panel .calendar-backfill-upload {
+  margin-top: 16px;
+}
+
+.calendar-backfill-sticky-actions {
+  display: none;
+}
+
+.calendar-backfill-paste,
+.calendar-backfill-paste label,
+.calendar-backfill-paste textarea {
+  max-width: 100%;
+  min-width: 0;
+}
+
+.calendar-backfill-paste textarea {
+  overflow-x: auto;
+  overflow-wrap: normal;
+  white-space: pre;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;
+}
+
+@media (max-width: 640px) {
+  body:has(.calendar-backfill-paste) {
+    overflow-x: hidden;
+  }
+
+  .calendar-backfill-paste {
+    padding-bottom: calc(120px + env(safe-area-inset-bottom));
+  }
+
+  .calendar-backfill-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .calendar-backfill-paste textarea {
+    width: 100%;
+  }
+
+  .calendar-backfill-sticky-actions {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 40;
+    display: grid;
+    gap: 10px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    align-items: start;
+    border-top: 1px solid var(--bf-line);
+    background: rgba(255, 255, 255, .96);
+    box-shadow: 0 -16px 36px rgba(15, 23, 42, .14);
+    padding: 12px 14px calc(16px + env(safe-area-inset-bottom));
+  }
+
+  .calendar-backfill-sticky-actions button {
+    min-height: 48px;
+    width: 100%;
+  }
+
+  .calendar-backfill-sticky-confirm {
+    display: grid;
+    gap: 4px;
+  }
+
+  .calendar-backfill-sticky-confirm small {
+    color: var(--bf-muted);
+    font-size: 11px;
+    line-height: 1.35;
+    text-align: center;
+  }
+}

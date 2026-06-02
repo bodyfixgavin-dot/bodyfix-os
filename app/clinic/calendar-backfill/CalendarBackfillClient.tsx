@@ -167,9 +167,21 @@ export default function CalendarBackfillPage() {
     }
   }
 
+  const dryRunHasProblems = Boolean(
+    dryRun && (
+      dryRun.issues.length > 0 ||
+      dryRun.summary.missing_names > 0 ||
+      (dryRun.summary.unparseable_rows ?? 0) > 0
+    )
+  );
+
   function confirmImport() {
     if (!dryRun) {
       setSubmitState({ kind: "error", message: "請先執行 Dry Run，再正式匯入。" });
+      return;
+    }
+    if (dryRunHasProblems) {
+      setSubmitState({ kind: "error", message: "請先修正 Dry Run 標出的問題資料後再匯入。" });
       return;
     }
     if (window.confirm("確定要正式寫入 Supabase？此動作會建立 clients / service_records / followups，但不會扣 balances。")) {
@@ -177,8 +189,17 @@ export default function CalendarBackfillPage() {
     }
   }
 
-  const canDryRun = (hasCsv(upload) || Boolean(pasteText.trim())) && !busy;
-  const canConfirm = Boolean(dryRun) && !busy;
+  const hasPasteText = Boolean(pasteText.trim());
+  const hasImportSource = hasCsv(upload) || hasPasteText;
+  const canDryRun = hasImportSource && !busy;
+  const canConfirm = Boolean(dryRun) && !dryRunHasProblems && !busy;
+  const pasteStatus = !hasPasteText
+    ? "請貼上資料後執行 Dry Run。"
+    : !dryRun
+      ? "已偵測到貼上資料，請先執行 Dry Run 預覽。"
+      : dryRunHasProblems
+        ? "請先修正問題資料後再匯入。"
+        : "Dry Run 完成，可確認後正式匯入。";
 
   return (
     <ClinicShell
@@ -212,17 +233,41 @@ export default function CalendarBackfillPage() {
         </label>
         <label>
           格式選擇
-          <select value={pasteFormat} onChange={(event) => setPasteFormat(event.target.value as PasteFormat)}>
+          <select value={pasteFormat} onChange={(event) => { setPasteFormat(event.target.value as PasteFormat); setDryRun(null); }}>
             <option value="auto">自動偵測</option>
             <option value="tsv">TSV</option>
             <option value="csv">CSV</option>
           </select>
         </label>
+        <p className="calendar-backfill-status" aria-live="polite">{pasteStatus}</p>
+        <div className="calendar-backfill-actions" aria-label="貼上式匯入操作">
+          <button className="bf-primary calendar-backfill-submit" type="button" onClick={() => runImport("dry_run")} disabled={!canDryRun}>
+            {busy ? "處理中…" : "Dry Run 預覽"}
+          </button>
+          <button className="bf-primary calendar-backfill-submit calendar-backfill-danger" type="button" onClick={confirmImport} disabled={!canConfirm}>
+            {busy ? "匯入中…" : "Confirm Import 正式匯入"}
+          </button>
+        </div>
+        {!canConfirm && <small className="calendar-backfill-helper">請先執行 Dry Run 預覽。</small>}
+        {submitState.message && <div className={submitState.kind === "success" ? "bf-success" : "bf-notice"}>{submitState.message}</div>}
+        {dryRun && (
+          <div className="calendar-backfill-preview" aria-live="polite">
+            <h3>Dry Run 結果</h3>
+            <div className="calendar-backfill-stats">
+              <StatCard label="預計新增客戶數" value={dryRun.summary.planned_new_clients} />
+              <StatCard label="預計新增服務紀錄數" value={dryRun.summary.planned_service_records} />
+              <StatCard label="預計建立追蹤候選數" value={dryRun.summary.planned_followups} />
+              <StatCard label="缺少姓名筆數" value={dryRun.summary.missing_names} />
+              <StatCard label="可能重複客戶數" value={dryRun.summary.possible_duplicates} />
+              <StatCard label="無法解析筆數" value={dryRun.summary.unparseable_rows ?? 0} />
+            </div>
+          </div>
+        )}
         <details className="calendar-backfill-details">
           <summary>範例格式（TSV）</summary>
           <pre className="calendar-backfill-example">{pasteExample}</pre>
         </details>
-        {!pasteText.trim() && !hasCsv(upload) && (
+        {!hasPasteText && !hasCsv(upload) && (
           <div className="calendar-backfill-empty">
             <strong>尚未提供匯入資料。</strong>
             <span>手機建議先在試算表整理欄位，直接複製表格後貼到上方文字框，再按 Dry Run。</span>
@@ -230,45 +275,29 @@ export default function CalendarBackfillPage() {
         )}
       </section>
 
-      <form action={onFiles} className="bf-card bf-form bf-section-gap calendar-backfill-card calendar-backfill-upload">
-        <h2 className="bf-section-title">可選：舊版 CSV 上傳</h2>
-        <label>bodyfix_clients_import_clean.csv<input name="clients_csv" type="file" accept=".csv,text/csv" /></label>
-        <label>bodyfix_service_records_import_clean.csv<input name="service_records_csv" type="file" accept=".csv,text/csv" /></label>
-        <label>bodyfix_followup_priority_clean.csv<input name="followups_csv" type="file" accept=".csv,text/csv" /></label>
-        <button className="bf-primary calendar-backfill-submit" type="submit">載入 CSV（不寫入）</button>
-        <small>已載入：{[fileNames.clients, fileNames.services, fileNames.followups].filter(Boolean).join("、") || "尚未選擇檔案"}</small>
-      </form>
-
-      <section className="bf-card bf-section-gap">
-        <h2 className="bf-section-title">2. Dry Run 預覽</h2>
-        <button className="bf-primary calendar-backfill-submit" type="button" onClick={() => runImport("dry_run")} disabled={!canDryRun}>{busy ? "處理中…" : "執行 Dry Run（不寫入資料庫）"}</button>
-        {submitState.message && <div className={submitState.kind === "success" ? "bf-success" : "bf-notice"}>{submitState.message}</div>}
-        {dryRun && (
-          <div className="calendar-backfill-stats" aria-live="polite">
-            <StatCard label="預計新增客戶" value={dryRun.summary.planned_new_clients} />
-            <StatCard label="預計新增服務紀錄" value={dryRun.summary.planned_service_records} />
-            <StatCard label="預計建立追蹤候選" value={dryRun.summary.planned_followups} />
-            <StatCard label="缺少姓名" value={dryRun.summary.missing_names} />
-            <StatCard label="可能重複客戶" value={dryRun.summary.possible_duplicates} />
-            <StatCard label="無法解析筆數" value={dryRun.summary.unparseable_rows ?? 0} />
-          </div>
-        )}
-      </section>
+      <details className="bf-card bf-section-gap calendar-backfill-card calendar-backfill-details calendar-backfill-upload-panel">
+        <summary>進階：舊版 CSV 上傳</summary>
+        <form action={onFiles} className="bf-form calendar-backfill-upload">
+          <label>bodyfix_clients_import_clean.csv<input name="clients_csv" type="file" accept=".csv,text/csv" /></label>
+          <label>bodyfix_service_records_import_clean.csv<input name="service_records_csv" type="file" accept=".csv,text/csv" /></label>
+          <label>bodyfix_followup_priority_clean.csv<input name="followups_csv" type="file" accept=".csv,text/csv" /></label>
+          <button className="bf-primary calendar-backfill-submit" type="submit">載入 CSV（不寫入）</button>
+          <small>已載入：{[fileNames.clients, fileNames.services, fileNames.followups].filter(Boolean).join("、") || "尚未選擇檔案"}</small>
+        </form>
+      </details>
 
       {dryRun && (
         <section className="bf-card bf-section-gap">
-          <h2 className="bf-section-title">3. 問題資料與可能重複客戶</h2>
+          <h2 className="bf-section-title">2. 問題資料與可能重複客戶</h2>
           <ProblemList title="問題資料列表" items={dryRun.issues} emptyText="目前沒有偵測到必要欄位缺漏或解析問題。" />
           <ProblemList title="可能重複客戶列表" items={dryRun.duplicates} emptyText="目前沒有偵測到可能重複客戶。" />
           <ProblemList title="Review list" items={dryRun.review_list} emptyText="目前沒有需要人工 review 的資料。" />
         </section>
       )}
 
-      <section className="bf-card bf-section-gap">
-        <h2 className="bf-section-title">4. Confirm Import 正式匯入</h2>
-        <p className="calendar-backfill-note">正式匯入時：contact_value 相同會更新既有 client notes / priority；只有姓名相同但 contact_value 空白會略過並進入 review list；歷史服務紀錄只保存 payment note / amount，不會扣 balances。</p>
-        <button className="bf-primary calendar-backfill-submit calendar-backfill-danger" type="button" onClick={confirmImport} disabled={!canConfirm}>{busy ? "匯入中…" : "Confirm Import（需二次確認）"}</button>
-        {dryRun?.result && (
+      {dryRun?.result && (
+        <section className="bf-card bf-section-gap">
+          <h2 className="bf-section-title">3. 正式匯入結果</h2>
           <div className="calendar-backfill-stats calendar-backfill-result">
             <StatCard label="新增 clients" value={dryRun.result.clients_created} />
             <StatCard label="更新 clients" value={dryRun.result.clients_updated} />
@@ -277,11 +306,11 @@ export default function CalendarBackfillPage() {
             <StatCard label="新增 followups" value={dryRun.result.followups_created} />
             <StatCard label="失敗" value={dryRun.result.failed} />
           </div>
-        )}
-      </section>
+        </section>
+      )}
 
       <section className="bf-card bf-section-gap">
-        <h2 className="bf-section-title">5. 最近匯入紀錄</h2>
+        <h2 className="bf-section-title">4. 最近匯入紀錄</h2>
         {recent?.records.length ? (
           <div className="calendar-backfill-list">
             {recent.records.map((record) => (
@@ -299,6 +328,18 @@ export default function CalendarBackfillPage() {
           </div>
         )}
       </section>
+
+      <div className="calendar-backfill-sticky-actions" aria-label="手機版貼上式匯入操作">
+        <button className="bf-primary" type="button" onClick={() => runImport("dry_run")} disabled={!canDryRun}>
+          {busy ? "處理中…" : "Dry Run 預覽"}
+        </button>
+        <div className="calendar-backfill-sticky-confirm">
+          <button className="bf-primary calendar-backfill-danger" type="button" onClick={confirmImport} disabled={!canConfirm}>
+            {busy ? "匯入中…" : "Confirm Import"}
+          </button>
+          {!canConfirm && <small>請先執行 Dry Run 預覽。</small>}
+        </div>
+      </div>
     </ClinicShell>
   );
 }
