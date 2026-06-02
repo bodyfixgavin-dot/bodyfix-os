@@ -26,6 +26,7 @@ export default function AdminPage() {
   const [slotType, setSlotType] = useState<AvailabilitySlot["slot_type"]>("normal");
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [bypassMode, setBypassMode] = useState(false);
 
   async function loadAdminData() {
     const res = await fetch("/api/admin/slots", { cache: "no-store" });
@@ -63,6 +64,23 @@ export default function AdminPage() {
     }
   }
 
+  async function bypassLogin() {
+    setErrorMessage("");
+    const res = await fetch("/api/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ bypass: true })
+    });
+
+    if (res.ok) {
+      setAuthed(true);
+      setPassword("");
+      await loadAdminData();
+    } else {
+      setErrorMessage("密碼錯誤，或後台環境變數尚未設定。");
+    }
+  }
+
   async function logout() {
     await fetch("/api/admin/logout", { method: "POST" });
     setAuthed(false);
@@ -77,6 +95,7 @@ export default function AdminPage() {
       if (!res.ok) return;
 
       const data = await res.json();
+      setBypassMode(Boolean(data.bypassMode));
       if (data.authenticated) {
         setAuthed(true);
         await loadAdminData();
@@ -160,6 +179,12 @@ export default function AdminPage() {
               <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
             </label>
             <button className="bf-primary" type="button" onClick={login}>登入</button>
+            {bypassMode && (
+              <button className="bf-small-btn" type="button" onClick={bypassLogin}>免密碼測試登入</button>
+            )}
+            {bypassMode && (
+              <div className="bf-notice">目前為 Preview 免密碼測試模式，請勿匯入正式客戶資料。</div>
+            )}
             {errorMessage && <div className="bf-notice">{errorMessage}</div>}
           </div>
         </section>
@@ -176,6 +201,9 @@ export default function AdminPage() {
         <button className="bf-small-btn" type="button" onClick={logout}>登出</button>
       </section>
 
+      {bypassMode && (
+        <div className="bf-notice bf-admin-notice">目前為 Preview 免密碼測試模式，請勿匯入正式客戶資料。</div>
+      )}
       {errorMessage && <div className="bf-notice bf-admin-notice">{errorMessage}</div>}
 
       <section className="bf-card bf-section-gap">

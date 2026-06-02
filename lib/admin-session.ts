@@ -2,9 +2,19 @@ import { createHmac, randomBytes, timingSafeEqual } from "crypto";
 
 export const ADMIN_SESSION_COOKIE = "bodyfix_admin_session";
 const SESSION_TTL_SECONDS = 60 * 60 * 8;
+const PREVIEW_BYPASS_SESSION_SECRET = "bodyfix-preview-admin-bypass-session";
+
+export function isAdminBypassAllowed() {
+  return process.env.ALLOW_ADMIN_BYPASS === "true" && process.env.VERCEL_ENV !== "production";
+}
 
 function getSessionSecret() {
-  return process.env.ADMIN_SESSION_SECRET || process.env.BODYFIX_ADMIN_TOKEN || process.env.ADMIN_PASSWORD || "";
+  return (
+    process.env.ADMIN_SESSION_SECRET ||
+    process.env.BODYFIX_ADMIN_TOKEN ||
+    process.env.ADMIN_PASSWORD ||
+    (isAdminBypassAllowed() ? PREVIEW_BYPASS_SESSION_SECRET : "")
+  );
 }
 
 function sign(value: string) {
