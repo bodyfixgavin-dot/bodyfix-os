@@ -29,6 +29,7 @@ export default function AdminPage() {
   const [bypassMode, setBypassMode] = useState(false);
 
   async function loadAdminData() {
+    setErrorMessage("");
     const res = await fetch("/api/admin/slots", { cache: "no-store" });
 
     if (res.status === 401) {
@@ -36,12 +37,18 @@ export default function AdminPage() {
       return;
     }
 
+    const data = await res.json().catch(() => null);
+
     if (!res.ok) {
-      setErrorMessage("載入後台資料失敗，請確認 Supabase 與後台環境變數。");
+      const missingEnv = Array.isArray(data?.missingEnv) ? data.missingEnv.join("、") : "";
+      setErrorMessage(
+        missingEnv
+          ? `載入後台資料失敗，Preview 缺少環境變數：${missingEnv}。請在 Vercel Preview 設定後重新部署。`
+          : "載入後台資料失敗，請確認 Supabase 與後台環境變數。"
+      );
       return;
     }
 
-    const data = await res.json();
     setBookings((data.bookings ?? []) as BookingRequest[]);
     setSlots((data.slots ?? []) as AvailabilitySlot[]);
     setServices((data.services ?? []) as BookingService[]);

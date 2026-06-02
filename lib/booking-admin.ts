@@ -1,7 +1,7 @@
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
-import { createSupabaseAdminClient } from "@/lib/supabase/server";
+import { createSupabaseAdminClient, getMissingSupabaseAdminEnvVars } from "@/lib/supabase/server";
 
 export async function requireBookingAdmin() {
   const cookieStore = await cookies();
@@ -14,11 +14,19 @@ export async function requireBookingAdmin() {
     };
   }
 
+  const missingEnv = getMissingSupabaseAdminEnvVars();
   const supabase = createSupabaseAdminClient();
   if (!supabase) {
     return {
       ok: false as const,
-      response: NextResponse.json({ error: "Supabase admin environment is not configured" }, { status: 500 })
+      response: NextResponse.json(
+        {
+          error: "Supabase admin environment is not configured",
+          missingEnv,
+          requiredEnv: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
+        },
+        { status: 500 }
+      )
     };
   }
 
