@@ -20,6 +20,7 @@ type RecentBackfillRecord = {
 
 type RecentData = { records: RecentBackfillRecord[] };
 type PreviewItem = { file: string; row: number; reason: string; value?: string; incoming?: string; existing?: string };
+type ImportMessage = { table: string; row?: number; message: string };
 type DryRunResult = {
   summary: {
     clients_rows: number;
@@ -42,7 +43,15 @@ type DryRunResult = {
     service_records_created: number;
     followups_created: number;
     failed: number;
+    createdClients?: number;
+    createdServiceRecords?: number;
+    createdFollowups?: number;
+    skippedRows?: number;
+    warnings?: ImportMessage[];
+    errors?: ImportMessage[];
   };
+  warnings?: ImportMessage[];
+  errors?: ImportMessage[];
 };
 
 type UploadState = {
@@ -162,7 +171,13 @@ export default function CalendarBackfillPage() {
     if (mode === "dry_run") {
       setSubmitState({ kind: "success", message: "Dry Run 完成：尚未寫入 Supabase。" });
     } else {
-      setSubmitState({ kind: "success", message: "正式匯入完成，請查看成功與失敗數量。" });
+      const result = (json as DryRunResult).result;
+      const warningCount = result?.warnings?.length ?? (json as DryRunResult).warnings?.length ?? 0;
+      const skippedRows = result?.skippedRows ?? 0;
+      setSubmitState({
+        kind: "success",
+        message: `正式匯入完成：clients ${result?.clients_created ?? 0} 筆、service_records ${result?.service_records_created ?? 0} 筆、followups ${result?.followups_created ?? 0} 筆；warning ${warningCount} 筆、skipped ${skippedRows} 筆。`
+      });
       await loadRecent();
     }
   }
@@ -304,8 +319,36 @@ export default function CalendarBackfillPage() {
             <StatCard label="略過 clients" value={dryRun.result.clients_skipped} />
             <StatCard label="新增 service_records" value={dryRun.result.service_records_created} />
             <StatCard label="新增 followups" value={dryRun.result.followups_created} />
+            <StatCard label="Warning" value={dryRun.result.warnings?.length ?? dryRun.warnings?.length ?? 0} />
+            <StatCard label="Skipped rows" value={dryRun.result.skippedRows ?? 0} />
             <StatCard label="失敗" value={dryRun.result.failed} />
           </div>
+          {Boolean(dryRun.result.warnings?.length ?? dryRun.warnings?.length) && (
+            <details className="calendar-backfill-details" open>
+              <summary>Warnings（{dryRun.result.warnings?.length ?? dryRun.warnings?.length ?? 0}）</summary>
+              <div className="calendar-backfill-problems">
+                {(dryRun.result.warnings ?? dryRun.warnings ?? []).slice(0, 50).map((warning, index) => (
+                  <article className="clinic-item" key={`${warning.table}-${warning.row ?? index}`}>
+                    <strong>{warning.table}{warning.row ? `｜第 ${warning.row} 列` : ""}</strong>
+                    <span>{warning.message}</span>
+                  </article>
+                ))}
+              </div>
+            </details>
+          )}
+          {Boolean(dryRun.result.errors?.length ?? dryRun.errors?.length) && (
+            <details className="calendar-backfill-details" open>
+              <summary>Errors（{dryRun.result.errors?.length ?? dryRun.errors?.length ?? 0}）</summary>
+              <div className="calendar-backfill-problems">
+                {(dryRun.result.errors ?? dryRun.errors ?? []).slice(0, 50).map((error, index) => (
+                  <article className="clinic-item" key={`${error.table}-${error.row ?? index}`}>
+                    <strong>{error.table}{error.row ? `｜第 ${error.row} 列` : ""}</strong>
+                    <span>{error.message}</span>
+                  </article>
+                ))}
+              </div>
+            </details>
+          )}
         </section>
       )}
 
