@@ -2,7 +2,9 @@ import { NextResponse } from "next/server";
 import { cleanPayload, CLIENT_FIELDS, FOLLOWUP_FIELDS, makeClientCode, readJson, RECORD_FIELDS, requireClinicAdmin } from "@/lib/clinic-api";
 
 const BACKFILL_NOTE_MARKER = "來源：A 完整客戶總表 / Calendar Backfill";
+const PASTE_NOTE_MARKER = "來源：貼上式行事曆 / 客戶總表回填";
 const CREATED_FROM_MARKER = "created_from：calendar_backfill";
+const PASTE_CREATED_FROM_MARKER = "created_from：calendar_backfill_paste";
 const DEFAULT_CLIENT_STATUS = "未判斷";
 const DEFAULT_CONTACT_METHOD = "unknown";
 
@@ -24,6 +26,8 @@ type ImportPayload = {
   clientsCsv?: string;
   serviceRecordsCsv?: string;
   followupsCsv?: string;
+  pasteText?: string;
+  pasteFormat?: "auto" | "tsv" | "csv";
 };
 
 type Issue = { file: string; row: number; reason: string; value?: string };
@@ -42,6 +46,8 @@ const columnAliases = {
   serviceName: ["service_name", "服務名稱", "項目", "課程名稱"],
   duration: ["duration_min", "duration_minutes", "服務時長", "分鐘", "時長"],
   location: ["location", "服務地點", "地點"],
+  paymentStatus: ["payment_status", "付款狀態", "收款狀態", "payment"],
+  amount: ["amount", "金額", "price", "price_twd", "費用"],
   note: ["note", "notes", "備註", "record_note", "內容"],
 } as const;
 
@@ -70,7 +76,7 @@ function getValue(row: CsvRow, aliases: readonly string[]) {
   return "";
 }
 
-function parseCsv(input: string | undefined) {
+function parseDelimited(input: string | undefined, delimiter: "," | "\t") {
   const content = normalize(input);
   if (!content) return [];
   const rows: string[][] = [];
@@ -88,7 +94,7 @@ function parseCsv(input: string | undefined) {
       } else {
         quoted = !quoted;
       }
-    } else if (char === "," && !quoted) {
+    } else if (char === delimiter && !quoted) {
       row.push(field);
       field = "";
     } else if ((char === "\n" || char === "\r") && !quoted) {
@@ -104,7 +110,74 @@ function parseCsv(input: string | undefined) {
   row.push(field);
   if (row.some((cell) => cell.trim())) rows.push(row);
   const [headers = [], ...dataRows] = rows;
-  return dataRows.map((cells) => Object.fromEntries(headers.map((header, index) => [header.trim().replace(/^\uFEFF/, ""), normalize(cells[index])])));
+  return dataRows.map((cells) => Object.fromEntries(headers.map((header, index) => [header.trim().replace(/^\uFEFF/, ""), normalize(cells[index])]))) as CsvRow[];
+}
+
+function detectPasteDelimiter(input: string | undefined, format: ImportPayload["pasteFormat"]) {
+  if (format === "tsv") return "\t";
+  if (format === "csv") return ",";
+  const firstNonEmptyLine = normalize(input).split(/\r?\n/).find((line) => line.trim()) ?? "";
+  return firstNonEmptyLine.includes("\t") ? "\t" : ",";
+}
+
+function parseCsv(input: string | undefined) {
+  return parseDelimited(input, ",");
+}
+
+function parsePasteRows(input: string | undefined, format: ImportPayload["pasteFormat"]) {
+  return parseDelimited(input, detectPasteDelimiter(input, format));
+}
+
+function rowHasServiceData(row: CsvRow) {
+  return Boolean(getValue(row, columnAliases.serviceDate) || getValue(row, columnAliases.serviceType) || getValue(row, columnAliases.serviceName));
+}
+
+function normalizedPriority(row: CsvRow) {
+  const priority = getValue(row, columnAliases.priority).toUpperCase();
+  return ["P1", "P2", "P3"].includes(priority) ? priority : "P3";
+}
+
+function parseAmount(value: string) {
+  const cleaned = value.replace(/NT\$/gi, "").replace(/,/g, "").trim();
+  if (!cleaned) return null;
+  const parsed = Number(cleaned);
+  return Number.isFinite(parsed) ? parsed : null;
+}
+
+function parseServiceDate(value: string) {
+  const raw = normalize(value);
+  if (!raw) return { value: "", warning: false };
+  const chinese = raw.match(/^(\d{4})年(\d{1,2})月(\d{1,2})日$/);
+  const slashOrDash = raw.match(/^(?:(\d{4})[/-])?(\d{1,2})[/-](\d{1,2})$/);
+  const match = chinese ?? slashOrDash;
+  if (!match) return { value: "", warning: true };
+  const year = Number(match[1] ?? new Date().getFullYear());
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  const parsed = new Date(Date.UTC(year, month - 1, day));
+  if (parsed.getUTCFullYear() !== year || parsed.getUTCMonth() !== month - 1 || parsed.getUTCDate() !== day) {
+    return { value: "", warning: true };
+  }
+  return { value: `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`, warning: false };
+}
+
+function normalizePaymentStatus(status: string) {
+  const map: Record<string, string> = {
+    已收: "paid",
+    未收: "outstanding",
+    不確定: "unknown",
+    贈送: "comped",
+    套票扣除: "package_deduction"
+  };
+  return map[status] ?? (status ? "unknown" : "");
+}
+
+function sourceLabel(row: CsvRow) {
+  return row.__source === "paste" ? PASTE_NOTE_MARKER : BACKFILL_NOTE_MARKER;
+}
+
+function createdFromLabel(row: CsvRow) {
+  return row.__source === "paste" ? PASTE_CREATED_FROM_MARKER : CREATED_FROM_MARKER;
 }
 
 function contactValues(row: CsvRow) {
@@ -136,6 +209,11 @@ function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
   if (byCode) return { client: byCode, reason: "client_code 相同" };
   const byContact = contacts.length ? existing.find((client) => [client.line_id, client.instagram, client.phone].filter(Boolean).map((value) => String(value).toLowerCase()).some((value) => contacts.includes(value))) : null;
   if (byContact) return { client: byContact, reason: "聯絡方式相同" };
+  const contactMethod = getValue(row, columnAliases.contactMethod);
+  const byNameAndMethod = name && contactMethod
+    ? existing.find((client) => clientNames(client).some((value) => value === name) && (client.internal_notes ?? "").includes(`contact_method：${contactMethod}`))
+    : null;
+  if (byNameAndMethod) return { client: byNameAndMethod, reason: "client_name + contact_method 相同" };
   const byName = name ? existing.find((client) => clientNames(client).some((value) => value === name)) : null;
   if (byName) return { client: byName, reason: "display_name 完全相同" };
   return null;
@@ -144,15 +222,16 @@ function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
 function buildClientPayload(row: CsvRow) {
   const displayName = getValue(row, columnAliases.displayName);
   const clientCode = getValue(row, columnAliases.clientCode) || makeClientCode();
-  const priority = ["P1", "P2", "P3"].includes(getValue(row, columnAliases.priority)) ? getValue(row, columnAliases.priority) : "P3";
+  const priority = normalizedPriority(row);
   const contactMethod = getValue(row, columnAliases.contactMethod) || DEFAULT_CONTACT_METHOD;
   const contactValue = getValue(row, columnAliases.contactValue);
   const status = getValue(row, columnAliases.status) || DEFAULT_CLIENT_STATUS;
   const notes = [
-    BACKFILL_NOTE_MARKER,
-    CREATED_FROM_MARKER,
+    sourceLabel(row),
+    createdFromLabel(row),
     `client_status：${status}`,
     `contact_method：${contactMethod}`,
+    priorityText[priority],
     getValue(row, columnAliases.note)
   ].filter(Boolean).join("\n");
   const payload: Record<string, unknown> = {
@@ -180,23 +259,28 @@ function buildRecordPayload(row: CsvRow, clientId: string) {
   const serviceType = getValue(row, columnAliases.serviceType) || "其他";
   const serviceName = getValue(row, columnAliases.serviceName) || serviceType;
   const duration = Number(getValue(row, columnAliases.duration));
+  const serviceDate = parseServiceDate(getValue(row, columnAliases.serviceDate));
+  const amount = parseAmount(getValue(row, columnAliases.amount));
+  const paymentStatus = getValue(row, columnAliases.paymentStatus);
+  const paymentCode = normalizePaymentStatus(paymentStatus);
   return cleanPayload({
     client_id: clientId,
-    service_date: getValue(row, columnAliases.serviceDate) || new Date().toISOString().slice(0, 10),
+    service_date: serviceDate.value || null,
     record_mode: "quick",
     service_code: serviceType,
     service_name_snapshot: serviceName,
     duration_minutes: Number.isFinite(duration) && duration > 0 ? duration : null,
+    price_twd: amount,
     main_complaint: "行事曆 / 客戶總表回填",
     processed_area: serviceType,
     body_region: getValue(row, columnAliases.location) || "未知",
     followup_needed: false,
-    internal_notes: [BACKFILL_NOTE_MARKER, "source：calendar_backfill", getValue(row, columnAliases.note) || "行事曆 / 客戶總表回填，詳細內容未補。", "歷史回填紀錄，不自動扣 balances。"].join("\n")
+    internal_notes: [sourceLabel(row), `source：${row.__source === "paste" ? "calendar_backfill_paste" : "calendar_backfill"}`, getValue(row, columnAliases.note) || "貼上式行事曆 / 客戶總表回填，詳細內容未補。", paymentStatus ? `payment_status：${paymentStatus} / ${paymentCode}` : "", amount !== null ? `amount：${amount}` : "", "歷史回填紀錄，不自動扣 balances。"].filter(Boolean).join("\n")
   }, RECORD_FIELDS);
 }
 
 function buildFollowupPayload(row: CsvRow, clientId: string) {
-  const priority = ["P1", "P2", "P3"].includes(getValue(row, columnAliases.priority)) ? getValue(row, columnAliases.priority) : "P3";
+  const priority = normalizedPriority(row);
   return cleanPayload({
     client_id: clientId,
     followup_type: "other",
@@ -220,6 +304,7 @@ async function loadExistingClients(supabase: Awaited<ReturnType<typeof requireCl
 function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: CsvRow[], existingClients: ExistingClient[]) {
   const issues: Issue[] = [];
   const duplicates: Duplicate[] = [];
+  let unparseableRows = 0;
   const reviewList: Review[] = [];
   const namesInFile = new Set<string>();
   let newClients = 0;
@@ -240,6 +325,16 @@ function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: Csv
     const name = getValue(row, columnAliases.displayName);
     const code = getValue(row, columnAliases.clientCode);
     if (!name && !code) issues.push({ file: "service_records", row: index + 2, reason: "缺少姓名或 client_code" });
+    const rawDate = getValue(row, columnAliases.serviceDate);
+    if (rawDate && parseServiceDate(rawDate).warning) {
+      unparseableRows += 1;
+      issues.push({ file: "service_records", row: index + 2, reason: "日期無法解析，正式匯入會保留空白日期", value: rawDate });
+    }
+    const rawAmount = getValue(row, columnAliases.amount);
+    if (rawAmount && parseAmount(rawAmount) === null) {
+      unparseableRows += 1;
+      issues.push({ file: "service_records", row: index + 2, reason: "金額無法解析，正式匯入會保留空白金額", value: rawAmount });
+    }
   });
 
   followupRows.forEach((row, index) => {
@@ -257,7 +352,8 @@ function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: Csv
       planned_service_records: serviceRows.length,
       planned_followups: followupRows.length,
       missing_names: issues.filter((issue) => issue.reason.includes("缺少姓名")).length,
-      possible_duplicates: duplicates.length
+      possible_duplicates: duplicates.length,
+      unparseable_rows: unparseableRows
     },
     issues,
     duplicates,
@@ -272,7 +368,7 @@ export async function GET() {
   const { data, error } = await auth.supabase
     .from("service_records")
     .select("id, service_date, service_code, service_name_snapshot, body_region, price_twd, internal_notes, followup_needed, clients(client_code, display_name, client_name)")
-    .ilike("internal_notes", `%${BACKFILL_NOTE_MARKER}%`)
+    .or(`internal_notes.ilike.%${BACKFILL_NOTE_MARKER}%,internal_notes.ilike.%${PASTE_NOTE_MARKER}%`)
     .order("created_at", { ascending: false })
     .limit(20);
 
@@ -286,9 +382,13 @@ export async function POST(req: Request) {
 
   const body = await readJson(req) as ImportPayload;
   const mode = body.mode === "confirm" ? "confirm" : "dry_run";
-  const clientsRows = parseCsv(body.clientsCsv);
-  const serviceRows = parseCsv(body.serviceRecordsCsv);
-  const followupRows = parseCsv(body.followupsCsv);
+  const pasteRows = parsePasteRows(body.pasteText, body.pasteFormat).map((row) => ({ ...row, __source: "paste" }));
+  const csvClientRows = parseCsv(body.clientsCsv);
+  const csvServiceRows = parseCsv(body.serviceRecordsCsv);
+  const csvFollowupRows = parseCsv(body.followupsCsv);
+  const clientsRows = [...csvClientRows, ...pasteRows];
+  const serviceRows = [...csvServiceRows, ...pasteRows.filter(rowHasServiceData)];
+  const followupRows = [...csvFollowupRows, ...pasteRows.filter((row) => ["P1", "P2"].includes(normalizedPriority(row)))];
   const existingClients = await loadExistingClients(auth.supabase);
   const dryRun = analyze(clientsRows, serviceRows, followupRows, existingClients);
 

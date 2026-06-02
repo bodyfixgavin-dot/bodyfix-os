@@ -30,6 +30,7 @@ type DryRunResult = {
     planned_followups: number;
     missing_names: number;
     possible_duplicates: number;
+    unparseable_rows?: number;
   };
   issues: PreviewItem[];
   duplicates: PreviewItem[];
@@ -50,7 +51,12 @@ type UploadState = {
   followupsCsv: string;
 };
 
+type PasteFormat = "auto" | "tsv" | "csv";
 type SubmitState = { kind: "" | "success" | "error"; message: string };
+
+const pasteExample = `client_name\tcontact_method\tcontact_value\tservice_date\tservice_type\tservice_name\tduration_min\tlocation\tpayment_status\tamount\tpriority\tnote
+小宇\tLINE\t\t2026-06-01\t筋膜整理\t筋膜鏈整理 60 分鐘\t60\t六張犁\t已收\t2200\tP1\t行事曆回填
+阿哲\tIG\t\t2026-06-03\t骨盆核心整理\t骨盆核心整理 60 分鐘\t60\t西門\t已收\t2500\tP2\t行事曆回填`;
 
 function StatCard({ label, value }: { label: string; value: number }) {
   return (
@@ -74,7 +80,7 @@ function ProblemList({ title, items, emptyText }: { title: string; items: Previe
               <small>{item.value ?? item.incoming ?? ""}{item.existing ? ` → ${item.existing}` : ""}</small>
             </article>
           ))}
-          {items.length > 50 && <small>僅顯示前 50 筆，請下載或整理 CSV 後再匯入。</small>}
+          {items.length > 50 && <small>僅顯示前 50 筆，請先整理資料後再匯入。</small>}
         </div>
       ) : <p>{emptyText}</p>}
     </details>
@@ -96,6 +102,8 @@ export default function CalendarBackfillPage() {
   const [recentError, setRecentError] = useState("");
   const [upload, setUpload] = useState<UploadState>({ clientsCsv: "", serviceRecordsCsv: "", followupsCsv: "" });
   const [fileNames, setFileNames] = useState({ clients: "", services: "", followups: "" });
+  const [pasteText, setPasteText] = useState("");
+  const [pasteFormat, setPasteFormat] = useState<PasteFormat>("auto");
   const [dryRun, setDryRun] = useState<DryRunResult | null>(null);
   const [submitState, setSubmitState] = useState<SubmitState>({ kind: "", message: "" });
   const [busy, setBusy] = useState(false);
@@ -142,12 +150,12 @@ export default function CalendarBackfillPage() {
     const res = await fetch("/api/clinic/calendar-backfill", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, ...upload })
+      body: JSON.stringify({ mode, ...upload, pasteText, pasteFormat })
     });
     const json = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setSubmitState({ kind: "error", message: json.error ?? "匯入流程失敗，請檢查 CSV 欄位或 Supabase schema。" });
+      setSubmitState({ kind: "error", message: json.error ?? "匯入流程失敗，請檢查欄位或 Supabase schema。" });
       return;
     }
     setDryRun(json as DryRunResult);
@@ -169,7 +177,7 @@ export default function CalendarBackfillPage() {
     }
   }
 
-  const canDryRun = hasCsv(upload) && !busy;
+  const canDryRun = (hasCsv(upload) || Boolean(pasteText.trim())) && !busy;
   const canConfirm = Boolean(dryRun) && !busy;
 
   return (
@@ -181,16 +189,49 @@ export default function CalendarBackfillPage() {
 
       <section className="bf-card bf-section-gap calendar-backfill-intro">
         <h2 className="bf-section-title">內部 admin / migration 工具</h2>
-        <p>此工具為內部資料回填工具。正式匯入前請先執行 Dry Run；上傳 CSV 不會直接寫入 Supabase，也不會自動扣 balances。</p>
+        <p>此工具為 admin-only 內部資料回填工具。建議手機使用「貼上資料匯入」，從 Google Sheet / Numbers / 備忘錄複製表格文字後貼上；Dry Run 不會寫入 Supabase，也不會自動扣 balances。</p>
         <div className="bf-tag-row">
-          <span className="bf-tag">支援 clients CSV</span>
-          <span className="bf-tag">支援 service_records CSV</span>
-          <span className="bf-tag">支援 followup priority CSV</span>
+          <span className="bf-tag">Paste Import</span>
+          <span className="bf-tag">優先支援 TSV</span>
+          <span className="bf-tag">支援 CSV</span>
+          <span className="bf-tag">Dry Run / Confirm Import</span>
         </div>
       </section>
 
+      <section className="bf-card bf-form bf-section-gap calendar-backfill-card calendar-backfill-paste">
+        <h2 className="bf-section-title">1. 貼上資料匯入 / Paste Import</h2>
+        <p className="calendar-backfill-note">第一列請放欄位名稱；必要欄位只有 client_name。欄位順序可調整，系統會依 header 對應 clients / service_records / followups。</p>
+        <label>
+          貼上資料文字框
+          <textarea
+            value={pasteText}
+            onChange={(event) => { setPasteText(event.target.value); setDryRun(null); }}
+            placeholder="請從 Google Sheet / Numbers / 行事曆整理表複製資料後貼上。第一列請放欄位名稱。"
+            rows={10}
+          />
+        </label>
+        <label>
+          格式選擇
+          <select value={pasteFormat} onChange={(event) => setPasteFormat(event.target.value as PasteFormat)}>
+            <option value="auto">自動偵測</option>
+            <option value="tsv">TSV</option>
+            <option value="csv">CSV</option>
+          </select>
+        </label>
+        <details className="calendar-backfill-details">
+          <summary>範例格式（TSV）</summary>
+          <pre className="calendar-backfill-example">{pasteExample}</pre>
+        </details>
+        {!pasteText.trim() && !hasCsv(upload) && (
+          <div className="calendar-backfill-empty">
+            <strong>尚未提供匯入資料。</strong>
+            <span>手機建議先在試算表整理欄位，直接複製表格後貼到上方文字框，再按 Dry Run。</span>
+          </div>
+        )}
+      </section>
+
       <form action={onFiles} className="bf-card bf-form bf-section-gap calendar-backfill-card calendar-backfill-upload">
-        <h2 className="bf-section-title">1. 上傳 CSV</h2>
+        <h2 className="bf-section-title">可選：舊版 CSV 上傳</h2>
         <label>bodyfix_clients_import_clean.csv<input name="clients_csv" type="file" accept=".csv,text/csv" /></label>
         <label>bodyfix_service_records_import_clean.csv<input name="service_records_csv" type="file" accept=".csv,text/csv" /></label>
         <label>bodyfix_followup_priority_clean.csv<input name="followups_csv" type="file" accept=".csv,text/csv" /></label>
@@ -209,6 +250,7 @@ export default function CalendarBackfillPage() {
             <StatCard label="預計建立追蹤候選" value={dryRun.summary.planned_followups} />
             <StatCard label="缺少姓名" value={dryRun.summary.missing_names} />
             <StatCard label="可能重複客戶" value={dryRun.summary.possible_duplicates} />
+            <StatCard label="無法解析筆數" value={dryRun.summary.unparseable_rows ?? 0} />
           </div>
         )}
       </section>
@@ -216,7 +258,7 @@ export default function CalendarBackfillPage() {
       {dryRun && (
         <section className="bf-card bf-section-gap">
           <h2 className="bf-section-title">3. 問題資料與可能重複客戶</h2>
-          <ProblemList title="問題資料列表" items={dryRun.issues} emptyText="目前沒有偵測到必要欄位缺漏。" />
+          <ProblemList title="問題資料列表" items={dryRun.issues} emptyText="目前沒有偵測到必要欄位缺漏或解析問題。" />
           <ProblemList title="可能重複客戶列表" items={dryRun.duplicates} emptyText="目前沒有偵測到可能重複客戶。" />
           <ProblemList title="Review list" items={dryRun.review_list} emptyText="目前沒有需要人工 review 的資料。" />
         </section>
@@ -224,7 +266,7 @@ export default function CalendarBackfillPage() {
 
       <section className="bf-card bf-section-gap">
         <h2 className="bf-section-title">4. Confirm Import 正式匯入</h2>
-        <p className="calendar-backfill-note">正式匯入時：client_code 已存在會更新 notes / priority；只有姓名相同但無法確認者會略過並進入 review list；歷史服務紀錄不會扣 balances。</p>
+        <p className="calendar-backfill-note">正式匯入時：contact_value 相同會更新既有 client notes / priority；只有姓名相同但 contact_value 空白會略過並進入 review list；歷史服務紀錄只保存 payment note / amount，不會扣 balances。</p>
         <button className="bf-primary calendar-backfill-submit calendar-backfill-danger" type="button" onClick={confirmImport} disabled={!canConfirm}>{busy ? "匯入中…" : "Confirm Import（需二次確認）"}</button>
         {dryRun?.result && (
           <div className="calendar-backfill-stats calendar-backfill-result">
@@ -253,7 +295,7 @@ export default function CalendarBackfillPage() {
         ) : (
           <div className="calendar-backfill-empty">
             <strong>目前尚無 Calendar Backfill 匯入紀錄。</strong>
-            <span>請先上傳 CSV，Dry Run 確認後再正式匯入。</span>
+            <span>請先貼上資料或載入 CSV，Dry Run 確認後再正式匯入。</span>
           </div>
         )}
       </section>

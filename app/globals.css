@@ -1549,3 +1549,26 @@ main {
     overflow-wrap: anywhere;
   }
 }
+
+.calendar-backfill-paste textarea {
+  min-height: 220px;
+  resize: vertical;
+}
+
+.calendar-backfill-paste select {
+  min-height: 48px;
+}
+
+.calendar-backfill-example {
+  margin: 0 16px 16px;
+  max-width: calc(100% - 32px);
+  overflow-x: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  border-radius: 14px;
+  background: rgba(15, 23, 42, .06);
+  color: var(--bf-navy);
+  font-size: 12px;
+  line-height: 1.7;
+  padding: 12px;
+}
