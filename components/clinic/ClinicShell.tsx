@@ -6,8 +6,21 @@ import { useCallback, useEffect, useState } from "react";
 type ShellProps = { title: string; subtitle: string; children: React.ReactNode };
 
 type LoadState<T> = { data: T | null; error: string; loading: boolean };
+type AdminSessionState = { bypassMode?: boolean };
 
 export function ClinicShell({ title, subtitle, children }: ShellProps) {
+  const [bypassMode, setBypassMode] = useState(false);
+
+  useEffect(() => {
+    async function loadAdminSession() {
+      const res = await fetch("/api/admin/session", { cache: "no-store" });
+      const data = await res.json().catch(() => ({})) as AdminSessionState;
+      setBypassMode(res.ok && Boolean(data.bypassMode));
+    }
+
+    loadAdminSession();
+  }, []);
+
   return (
     <main className="bf-container clinic-page">
       <section className="bf-hero">
@@ -30,6 +43,9 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
           <Link href="/admin">預約後台</Link>
         </nav>
       </section>
+      {bypassMode && (
+        <div className="bf-notice bf-section-gap">目前為 Preview 免密碼測試模式，請勿匯入正式客戶資料。</div>
+      )}
       {children}
     </main>
   );
