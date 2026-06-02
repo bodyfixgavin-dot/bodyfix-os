@@ -22,6 +22,14 @@ type RecentData = { records: RecentBackfillRecord[] };
 type PreviewItem = { file: string; row: number; reason: string; value?: string; incoming?: string; existing?: string };
 type ImportMessage = { table: string; row?: number; message: string };
 type DryRunResult = {
+  parsedRows?: number;
+  validRows?: number;
+  missingNameRows?: PreviewItem[];
+  possibleDuplicates?: PreviewItem[];
+  invalidDateRows?: PreviewItem[];
+  invalidAmountRows?: PreviewItem[];
+  previewClientsCount?: number;
+  previewServiceRecordsCount?: number;
   summary: {
     clients_rows: number;
     service_records_rows: number;
@@ -164,7 +172,10 @@ export default function CalendarBackfillPage() {
     const json = await res.json().catch(() => ({}));
     setBusy(false);
     if (!res.ok) {
-      setSubmitState({ kind: "error", message: json.error ?? "匯入流程失敗，請檢查欄位或 Supabase schema。" });
+      const fallback = mode === "dry_run"
+        ? "Dry Run 解析失敗：請檢查貼上資料格式。"
+        : "Confirm Import clients 寫入失敗：請檢查 clients schema 或 server log。";
+      setSubmitState({ kind: "error", message: json.error ?? fallback });
       return;
     }
     setDryRun(json as DryRunResult);
@@ -269,8 +280,10 @@ export default function CalendarBackfillPage() {
           <div className="calendar-backfill-preview" aria-live="polite">
             <h3>Dry Run 結果</h3>
             <div className="calendar-backfill-stats">
-              <StatCard label="預計新增客戶數" value={dryRun.summary.planned_new_clients} />
-              <StatCard label="預計新增服務紀錄數" value={dryRun.summary.planned_service_records} />
+              <StatCard label="解析資料筆數" value={dryRun.parsedRows ?? dryRun.summary.clients_rows} />
+              <StatCard label="有效客戶資料筆數" value={dryRun.validRows ?? Math.max(0, dryRun.summary.clients_rows - dryRun.summary.missing_names)} />
+              <StatCard label="預計新增客戶數" value={dryRun.previewClientsCount ?? dryRun.summary.planned_new_clients} />
+              <StatCard label="預計新增服務紀錄數" value={dryRun.previewServiceRecordsCount ?? dryRun.summary.planned_service_records} />
               <StatCard label="預計建立追蹤候選數" value={dryRun.summary.planned_followups} />
               <StatCard label="缺少姓名筆數" value={dryRun.summary.missing_names} />
               <StatCard label="可能重複客戶數" value={dryRun.summary.possible_duplicates} />
@@ -307,6 +320,7 @@ export default function CalendarBackfillPage() {
           <ProblemList title="問題資料列表" items={dryRun.issues} emptyText="目前沒有偵測到必要欄位缺漏或解析問題。" />
           <ProblemList title="可能重複客戶列表" items={dryRun.duplicates} emptyText="目前沒有偵測到可能重複客戶。" />
           <ProblemList title="Review list" items={dryRun.review_list} emptyText="目前沒有需要人工 review 的資料。" />
+          <ProblemList title="Dry Run warnings" items={(dryRun.warnings ?? []).map((warning) => ({ file: warning.table, row: warning.row ?? 0, reason: warning.message }))} emptyText="目前沒有 schema 或匯入警告。" />
         </section>
       )}
 
@@ -321,7 +335,7 @@ export default function CalendarBackfillPage() {
             <StatCard label="新增 followups" value={dryRun.result.followups_created} />
             <StatCard label="Warning" value={dryRun.result.warnings?.length ?? dryRun.warnings?.length ?? 0} />
             <StatCard label="Skipped rows" value={dryRun.result.skippedRows ?? 0} />
-            <StatCard label="失敗" value={dryRun.result.failed} />
+            <StatCard label="Error" value={dryRun.result.errors?.length ?? dryRun.errors?.length ?? dryRun.result.failed} />
           </div>
           {Boolean(dryRun.result.warnings?.length ?? dryRun.warnings?.length) && (
             <details className="calendar-backfill-details" open>

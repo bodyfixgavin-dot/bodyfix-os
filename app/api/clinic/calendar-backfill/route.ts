@@ -14,11 +14,13 @@ type ExistingClient = {
   client_code: string | null;
   display_name: string | null;
   client_name: string | null;
+  name?: string | null;
   nickname: string | null;
   line_id: string | null;
   instagram: string | null;
   phone: string | null;
   internal_notes: string | null;
+  notes?: string | null;
   priority: string | null;
 };
 type ImportPayload = {
@@ -38,6 +40,12 @@ type ImportError = { table: string; row?: number; message: string };
 type ExistingClientSelect = Pick<ExistingClient, "id"> & Partial<Omit<ExistingClient, "id">>;
 type SupabaseClientLike = Awaited<ReturnType<typeof requireClinicAdmin>>["supabase"];
 type SupabaseImportError = { code?: string; message?: string };
+type SchemaInfo = {
+  clients: Set<string>;
+  service_records: Set<string>;
+  followups: Set<string>;
+  warnings: ImportWarning[];
+};
 
 const columnAliases = {
   clientCode: ["client_code", "客戶編號", "原始客戶編號", "編號", "id", "client_id"],
@@ -63,7 +71,9 @@ const priorityText: Record<string, string> = {
 };
 
 const clientsAllowedColumns = [
+  "id",
   "client_name",
+  "name",
   "line_id",
   "phone",
   "client_code",
@@ -75,11 +85,14 @@ const clientsAllowedColumns = [
   "first_pain_point",
   "current_stage",
   "priority",
+  "notes",
   "internal_notes",
+  "created_at",
   "updated_at"
 ];
 
 const serviceRecordsAllowedColumns = [
+  "id",
   "client_id",
   "service_date",
   "record_mode",
@@ -95,6 +108,7 @@ const serviceRecordsAllowedColumns = [
 ];
 
 const followupsAllowedColumns = [
+  "id",
   "client_id",
   "followup_type",
   "scheduled_date",
@@ -126,81 +140,139 @@ function logSupabaseImportError(table: string, error: { code?: string; message?:
 }
 
 function publicTableError(table: string, fallback = "Supabase insert 回傳錯誤，請查看 server log。") {
-  if (table === "clients") return "匯入失敗：clients 欄位不相容。";
-  if (table === "service_records") return "匯入失敗：service_records 欄位不相容。";
-  if (table === "followups") return "匯入失敗：followups 欄位不相容。";
+  if (table === "clients") return "Confirm Import clients 寫入失敗：clients 欄位不相容。";
+  if (table === "service_records") return "service_records 寫入失敗：欄位不相容，已略過該筆。";
+  if (table === "followups") return "followups 寫入失敗：欄位不相容，已略過該筆。";
   return `匯入失敗：${fallback}`;
 }
 
-function buildFallbackClientPayloads(payload: Record<string, unknown>) {
-  const displayName = payload.client_name ?? payload.display_name;
-  return [
-    { payload: keepAllowedColumns({ client_name: displayName, line_id: payload.line_id, phone: payload.phone }, ["client_name", "line_id", "phone"]), select: "id, client_name", warning: "clients schema 較舊，已改用 client_name / line_id / phone 最小欄位建立。" },
-    { payload: keepAllowedColumns({ display_name: displayName }, ["display_name"]), select: "id, display_name", warning: "clients schema 只支援 display_name，已改用最小欄位建立。" },
-    { payload: keepAllowedColumns({ name: displayName }, ["name"]), select: "id, name", warning: "clients schema 只支援 name，已改用最小欄位建立。" }
-  ];
+async function detectAvailableColumns(supabase: SupabaseClientLike, table: keyof SchemaInfo, candidates: string[]) {
+  const available = new Set<string>();
+  for (const column of candidates) {
+    const { error } = await supabase.from(table).select(column).limit(1);
+    if (!error) {
+      available.add(column);
+    } else if (!isSupabaseSchemaError(error as SupabaseImportError)) {
+      logSupabaseImportError(table, error as SupabaseImportError);
+    }
+  }
+  return available;
 }
 
-function buildFallbackRecordPayload(payload: Record<string, unknown>) {
-  return keepAllowedColumns({ client_id: payload.client_id }, ["client_id"]);
+async function detectSchemaInfo(supabase: SupabaseClientLike): Promise<SchemaInfo> {
+  const [clients, serviceRecords, followups] = await Promise.all([
+    detectAvailableColumns(supabase, "clients", clientsAllowedColumns),
+    detectAvailableColumns(supabase, "service_records", serviceRecordsAllowedColumns),
+    detectAvailableColumns(supabase, "followups", followupsAllowedColumns)
+  ]);
+  const warnings: ImportWarning[] = [];
+  if (!clients.has("display_name") && !clients.has("client_name") && !clients.has("name")) {
+    warnings.push({ table: "clients", message: "Dry Run schema check：clients 找不到 display_name / client_name / name，正式匯入會失敗。" });
+  }
+  if (!serviceRecords.has("client_id")) warnings.push({ table: "service_records", message: "Dry Run schema check：service_records schema 不完整，正式匯入會略過服務紀錄。" });
+  if (!followups.has("client_id")) warnings.push({ table: "followups", message: "Dry Run schema check：followups schema 不完整，正式匯入會略過追蹤候選。" });
+  return { clients, service_records: serviceRecords, followups, warnings };
 }
 
-async function insertClientSchemaSafe(supabase: SupabaseClientLike, payload: Record<string, unknown>) {
-  const { data, error } = await supabase
-    .from("clients")
-    .insert(payload)
-    .select("id, client_code, display_name, client_name, nickname")
-    .single();
+function selectForAvailableColumns(availableColumns: Set<string>, preferred: string[]) {
+  return ["id", ...preferred].filter((column, index, columns) => availableColumns.has(column) && columns.indexOf(column) === index).join(", ");
+}
+
+function buildClientInsertPayload(row: CsvRow, availableColumns: Set<string>) {
+  const displayName = getValue(row, columnAliases.displayName);
+  const clientCode = getValue(row, columnAliases.clientCode) || makeClientCode();
+  const priority = normalizedPriority(row);
+  const contactMethod = getValue(row, columnAliases.contactMethod) || DEFAULT_CONTACT_METHOD;
+  const contactValue = getValue(row, columnAliases.contactValue);
+  const status = getValue(row, columnAliases.status) || DEFAULT_CLIENT_STATUS;
+  const notes = [
+    sourceLabel(row),
+    createdFromLabel(row),
+    `client_status：${status}`,
+    `contact_method：${contactMethod}`,
+    contactValue ? `contact_value：${contactValue}` : "",
+    priorityText[priority],
+    getValue(row, columnAliases.note)
+  ].filter(Boolean).join("\n");
+  const payload: Record<string, unknown> = {};
+  if (availableColumns.has("display_name")) payload.display_name = displayName;
+  if (availableColumns.has("client_name")) payload.client_name = displayName;
+  if (!availableColumns.has("display_name") && availableColumns.has("name")) payload.name = displayName;
+  if (availableColumns.has("client_code")) payload.client_code = clientCode;
+  if (availableColumns.has("nickname")) payload.nickname = displayName;
+  if (availableColumns.has("source")) payload.source = "other";
+  if (availableColumns.has("priority")) payload.priority = priority;
+  if (availableColumns.has("current_stage")) payload.current_stage = status === "流失" ? "lost" : status === "熟客" ? "repeat" : "followup";
+  if (availableColumns.has("first_contact_date")) payload.first_contact_date = new Date().toISOString().slice(0, 10);
+  if (availableColumns.has("first_pain_point")) payload.first_pain_point = "Calendar Backfill";
+  if (availableColumns.has("notes")) payload.notes = notes;
+  if (availableColumns.has("internal_notes")) payload.internal_notes = notes;
+  if (availableColumns.has("updated_at")) payload.updated_at = new Date().toISOString();
+
+  const method = contactMethod.toLowerCase();
+  if (availableColumns.has("line_id") && contactValue && (method.includes("line") || method === "line")) payload.line_id = contactValue;
+  if (availableColumns.has("instagram") && contactValue && (method.includes("ig") || method.includes("instagram"))) payload.instagram = contactValue;
+  if (availableColumns.has("phone") && contactValue && (method.includes("電話") || method.includes("phone") || method.includes("手機"))) payload.phone = contactValue;
+  if (availableColumns.has("line_id") && !payload.line_id) payload.line_id = `clinic-${clientCode}`;
+  return keepAllowedColumns(payload, Array.from(availableColumns));
+}
+
+function buildClientUpdatePayload(existingClient: ExistingClient, row: CsvRow, availableColumns: Set<string>) {
+  const insertPayload = buildClientInsertPayload(row, availableColumns);
+  const notes = [existingClient.internal_notes, insertPayload.internal_notes ?? insertPayload.notes].filter(Boolean).join("\n---\n");
+  return keepAllowedColumns({
+    internal_notes: notes,
+    notes,
+    priority: insertPayload.priority,
+    updated_at: new Date().toISOString()
+  }, Array.from(availableColumns));
+}
+
+async function insertClientSchemaSafe(supabase: SupabaseClientLike, row: CsvRow, availableColumns: Set<string>) {
+  if (!getValue(row, columnAliases.displayName)) return { data: null, error: { message: "缺少必要欄位 display_name。" } };
+  const payload = buildClientInsertPayload(row, availableColumns);
+  if (!Object.keys(payload).length) return { data: null, error: { message: "clients 沒有可寫入的安全欄位。" } };
+  const select = selectForAvailableColumns(availableColumns, ["client_code", "display_name", "client_name", "name", "nickname"]);
+  const query = supabase.from("clients").insert(payload);
+  const { data, error } = select ? await query.select(select).single() : await query.select("id").single();
   if (!error && data) return { data: data as ExistingClientSelect, warning: "" };
   logSupabaseImportError("clients", error as SupabaseImportError);
+  return { data: null, error: error as SupabaseImportError };
+}
 
-  if (!isSupabaseSchemaError(error as SupabaseImportError)) return { data: null, error: error as SupabaseImportError };
+function buildRecordPayloadSchemaSafe(row: CsvRow, clientId: string, availableColumns: Set<string>) {
+  return keepAllowedColumns(buildRecordPayload(row, clientId), Array.from(availableColumns));
+}
 
-  const fallbacks = buildFallbackClientPayloads(payload);
-  if (!payload.client_name && !payload.display_name) return { data: null, error: { message: "缺少必要欄位 display_name。" } };
-
-  for (const fallbackPayload of fallbacks) {
-    const fallback = await supabase
-      .from("clients")
-      .insert(fallbackPayload.payload)
-      .select(fallbackPayload.select)
-      .single();
-    if (!fallback.error && fallback.data) {
-      return { data: fallback.data as unknown as ExistingClientSelect, warning: fallbackPayload.warning };
-    }
-    logSupabaseImportError("clients", fallback.error as SupabaseImportError);
-  }
-
-  return { data: null, error: { message: "clients fallback insert failed" } };
+function buildFollowupPayloadSchemaSafe(row: CsvRow, clientId: string, availableColumns: Set<string>) {
+  return keepAllowedColumns(buildFollowupPayload(row, clientId), Array.from(availableColumns));
 }
 
 async function insertOptionalSchemaSafe(supabase: SupabaseClientLike, table: "service_records" | "followups", payload: Record<string, unknown>) {
+  if (!Object.keys(payload).length) return { ok: false, warning: `${table} 沒有可寫入的安全欄位，已略過該筆。` };
   const { error } = await supabase.from(table).insert(payload);
   if (!error) return { ok: true, warning: "" };
   logSupabaseImportError(table, error as SupabaseImportError);
-
-  if (!isSupabaseSchemaError(error as SupabaseImportError)) return { ok: false, warning: `匯入失敗：${table} insert 回傳錯誤，已略過該筆。` };
-
-  if (table === "service_records") {
-    const fallback = await supabase.from(table).insert(buildFallbackRecordPayload(payload));
-    if (!fallback.error) return { ok: true, warning: "service_records schema 較舊，已改用 client_id 最小欄位建立。" };
-    logSupabaseImportError(table, fallback.error as SupabaseImportError);
-  }
-
-  return { ok: false, warning: `${publicTableError(table)} 已略過該筆，不影響 clients 匯入。` };
+  const message = isSupabaseSchemaError(error as SupabaseImportError)
+    ? `${publicTableError(table)} 不影響 clients 匯入。`
+    : `匯入失敗：${table} insert 回傳錯誤，已略過該筆。`;
+  return { ok: false, warning: message };
 }
 
 function normalizeExistingClient(client: ExistingClientSelect): ExistingClient {
+  const clientWithLegacyFields = client as ExistingClientSelect & { name?: string | null; notes?: string | null };
   return {
     id: client.id,
     client_code: client.client_code ?? null,
-    display_name: client.display_name ?? client.client_name ?? null,
-    client_name: client.client_name ?? client.display_name ?? null,
+    display_name: client.display_name ?? client.client_name ?? clientWithLegacyFields.name ?? null,
+    client_name: client.client_name ?? client.display_name ?? clientWithLegacyFields.name ?? null,
+    name: clientWithLegacyFields.name ?? null,
     nickname: client.nickname ?? null,
     line_id: client.line_id ?? null,
     instagram: client.instagram ?? null,
     phone: client.phone ?? null,
-    internal_notes: client.internal_notes ?? null,
+    internal_notes: client.internal_notes ?? clientWithLegacyFields.notes ?? null,
+    notes: clientWithLegacyFields.notes ?? null,
     priority: client.priority ?? null
   };
 }
@@ -367,42 +439,6 @@ function findExistingClient(row: CsvRow, existing: ExistingClient[]) {
   return null;
 }
 
-function buildClientPayload(row: CsvRow) {
-  const displayName = getValue(row, columnAliases.displayName);
-  const clientCode = getValue(row, columnAliases.clientCode) || makeClientCode();
-  const priority = normalizedPriority(row);
-  const contactMethod = getValue(row, columnAliases.contactMethod) || DEFAULT_CONTACT_METHOD;
-  const contactValue = getValue(row, columnAliases.contactValue);
-  const status = getValue(row, columnAliases.status) || DEFAULT_CLIENT_STATUS;
-  const notes = [
-    sourceLabel(row),
-    createdFromLabel(row),
-    `client_status：${status}`,
-    `contact_method：${contactMethod}`,
-    priorityText[priority],
-    getValue(row, columnAliases.note)
-  ].filter(Boolean).join("\n");
-  const payload: Record<string, unknown> = {
-    client_code: clientCode,
-    client_name: displayName,
-    display_name: displayName,
-    nickname: displayName,
-    source: "other",
-    priority,
-    current_stage: status === "流失" ? "lost" : status === "熟客" ? "repeat" : "followup",
-    first_contact_date: new Date().toISOString().slice(0, 10),
-    first_pain_point: "Calendar Backfill",
-    internal_notes: notes,
-    updated_at: new Date().toISOString()
-  };
-  const method = contactMethod.toLowerCase();
-  if (contactValue && (method.includes("line") || method === "line")) payload.line_id = contactValue;
-  if (contactValue && (method.includes("ig") || method.includes("instagram"))) payload.instagram = contactValue;
-  if (contactValue && (method.includes("電話") || method.includes("phone") || method.includes("手機"))) payload.phone = contactValue;
-  if (!payload.line_id) payload.line_id = `clinic-${clientCode}`;
-  return keepAllowedColumns(payload, clientsAllowedColumns);
-}
-
 function buildRecordPayload(row: CsvRow, clientId: string) {
   const serviceType = getValue(row, columnAliases.serviceType) || "其他";
   const serviceName = getValue(row, columnAliases.serviceName) || serviceType;
@@ -440,25 +476,19 @@ function buildFollowupPayload(row: CsvRow, clientId: string) {
   }, followupsAllowedColumns);
 }
 
-async function loadExistingClients(supabase: SupabaseClientLike) {
+async function loadExistingClients(supabase: SupabaseClientLike, availableColumns: Set<string>, strict = true) {
+  const select = selectForAvailableColumns(availableColumns, ["client_code", "display_name", "client_name", "name", "nickname", "line_id", "instagram", "phone", "internal_notes", "notes", "priority"]);
+  if (!select) return [];
+
   const { data, error } = await supabase
     .from("clients")
-    .select("id, client_code, display_name, client_name, nickname, line_id, instagram, phone, internal_notes, priority")
+    .select(select)
     .limit(10000);
-  if (!error) return (data ?? []).map((client) => normalizeExistingClient(client as ExistingClientSelect));
+  if (!error) return (data ?? []).map((client) => normalizeExistingClient(client as unknown as ExistingClientSelect));
 
   logSupabaseImportError("clients", error as SupabaseImportError);
-  if (!isSupabaseSchemaError(error as SupabaseImportError)) throw new Error(error.message);
-
-  const fallback = await supabase
-    .from("clients")
-    .select("id, client_name, line_id, phone")
-    .limit(10000);
-  if (fallback.error) {
-    logSupabaseImportError("clients", fallback.error as SupabaseImportError);
-    throw new Error(fallback.error.message);
-  }
-  return (fallback.data ?? []).map((client) => normalizeExistingClient(client as ExistingClientSelect));
+  if (strict) throw new Error(error.message);
+  return [];
 }
 
 function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: CsvRow[], existingClients: ExistingClient[]) {
@@ -521,6 +551,24 @@ function analyze(clientsRows: CsvRow[], serviceRows: CsvRow[], followupRows: Csv
   };
 }
 
+function buildDryRunResponse(dryRun: ReturnType<typeof analyze>, schemaWarnings: ImportWarning[]) {
+  const missingNameRows = dryRun.issues.filter((issue) => issue.reason.includes("缺少姓名"));
+  const invalidDateRows = dryRun.issues.filter((issue) => issue.reason.includes("日期無法解析"));
+  const invalidAmountRows = dryRun.issues.filter((issue) => issue.reason.includes("金額無法解析"));
+  const validRows = Math.max(0, dryRun.summary.clients_rows - missingNameRows.length);
+  return {
+    parsedRows: dryRun.summary.clients_rows,
+    validRows,
+    missingNameRows,
+    possibleDuplicates: dryRun.duplicates,
+    invalidDateRows,
+    invalidAmountRows,
+    previewClientsCount: dryRun.summary.planned_new_clients,
+    previewServiceRecordsCount: dryRun.summary.planned_service_records,
+    warnings: schemaWarnings
+  };
+}
+
 export async function GET() {
   const auth = await requireClinicAdmin();
   if (!auth.ok) return auth.response;
@@ -549,17 +597,19 @@ export async function POST(req: Request) {
   const clientsRows = [...csvClientRows, ...pasteRows];
   const serviceRows = [...csvServiceRows, ...pasteRows.filter(rowHasServiceData)];
   const followupRows = [...csvFollowupRows, ...pasteRows.filter((row) => ["P1", "P2"].includes(normalizedPriority(row)))];
+  const schemaInfo = await detectSchemaInfo(auth.supabase);
   let existingClients: ExistingClient[] = [];
   try {
-    existingClients = await loadExistingClients(auth.supabase);
+    existingClients = await loadExistingClients(auth.supabase, schemaInfo.clients, mode === "confirm");
   } catch (error) {
     console.error("calendar backfill load clients failed", { message: error instanceof Error ? error.message : String(error) });
-    return NextResponse.json({ error: "匯入失敗：clients 欄位不相容。" }, { status: 500 });
+    if (mode === "confirm") return NextResponse.json({ error: "Confirm Import clients 寫入失敗：無法讀取既有 clients 對照。" }, { status: 500 });
   }
   const dryRun = analyze(clientsRows, serviceRows, followupRows, existingClients);
+  const dryRunResponse = buildDryRunResponse(dryRun, schemaInfo.warnings);
 
   if (mode === "dry_run") {
-    return NextResponse.json({ mode, ...dryRun });
+    return NextResponse.json({ mode, ...dryRun, ...dryRunResponse });
   }
 
   const clientByCode = new Map<string, string>();
@@ -592,20 +642,23 @@ export async function POST(req: Request) {
       errors.push({ table: "clients", row: index + 2, message: "匯入失敗：缺少必要欄位 display_name。" });
       continue;
     }
-    const payload = buildClientPayload(row);
     const existingMatch = findExistingClient(row, existingClients);
     if (existingMatch?.reason === "display_name 完全相同" && !code) {
       result.clients_skipped += 1;
       result.skippedRows += 1;
       importReview.push({ file: "clients", row: index + 2, reason: "姓名相同但無 client_code / 聯絡方式佐證，已略過避免重複新增", value: name });
     } else if (existingMatch) {
+      const updatePayload = buildClientUpdatePayload(existingMatch.client, row, schemaInfo.clients);
+      if (!Object.keys(updatePayload).length) {
+        warnings.push({ table: "clients", row: index + 2, message: "clients schema 沒有可安全更新欄位，已保留既有 client 對應。" });
+        result.clients_skipped += 1;
+        result.skippedRows += 1;
+        rememberClient({ ...existingMatch.client, display_name: name || existingMatch.client.display_name }, clientByCode, clientByName);
+        continue;
+      }
       const { error } = await auth.supabase
         .from("clients")
-        .update(keepAllowedColumns({
-          internal_notes: [existingMatch.client.internal_notes, payload.internal_notes].filter(Boolean).join("\n---\n"),
-          priority: payload.priority,
-          updated_at: new Date().toISOString()
-        }, clientsAllowedColumns))
+        .update(updatePayload)
         .eq("id", existingMatch.client.id);
       if (error) {
         logSupabaseImportError("clients", error as SupabaseImportError);
@@ -623,7 +676,7 @@ export async function POST(req: Request) {
         rememberClient({ ...existingMatch.client, display_name: name || existingMatch.client.display_name }, clientByCode, clientByName);
       }
     } else {
-      const inserted = await insertClientSchemaSafe(auth.supabase, payload);
+      const inserted = await insertClientSchemaSafe(auth.supabase, row, schemaInfo.clients);
       if (inserted.error || !inserted.data) {
         result.failed += 1;
         errors.push({ table: "clients", row: index + 2, message: inserted.error?.message === "缺少必要欄位 display_name。" ? "匯入失敗：缺少必要欄位 display_name。" : publicTableError("clients") });
@@ -650,7 +703,7 @@ export async function POST(req: Request) {
       importReview.push({ file: "service_records", row: index + 2, reason: "找不到可對應 client，未建立服務紀錄", value: getValue(row, columnAliases.displayName) || getValue(row, columnAliases.clientCode) });
       continue;
     }
-    const inserted = await insertOptionalSchemaSafe(auth.supabase, "service_records", buildRecordPayload(row, clientId));
+    const inserted = await insertOptionalSchemaSafe(auth.supabase, "service_records", buildRecordPayloadSchemaSafe(row, clientId, schemaInfo.service_records));
     if (inserted.ok) {
       result.service_records_created += 1;
       result.createdServiceRecords += 1;
@@ -668,7 +721,7 @@ export async function POST(req: Request) {
       importReview.push({ file: "followups", row: index + 2, reason: "找不到可對應 client，未建立追蹤候選", value: getValue(row, columnAliases.displayName) || getValue(row, columnAliases.clientCode) });
       continue;
     }
-    const inserted = await insertOptionalSchemaSafe(auth.supabase, "followups", buildFollowupPayload(row, clientId));
+    const inserted = await insertOptionalSchemaSafe(auth.supabase, "followups", buildFollowupPayloadSchemaSafe(row, clientId, schemaInfo.followups));
     if (inserted.ok) {
       result.followups_created += 1;
       result.createdFollowups += 1;
@@ -678,5 +731,5 @@ export async function POST(req: Request) {
     if (inserted.warning) warnings.push({ table: "followups", row: index + 2, message: inserted.warning });
   }
 
-  return NextResponse.json({ mode, ...dryRun, result, review_list: importReview, warnings, errors });
+  return NextResponse.json({ mode, ...dryRun, ...dryRunResponse, result, review_list: importReview, warnings, errors });
 }
