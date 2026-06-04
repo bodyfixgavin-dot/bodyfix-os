@@ -1,0 +1,1164 @@
+<!doctype html>
+<html lang="zh-Hant-TW">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>BodyFix Pelvic Anatomy Viewer v0.1</title>
+  <style>
+    :root {
+      --navy: #111d2d;
+      --navy-2: #16263a;
+      --ivory: #f7f1e7;
+      --bronze: #b9915f;
+      --bronze-2: #d4b684;
+      --muscle: #8f4f4f;
+      --bone: rgba(232, 221, 204, 0.54);
+      --line: rgba(247, 241, 231, 0.16);
+      --text-soft: rgba(247, 241, 231, 0.72);
+      --danger-soft: #b46b64;
+      --shadow: 0 24px 80px rgba(0, 0, 0, 0.38);
+    }
+
+    * { box-sizing: border-box; }
+
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      background: var(--navy);
+      color: var(--ivory);
+      font-family: -apple-system, BlinkMacSystemFont, "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+    }
+
+    body {
+      background:
+        radial-gradient(circle at 18% 12%, rgba(185, 145, 95, 0.18), transparent 28%),
+        radial-gradient(circle at 80% 8%, rgba(65, 90, 120, 0.26), transparent 32%),
+        linear-gradient(145deg, #0d1724 0%, #142236 55%, #101925 100%);
+    }
+
+    button,
+    textarea { font: inherit; }
+
+    .viewer-shell {
+      position: relative;
+      height: 100dvh;
+      min-height: 100vh;
+      overflow: hidden;
+    }
+
+    .top-bar {
+      position: fixed;
+      z-index: 20;
+      top: 0;
+      left: 0;
+      right: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      min-height: 72px;
+      padding: calc(14px + env(safe-area-inset-top)) 16px 12px;
+      border-bottom: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(17, 29, 45, 0.94), rgba(17, 29, 45, 0.68));
+      backdrop-filter: blur(18px);
+    }
+
+    .brand-title {
+      display: grid;
+      gap: 2px;
+      min-width: 0;
+    }
+
+    .brand-title strong {
+      color: var(--ivory);
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: clamp(18px, 4vw, 28px);
+      letter-spacing: -0.02em;
+      white-space: nowrap;
+    }
+
+    .brand-title span {
+      color: var(--bronze-2);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+    }
+
+    .segmented {
+      display: inline-flex;
+      gap: 4px;
+      padding: 4px;
+      border: 1px solid rgba(212, 182, 132, 0.24);
+      border-radius: 999px;
+      background: rgba(247, 241, 231, 0.06);
+    }
+
+    .segmented button,
+    .view-button,
+    .tab-button,
+    .chip-button {
+      border: 0;
+      color: var(--text-soft);
+      background: transparent;
+      cursor: pointer;
+      transition: 0.18s ease;
+    }
+
+    .segmented button {
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-size: 13px;
+      white-space: nowrap;
+    }
+
+    .segmented button.active,
+    .tab-button.active,
+    .chip-button.active {
+      color: #162033;
+      background: linear-gradient(135deg, var(--bronze-2), var(--bronze));
+      box-shadow: 0 10px 24px rgba(185, 145, 95, 0.22);
+    }
+
+    #scene {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      touch-action: none;
+    }
+
+    .model-badge {
+      position: fixed;
+      z-index: 15;
+      top: calc(82px + env(safe-area-inset-top));
+      left: 16px;
+      right: 16px;
+      display: flex;
+      justify-content: center;
+      pointer-events: none;
+    }
+
+    .model-badge span {
+      max-width: 720px;
+      padding: 9px 13px;
+      border: 1px solid rgba(212, 182, 132, 0.22);
+      border-radius: 999px;
+      background: rgba(17, 29, 45, 0.72);
+      color: var(--text-soft);
+      font-size: 12px;
+      line-height: 1.5;
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .view-controls {
+      position: fixed;
+      z-index: 18;
+      left: 14px;
+      bottom: calc(31% + 16px + env(safe-area-inset-bottom));
+      display: grid;
+      gap: 8px;
+    }
+
+    .view-button {
+      width: 76px;
+      padding: 9px 10px;
+      border: 1px solid rgba(247, 241, 231, 0.16);
+      border-radius: 16px;
+      background: rgba(17, 29, 45, 0.68);
+      backdrop-filter: blur(12px);
+      color: var(--ivory);
+      font-size: 12px;
+      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.18);
+    }
+
+    .view-button:hover { border-color: rgba(212, 182, 132, 0.58); }
+
+    .side-switcher {
+      position: fixed;
+      z-index: 18;
+      right: 16px;
+      bottom: calc(31% + 16px + env(safe-area-inset-bottom));
+      display: grid;
+      gap: 8px;
+      width: min(160px, 42vw);
+      padding: 10px;
+      border: 1px solid rgba(247, 241, 231, 0.14);
+      border-radius: 20px;
+      background: rgba(17, 29, 45, 0.68);
+      backdrop-filter: blur(12px);
+      box-shadow: var(--shadow);
+    }
+
+    .side-switcher label {
+      color: var(--bronze-2);
+      font-size: 11px;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+    }
+
+    .chip-row { display: flex; gap: 6px; }
+
+    .chip-button {
+      flex: 1;
+      padding: 8px;
+      border: 1px solid rgba(247, 241, 231, 0.12);
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    .bottom-drawer {
+      position: fixed;
+      z-index: 25;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      height: 30dvh;
+      min-height: 214px;
+      max-height: 85dvh;
+      display: flex;
+      flex-direction: column;
+      border: 1px solid rgba(247, 241, 231, 0.14);
+      border-bottom: 0;
+      border-radius: 28px 28px 0 0;
+      background: linear-gradient(180deg, rgba(247, 241, 231, 0.96), rgba(240, 231, 217, 0.96));
+      color: var(--navy);
+      box-shadow: 0 -26px 80px rgba(0, 0, 0, 0.34);
+      transition: height 0.24s ease;
+    }
+
+    .bottom-drawer.expanded { height: 55dvh; }
+    .bottom-drawer.full { height: 85dvh; }
+
+    .drawer-handle {
+      width: 58px;
+      height: 5px;
+      flex: 0 0 auto;
+      margin: 10px auto 8px;
+      border-radius: 999px;
+      background: rgba(17, 29, 45, 0.22);
+    }
+
+    .drawer-body {
+      overflow: auto;
+      padding: 0 18px 86px;
+    }
+
+    .selected-status {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      color: rgba(17, 29, 45, 0.62);
+      font-size: 13px;
+    }
+
+    .pending-pill {
+      display: none;
+      flex: 0 0 auto;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: rgba(180, 107, 100, 0.12);
+      color: #8d4b45;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    .pending-pill.show { display: inline-flex; }
+
+    .info-title {
+      display: grid;
+      gap: 4px;
+      margin: 10px 0 12px;
+    }
+
+    .info-title h1 {
+      margin: 0;
+      color: var(--navy);
+      font-family: Georgia, "Noto Serif TC", serif;
+      font-size: clamp(26px, 8vw, 42px);
+      letter-spacing: -0.03em;
+    }
+
+    .info-title p { margin: 0; color: rgba(17, 29, 45, 0.62); }
+
+    .meta-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin: 12px 0 14px;
+    }
+
+    .meta-card,
+    .info-section,
+    .record-card {
+      border: 1px solid rgba(17, 29, 45, 0.12);
+      background: rgba(255, 255, 255, 0.42);
+      box-shadow: 0 12px 28px rgba(17, 29, 45, 0.06);
+    }
+
+    .meta-card {
+      min-height: 64px;
+      padding: 10px;
+      border-radius: 16px;
+    }
+
+    .meta-card span,
+    .info-section h2,
+    .record-card h2 {
+      display: block;
+      margin: 0 0 4px;
+      color: var(--bronze);
+      font-size: 11px;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .meta-card strong { font-size: 14px; line-height: 1.5; }
+
+    .tab-content { display: none; gap: 10px; }
+    .tab-content.active { display: grid; }
+
+    .info-section,
+    .record-card {
+      padding: 14px;
+      border-radius: 18px;
+      line-height: 1.72;
+    }
+
+    .info-section p,
+    .record-card p { margin: 0; }
+
+    .safety { border-color: rgba(180, 107, 100, 0.28); }
+    .safety h2 { color: var(--danger-soft); }
+
+    .tab-bar {
+      position: absolute;
+      left: 12px;
+      right: 12px;
+      bottom: calc(12px + env(safe-area-inset-bottom));
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 8px;
+      padding: 8px;
+      border: 1px solid rgba(17, 29, 45, 0.12);
+      border-radius: 22px;
+      background: rgba(247, 241, 231, 0.88);
+      backdrop-filter: blur(14px);
+    }
+
+    .tab-button {
+      padding: 11px 8px;
+      border-radius: 16px;
+      color: rgba(17, 29, 45, 0.64);
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .record-card textarea {
+      width: 100%;
+      min-height: 110px;
+      resize: vertical;
+      margin-top: 10px;
+      padding: 12px;
+      border: 1px solid rgba(17, 29, 45, 0.16);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.58);
+      color: var(--navy);
+      line-height: 1.6;
+      outline: none;
+    }
+
+    .record-actions { display: flex; gap: 8px; margin-top: 10px; }
+    .record-actions button {
+      flex: 1;
+      border: 0;
+      border-radius: 14px;
+      padding: 10px;
+      cursor: pointer;
+      font-weight: 800;
+    }
+    .save-record { background: var(--navy); color: var(--ivory); }
+    .clear-record { background: rgba(17, 29, 45, 0.08); color: var(--navy); }
+
+    @media (min-width: 860px) {
+      .top-bar { padding-inline: 28px; }
+      .bottom-drawer {
+        left: auto;
+        right: 24px;
+        bottom: 24px;
+        width: 420px;
+        height: min(72dvh, 720px);
+        max-height: calc(100dvh - 120px);
+        border-radius: 28px;
+        border: 1px solid rgba(247, 241, 231, 0.14);
+      }
+      .bottom-drawer.expanded,
+      .bottom-drawer.full { height: min(78dvh, 760px); }
+      .view-controls { bottom: 28px; left: 28px; }
+      .side-switcher { bottom: 28px; right: 468px; }
+      .model-badge { top: calc(86px + env(safe-area-inset-top)); }
+      .drawer-body { padding-bottom: 92px; }
+    }
+  </style>
+</head>
+<body>
+  <main class="viewer-shell" aria-label="BodyFix Pelvic Anatomy Viewer">
+    <header class="top-bar">
+      <div class="brand-title">
+        <strong>BodyFix Pelvic Map</strong>
+        <span>Pelvic · Hip · Tension Viewer</span>
+      </div>
+      <div class="segmented" aria-label="層級切換">
+        <button type="button" class="active" data-layer="superficial">表層</button>
+        <button type="button" data-layer="middle">中層</button>
+        <button type="button" data-layer="deep">深層</button>
+      </div>
+    </header>
+
+    <canvas id="scene"></canvas>
+
+    <div class="model-badge" aria-live="polite">
+      <span id="modelBadge">v0.1 原型：若 GLB 尚未提供，畫面會以「模型待補」佔位物呈現，不代表精準解剖模型。</span>
+    </div>
+
+    <nav class="view-controls" aria-label="視角控制">
+      <button type="button" class="view-button" data-view="front">前視圖</button>
+      <button type="button" class="view-button" data-view="back">後視圖</button>
+      <button type="button" class="view-button" data-view="side">側視圖</button>
+      <button type="button" class="view-button" data-view="quarter">斜側視圖</button>
+    </nav>
+
+    <aside class="side-switcher" aria-label="左右側切換">
+      <label>Side Switch</label>
+      <div class="chip-row">
+        <button type="button" class="chip-button active" data-side="left">左側</button>
+        <button type="button" class="chip-button" data-side="right">右側</button>
+      </div>
+    </aside>
+
+    <section class="bottom-drawer" id="drawer" aria-label="結構資訊卡">
+      <button type="button" class="drawer-handle" id="drawerHandle" aria-label="切換資訊卡高度"></button>
+      <div class="drawer-body">
+        <div class="selected-status">
+          <span id="selectedHint">點擊模型結構，查看 BodyFix 張力判讀語言。</span>
+          <span class="pending-pill" id="pendingPill">模型待補</span>
+        </div>
+
+        <div class="info-title">
+          <h1 id="nameZh">骨盆區張力地圖</h1>
+          <p id="nameLa">BodyFix Pelvic Anatomy Viewer v0.1</p>
+        </div>
+
+        <div class="meta-grid">
+          <div class="meta-card"><span>層級</span><strong id="layerText">表層 / 中層 / 深層</strong></div>
+          <div class="meta-card"><span>筋膜線</span><strong id="fasciaText">選取後顯示</strong></div>
+        </div>
+
+        <div class="tab-content active" data-tab-panel="client">
+          <article class="info-section">
+            <h2>客戶白話說明</h2>
+            <p id="clientExplanation">這不是全身解剖百科，而是 BodyFix 用來說明骨盆、臀髖、下背與大腿外側如何一起硬撐的成交與教育工具。</p>
+          </article>
+          <article class="info-section safety">
+            <h2>安全邊界</h2>
+            <p id="safetyBoundary">骨盆底與會陰區只用於模型教育與張力判讀，不暗示直接操作敏感區。</p>
+          </article>
+          <article class="info-section">
+            <h2>居家提示</h2>
+            <p id="homeCue">先用呼吸、站姿與髖部小範圍活動，感覺身體能不能回到更穩定、有韌性、有彈性的系統。</p>
+          </article>
+        </div>
+
+        <div class="tab-content" data-tab-panel="pro">
+          <article class="info-section">
+            <h2>BodyFix 判讀</h2>
+            <p id="bodyfixInterpretation">選取結構後，這裡會顯示 BodyFix 的張力判讀、筋膜與動作整合語言。</p>
+          </article>
+          <article class="info-section">
+            <h2>專業備註</h2>
+            <p id="professionalNote">避免單一肌肉歸因；以負荷分配、呼吸、支撐策略與外部張力整理作為溝通主軸。</p>
+          </article>
+          <article class="info-section safety">
+            <h2>避免用語</h2>
+            <p id="avoidClaims">不使用診斷、治療、患者、臨床療效等語言。</p>
+          </article>
+        </div>
+
+        <div class="tab-content" data-tab-panel="record">
+          <article class="record-card">
+            <h2>服務紀錄</h2>
+            <p>紀錄會存到本機 localStorage，方便現場示範或下一次回顧。</p>
+            <textarea id="recordText" placeholder="例：今天主要觀察左側髖外側與內收鏈的負荷分配，先用呼吸和站姿回接。"></textarea>
+            <div class="record-actions">
+              <button type="button" class="save-record" id="saveRecord">儲存紀錄</button>
+              <button type="button" class="clear-record" id="clearRecord">清除</button>
+            </div>
+          </article>
+        </div>
+      </div>
+
+      <nav class="tab-bar" aria-label="主功能切換">
+        <button type="button" class="tab-button active" data-tab="client">客戶說明</button>
+        <button type="button" class="tab-button" data-tab="pro">專業判讀</button>
+        <button type="button" class="tab-button" data-tab="record">服務紀錄</button>
+      </nav>
+    </section>
+  </main>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.165.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.165.0/examples/jsm/"
+      }
+    }
+  </script>
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+
+    const pelvicStructures = [
+      {
+        id: "pelvis",
+        nameZh: "骨盆",
+        nameLa: "Pelvis",
+        nameEn: "Pelvis",
+        category: "bone",
+        side: "midline",
+        layer: "base",
+        bodyRegion: "骨盆環",
+        meshFile: "/models/pelvis.glb",
+        color: "#d8c8ad",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 0,
+        relatedFasciaLines: ["深前線", "功能線", "側線"],
+        relatedStructures: ["sacrum", "proximal_femur", "gluteus_medius", "iliopsoas"],
+        clientExplanation: "骨盆可以想成身體中段的承重平台，連接下背、髖關節、大腿與骨盆底。它不是單一骨頭，而是整個張力系統的中繼站。",
+        bodyfixInterpretation: "BodyFix 會用骨盆位置判讀左右承重、前後傾策略，以及臀髖、下背、內收鏈是不是在一起硬撐。",
+        professionalNote: "先看整體承重與方向，再看局部結構；不要把骨盆歪斜簡化成單一原因。",
+        safetyBoundary: "僅作為姿勢、動作與張力教育，不使用診斷或矯正承諾。",
+        homeCue: "站姿時感覺左右腳掌平均接地，讓骨盆像碗一樣穩穩放在雙腿上。",
+        avoidClaims: ["骨盆矯正", "治療骨盆歪斜", "保證復位"]
+      },
+      {
+        id: "sacrum",
+        nameZh: "薦骨",
+        nameLa: "Os sacrum",
+        nameEn: "Sacrum",
+        category: "bone",
+        side: "midline",
+        layer: "base",
+        bodyRegion: "骨盆後側",
+        meshFile: "/models/sacrum.glb",
+        color: "#d8c8ad",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 0,
+        relatedFasciaLines: ["背側線", "深前線"],
+        relatedStructures: ["pelvis", "iliococcygeus", "external_anal_sphincter", "piriformis"],
+        clientExplanation: "薦骨在骨盆後側，像是下背和骨盆底之間的支撐樞紐，跟久坐、站姿和深層穩定感有關。",
+        bodyfixInterpretation: "BodyFix 會從薦骨周圍看後側支撐、呼吸波動與骨盆底張力是否有足夠彈性。",
+        professionalNote: "觀察薦髂周邊負荷，不做過度推壓或復位式承諾。",
+        safetyBoundary: "可做外部教育與動作回接，不宣稱調整薦骨位置。",
+        homeCue: "仰躺時感覺薦骨寬寬地貼在地面，搭配慢吐氣放鬆後側硬撐。",
+        avoidClaims: ["薦骨復位", "治療坐骨神經", "一次調回去"]
+      },
+      {
+        id: "proximal_femur",
+        nameZh: "股骨近端",
+        nameLa: "Femur proximalis",
+        nameEn: "Proximal femur",
+        category: "bone",
+        side: "bilateral",
+        layer: "base",
+        bodyRegion: "髖關節",
+        meshFile: "/models/proximal_femur_left.glb",
+        color: "#d8c8ad",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 0,
+        relatedFasciaLines: ["深前線", "側線", "螺旋線"],
+        relatedStructures: ["pelvis", "gluteus_maximus", "gluteus_medius", "iliopsoas"],
+        clientExplanation: "股骨近端是大腿接進骨盆的地方，髖關節能不能順，會影響走路、站起來和上下樓梯的感覺。",
+        bodyfixInterpretation: "BodyFix 會用它判讀髖關節旋轉、承重方向與臀肌、髂腰肌、內收鏈的分工。",
+        professionalNote: "搭配骨盆位置與足底接地觀察，不把髖卡直接歸因於骨頭問題。",
+        safetyBoundary: "僅做外部動作教育與張力整理，不提供骨科式判斷。",
+        homeCue: "做小幅度髖鉸鏈，感覺大腿骨能在髖窩裡安定滑動。",
+        avoidClaims: ["髖關節治療", "骨頭移位", "復位"]
+      },
+      {
+        id: "gluteus_maximus",
+        nameZh: "臀大肌",
+        nameLa: "Musculus gluteus maximus",
+        nameEn: "Gluteus maximus",
+        category: "muscle",
+        side: "bilateral",
+        layer: "superficial",
+        bodyRegion: "臀部後側",
+        meshFile: "/models/gluteus_maximus_left.glb",
+        color: "#8f4f4f",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 1,
+        relatedFasciaLines: ["背側線", "功能線", "側線"],
+        relatedStructures: ["pelvis", "sacrum", "gluteus_medius", "piriformis"],
+        clientExplanation: "臀大肌可以把它想成骨盆後側的大牆。它不只是讓屁股有形狀，也跟站起來、走路、爬樓梯、髖伸展和下背支撐有關。",
+        bodyfixInterpretation: "BodyFix 會把臀大肌視為後側支撐系統的重要觀察區。如果這裡沒有好好參與，身體可能會讓下背、腿後側或髖外側多做工作。",
+        professionalNote: "檢查髖伸展是否由臀部、後鏈與核心共同分擔，而非單純強化臀大肌。",
+        safetyBoundary: "可做外部張力整理與動作整合，不碰敏感區，不把臀部痠痛直接說成單一肌肉問題。",
+        homeCue: "橋式或站姿髖伸展時，感覺臀部參與但下背不要先硬起來。",
+        avoidClaims: ["治療臀部疼痛", "按開臀肌", "保證改善下背"]
+      },
+      {
+        id: "gluteus_medius",
+        nameZh: "臀中肌",
+        nameLa: "Musculus gluteus medius",
+        nameEn: "Gluteus medius",
+        category: "muscle",
+        side: "bilateral",
+        layer: "superficial",
+        bodyRegion: "髖外側",
+        meshFile: "/models/gluteus_medius_left.glb",
+        color: "#945756",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 1,
+        relatedFasciaLines: ["側線", "螺旋線"],
+        relatedStructures: ["pelvis", "tensor_fasciae_latae", "gluteus_maximus", "adductor_longus"],
+        clientExplanation: "臀中肌像是骨盆旁邊的水平控制器。走路、單腳站、上下樓梯時，它會幫骨盆不要一直歪來歪去。",
+        bodyfixInterpretation: "BodyFix 會用它來觀察骨盆水平、側線張力和單腳承重策略。髖外側緊、走路晃、單邊腰臀容易累時，這裡通常值得一起看。",
+        professionalNote: "要同時判讀 TFL、臀大肌、內收鏈與足底接地，避免單點訓練邏輯。",
+        safetyBoundary: "可作為外部整理與訓練回接區，但不能只看臀中肌。",
+        homeCue: "單腳站時想像骨盆兩側像托盤一樣保持水平，不要用腰硬撐。",
+        avoidClaims: ["治療髖外側痛", "喚醒失能肌肉", "單一肌肉造成"]
+      },
+      {
+        id: "tensor_fasciae_latae",
+        nameZh: "闊筋膜張肌",
+        nameLa: "Musculus tensor fasciae latae",
+        nameEn: "Tensor fasciae latae",
+        category: "muscle",
+        side: "bilateral",
+        layer: "superficial",
+        bodyRegion: "髖前外側",
+        meshFile: "/models/tensor_fasciae_latae_left.glb",
+        color: "#9b5c56",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 1,
+        relatedFasciaLines: ["側線", "螺旋線"],
+        relatedStructures: ["gluteus_medius", "iliopsoas", "proximal_femur", "adductor_longus"],
+        clientExplanation: "闊筋膜張肌在髖前外側，常常跟大腿外側緊、骨盆前側卡、走路時髖外側代償有關。",
+        bodyfixInterpretation: "這裡是大腿外側張力的重要入口。BodyFix 不會只硬壓大腿外側，而是會看 TFL、臀中肌、髖前側與足底怎麼一起分工。",
+        professionalNote: "用外側張力整理與負荷分配調整取代單純壓髂脛束。",
+        safetyBoundary: "避免用「沾黏、按開、治療髂脛束」這類說法。",
+        homeCue: "站立時讓膝蓋對準腳尖，感覺髖外側不用一直抓緊。",
+        avoidClaims: ["治療髂脛束", "按開沾黏", "放鬆就會好"]
+      },
+      {
+        id: "piriformis",
+        nameZh: "梨狀肌",
+        nameLa: "Musculus piriformis",
+        nameEn: "Piriformis",
+        category: "muscle",
+        side: "bilateral",
+        layer: "middle",
+        bodyRegion: "深臀區",
+        meshFile: "/models/piriformis_left.glb",
+        color: "#7f464b",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 2,
+        relatedFasciaLines: ["深外旋鏈", "背側線"],
+        relatedStructures: ["sacrum", "gluteus_maximus", "obturator_internus", "proximal_femur"],
+        clientExplanation: "梨狀肌在深臀區，位置比較深。它像髖關節後側的小閘門，跟髖旋轉、坐久後深臀緊、骨盆後側張力有關。",
+        bodyfixInterpretation: "BodyFix 會把梨狀肌當成深臀旋轉與神經安全判讀區，不會把它當成硬壓目標。重點是看它是不是在幫骨盆或髖關節硬撐。",
+        professionalNote: "深臀區要觀察放射、麻刺與無力等警訊，必要時停止並轉介。",
+        safetyBoundary: "深臀區要控制力道，若有麻、刺、放射、無力或明顯神經症狀，停止操作並建議轉介。",
+        homeCue: "坐姿或仰躺做小幅髖旋轉，感覺深臀可以慢慢放掉防衛。",
+        avoidClaims: ["治療坐骨神經痛", "梨狀肌症候群診斷", "深壓解決"]
+      },
+      {
+        id: "obturator_internus",
+        nameZh: "閉孔內肌",
+        nameLa: "Musculus obturator internus",
+        nameEn: "Obturator internus",
+        category: "muscle",
+        side: "bilateral",
+        layer: "middle",
+        bodyRegion: "深層髖旋轉與骨盆內側",
+        meshFile: "/models/obturator_internus_left.glb",
+        color: "#77434a",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 2,
+        relatedFasciaLines: ["深前線", "深外旋鏈"],
+        relatedStructures: ["piriformis", "iliococcygeus", "adductor_longus", "pelvis"],
+        clientExplanation: "閉孔內肌是深層髖旋轉肌之一，也跟骨盆底附近的張力有關。它不是一般人會感覺到的表層肌肉，但它可能影響骨盆深層穩定感。",
+        bodyfixInterpretation: "BodyFix 會把它視為深層髖旋轉、骨盆內側支撐與骨盆底張力連動的觀察點。通常不會直接用力處理，而是透過髖、呼吸、內收鏈與外部張力整理間接回接。",
+        professionalNote: "以間接回接與動作整合為主，不把深層骨盆不適歸因為單一肌肉。",
+        safetyBoundary: "不做體腔操作，不做敏感區操作，不用挑逗式語言，不把深層骨盆不適直接歸因為單一肌肉。",
+        homeCue: "搭配吐氣做小幅髖外旋與內旋，找回深層髖旋轉的順暢感。",
+        avoidClaims: ["體腔操作", "處理私密處", "深層治療"]
+      },
+      {
+        id: "adductor_longus",
+        nameZh: "內收長肌",
+        nameLa: "Musculus adductor longus",
+        nameEn: "Adductor longus",
+        category: "muscle",
+        side: "bilateral",
+        layer: "middle",
+        bodyRegion: "大腿內側",
+        meshFile: "/models/adductor_longus_left.glb",
+        color: "#965a58",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 2,
+        relatedFasciaLines: ["深前線", "前功能線"],
+        relatedStructures: ["pelvis", "iliopsoas", "gluteus_medius", "deep_transverse_perineal"],
+        clientExplanation: "內收長肌在大腿內側，跟雙腿夾緊、骨盆前側穩定、走路時腿往中線控制有關。",
+        bodyfixInterpretation: "BodyFix 會把內收鏈看成骨盆與深前線的重要入口。當骨盆底、髖前側或下背一直硬撐時，大腿內側常常也需要一起判讀。",
+        professionalNote: "先說明範圍並維持遮蔽，以專業、非曖昧語言處理高敏感邊界。",
+        safetyBoundary: "大腿內側屬於高敏感邊界區，操作前要清楚說明範圍、取得同意，並保持專業遮蔽。",
+        homeCue: "夾瑜伽磚或枕頭時只用三成力，感覺內側參與但骨盆底不憋緊。",
+        avoidClaims: ["治療鼠蹊痛", "私密緊實", "按開內側"]
+      },
+      {
+        id: "iliopsoas",
+        nameZh: "髂腰肌",
+        nameLa: "Musculus iliopsoas",
+        nameEn: "Iliopsoas",
+        category: "muscle",
+        side: "bilateral",
+        layer: "deep",
+        bodyRegion: "髖前側與深前線",
+        meshFile: "/models/iliopsoas_left.glb",
+        color: "#7d4850",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["深前線"],
+        relatedStructures: ["pelvis", "proximal_femur", "adductor_longus", "deep_transverse_perineal"],
+        clientExplanation: "髂腰肌在身體很深的位置，連接腰椎、骨盆和大腿。它常跟髖前側緊、久坐後站起來卡、下背容易代償有關。",
+        bodyfixInterpretation: "BodyFix 會把髂腰肌視為深前線的重要節點。不會把它簡化成「太緊所以要按開」，而是會看呼吸、骨盆、髖關節和核心支撐怎麼配合。",
+        professionalNote: "避免深壓腹部與過度醫療化說法，優先用呼吸與髖前側活動回接。",
+        safetyBoundary: "避免深壓腹部與過度醫療化說法。若有腹痛、不明腫塊、急性疼痛、術後狀況，應停止並轉介。",
+        homeCue: "半跪姿時先吐氣讓肋骨放下，再感覺髖前側慢慢打開，不要硬頂腰。",
+        avoidClaims: ["治療腰痛", "深壓髂腰肌", "按開腹部"]
+      },
+      {
+        id: "deep_transverse_perineal",
+        nameZh: "會陰深橫肌",
+        nameLa: "Musculus transversus perinei profundus",
+        nameEn: "Deep transverse perineal muscle",
+        category: "pelvic_floor",
+        side: "bilateral",
+        layer: "deep",
+        bodyRegion: "骨盆底中層",
+        meshFile: "/models/deep_transverse_perineal_left.glb",
+        color: "#9f6260",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["深前線", "骨盆底支撐網"],
+        relatedStructures: ["adductor_longus", "iliopsoas", "bulbospongiosus", "ischiocavernosus"],
+        clientExplanation: "這是骨盆底深層附近的橫向支撐結構，可以理解成骨盆底中間的一條穩定帶。",
+        bodyfixInterpretation: "BodyFix 只會把它作為教育與張力判讀概念，用來說明骨盆底不只是「一個點」，而是一套支撐與協調系統。",
+        professionalNote: "使用模型與中性語言說明，不引導直接觸碰或敏感操作。",
+        safetyBoundary: "不做直接操作，不碰觸會陰敏感區，不暗示特殊服務。只能用模型與語言做說明。",
+        homeCue: "吐氣時想像骨盆底像吊床微微回彈，不用用力夾或憋。",
+        avoidClaims: ["骨盆底治療", "私密操作", "直接放鬆會陰"]
+      },
+      {
+        id: "bulbospongiosus",
+        nameZh: "球海綿體肌",
+        nameLa: "Musculus bulbospongiosus",
+        nameEn: "Bulbospongiosus",
+        category: "pelvic_floor",
+        side: "bilateral",
+        layer: "deep",
+        bodyRegion: "骨盆底前側",
+        meshFile: "/models/bulbospongiosus_left.glb",
+        color: "#a86662",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["骨盆底支撐網", "深前線"],
+        relatedStructures: ["deep_transverse_perineal", "ischiocavernosus", "external_anal_sphincter"],
+        clientExplanation: "球海綿體肌位在會陰前側區域，是骨盆底表層結構之一。對一般客戶來說，不需要背名字，知道它屬於骨盆底前側支撐區就好。",
+        bodyfixInterpretation: "BodyFix 可用它來說明骨盆底前側張力與深層安全感，但不會把它變成操作目標。",
+        professionalNote: "紅黃邊界結構，以教育圖像和身體覺察語言為限。",
+        safetyBoundary: "這是紅黃邊界區，只做教育，不做觸碰，不做情色暗示。",
+        homeCue: "用自然呼吸感覺骨盆底前側有空間，不需要刻意夾緊。",
+        avoidClaims: ["特殊服務", "性功能療效", "私密處操作"]
+      },
+      {
+        id: "ischiocavernosus",
+        nameZh: "坐骨海綿體肌",
+        nameLa: "Musculus ischiocavernosus",
+        nameEn: "Ischiocavernosus",
+        category: "pelvic_floor",
+        side: "bilateral",
+        layer: "deep",
+        bodyRegion: "坐骨支與骨盆底前側",
+        meshFile: "/models/ischiocavernosus_left.glb",
+        color: "#9d5f5d",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["骨盆底支撐網", "深前線"],
+        relatedStructures: ["bulbospongiosus", "deep_transverse_perineal", "pelvis"],
+        clientExplanation: "坐骨海綿體肌靠近坐骨支附近，是骨盆底前側與坐骨支撐相關的結構。",
+        bodyfixInterpretation: "BodyFix 可用它來說明坐骨、骨盆底前側和深層張力的關係，但現場服務重點仍放在外部張力整理、呼吸與動作回接。",
+        professionalNote: "只做概念說明，避免讓客戶誤會為敏感區服務。",
+        safetyBoundary: "不直接操作敏感區，不做特殊服務暗示，不用曖昧語言包裝。",
+        homeCue: "坐姿時感覺左右坐骨均勻承重，讓前側骨盆底不用緊抓。",
+        avoidClaims: ["性功能療效", "特殊按摩", "私密放鬆"]
+      },
+      {
+        id: "iliococcygeus",
+        nameZh: "髂尾肌",
+        nameLa: "Musculus iliococcygeus",
+        nameEn: "Iliococcygeus",
+        category: "pelvic_floor",
+        side: "bilateral",
+        layer: "deep",
+        bodyRegion: "骨盆底後側",
+        meshFile: "/models/iliococcygeus_left.glb",
+        color: "#87515a",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["骨盆底支撐網", "深前線", "背側線"],
+        relatedStructures: ["sacrum", "deep_transverse_perineal", "external_anal_sphincter", "obturator_internus"],
+        clientExplanation: "髂尾肌屬於骨盆底後側支撐的一部分，可以用來理解尾骨、薦骨與深層穩定感的關係。",
+        bodyfixInterpretation: "BodyFix 會把它當作骨盆底後側與呼吸、深臀、薦骨周邊張力連動的教育節點。",
+        professionalNote: "以呼吸、深臀外部張力與坐骨承重回接，不做侵入式或敏感區操作。",
+        safetyBoundary: "只做教育與判讀語言，不直接操作骨盆底或會陰敏感區。",
+        homeCue: "吐氣時感覺尾骨附近向下變寬，吸氣時骨盆底自然回彈。",
+        avoidClaims: ["骨盆底治療", "尾骨復位", "私密處處理"]
+      },
+      {
+        id: "external_anal_sphincter",
+        nameZh: "肛門外括約肌",
+        nameLa: "Musculus sphincter ani externus",
+        nameEn: "External anal sphincter",
+        category: "pelvic_floor",
+        side: "midline",
+        layer: "deep",
+        bodyRegion: "骨盆底後側紅燈邊界",
+        meshFile: "/models/external_anal_sphincter.glb",
+        color: "#a05c5c",
+        defaultVisible: true,
+        clickable: true,
+        depthLevel: 3,
+        relatedFasciaLines: ["骨盆底支撐網", "背側線"],
+        relatedStructures: ["iliococcygeus", "deep_transverse_perineal", "sacrum"],
+        clientExplanation: "肛門外括約肌屬於骨盆底後側的邊界結構。一般客戶只需要知道它跟骨盆底後側控制與安全感有關。",
+        bodyfixInterpretation: "BodyFix 只把它作為紅燈邊界教育：用來提醒骨盆底是支撐與協調系統，不是現場直接操作目標。",
+        professionalNote: "這是明確紅燈邊界；不觸碰、不暗示、不以任何服務包裝敏感區操作。",
+        safetyBoundary: "紅燈邊界，只做教育不操作；若有排便、疼痛或神經相關困擾，建議尋求合適專業資源。",
+        homeCue: "練習自然吐氣，避免整天夾緊或憋住骨盆底。",
+        avoidClaims: ["肛門治療", "括約肌調整", "特殊服務"]
+      }
+    ];
+
+    const canvas = document.querySelector("#scene");
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.Fog(0x111d2d, 8, 24);
+
+    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
+    camera.position.set(0, 2.2, 7.4);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.enableDamping = true;
+    controls.target.set(0, 0.8, 0);
+    controls.minDistance = 3.2;
+    controls.maxDistance = 12;
+
+    scene.add(new THREE.HemisphereLight(0xf7f1e7, 0x111d2d, 2.4));
+    const keyLight = new THREE.DirectionalLight(0xf7f1e7, 2.8);
+    keyLight.position.set(3, 5, 4);
+    scene.add(keyLight);
+    const bronzeLight = new THREE.PointLight(0xd4b684, 80, 18);
+    bronzeLight.position.set(-3, 2, 4);
+    scene.add(bronzeLight);
+
+    const floorGrid = new THREE.GridHelper(10, 20, 0xb9915f, 0x38516e);
+    floorGrid.position.y = -1.5;
+    floorGrid.material.opacity = 0.15;
+    floorGrid.material.transparent = true;
+    scene.add(floorGrid);
+
+    const loader = new GLTFLoader();
+    const raycaster = new THREE.Raycaster();
+    const pointer = new THREE.Vector2();
+    const meshGroup = new THREE.Group();
+    scene.add(meshGroup);
+
+    const meshesById = new Map();
+    let selectedId = null;
+    let activeLayer = "superficial";
+    let activeSide = "left";
+    let drawerState = "collapsed";
+
+    const layerLabels = { base: "骨性定位", superficial: "表層", middle: "中層", deep: "深層" };
+    const categoryScales = { bone: [1.7, 0.32, 1.1], muscle: [0.58, 0.34, 1.05], pelvic_floor: [0.45, 0.22, 0.52] };
+
+    function materialFor(structure, isPlaceholder = false) {
+      const isBone = structure.category === "bone";
+      return new THREE.MeshStandardMaterial({
+        color: new THREE.Color(structure.color),
+        roughness: 0.72,
+        metalness: 0.04,
+        transparent: true,
+        opacity: isPlaceholder ? 0.62 : isBone ? 0.58 : 0.88,
+        wireframe: isPlaceholder,
+      });
+    }
+
+    function makePlaceholder(structure, index) {
+      const geometry = structure.category === "bone"
+        ? new THREE.BoxGeometry(...categoryScales.bone)
+        : new THREE.CapsuleGeometry(categoryScales[structure.category][0], categoryScales[structure.category][1], 7, 16);
+      const mesh = new THREE.Mesh(geometry, materialFor(structure, true));
+      const ring = index % 8;
+      const radius = structure.layer === "deep" ? 1.2 : structure.layer === "middle" ? 1.75 : 2.25;
+      const y = structure.category === "bone" ? -0.4 + index * 0.03 : 0.35 + structure.depthLevel * 0.28;
+      mesh.position.set(Math.cos(ring * 0.78) * radius, y, Math.sin(ring * 0.78) * 0.8);
+      mesh.rotation.set(0.35 + index * 0.04, ring * 0.35, -0.35 + index * 0.02);
+      mesh.name = structure.id;
+      mesh.userData = { id: structure.id, pendingModel: true };
+      return mesh;
+    }
+
+    function assignStructureData(root, structure) {
+      root.traverse((child) => {
+        if (!child.isMesh) return;
+        child.name = child.name || structure.id;
+        child.userData.id = structure.id;
+        child.userData.pendingModel = false;
+        child.material = materialFor(structure, false);
+      });
+      root.userData.id = structure.id;
+      root.userData.pendingModel = false;
+      root.name = structure.id;
+      return root;
+    }
+
+    async function loadStructure(structure, index) {
+      try {
+        const gltf = await loader.loadAsync(structure.meshFile);
+        const object = assignStructureData(gltf.scene, structure);
+        object.scale.setScalar(1);
+        meshGroup.add(object);
+        meshesById.set(structure.id, object);
+      } catch {
+        const placeholder = makePlaceholder(structure, index);
+        meshGroup.add(placeholder);
+        meshesById.set(structure.id, placeholder);
+      }
+      updateVisibility();
+    }
+
+    pelvicStructures.forEach(loadStructure);
+
+    function shouldShow(structure) {
+      if (!structure.defaultVisible) return false;
+      const sideMatches = structure.side === "midline" || structure.side === "bilateral" || structure.side === activeSide;
+      const layerMatches = structure.layer === "base" || structure.layer === activeLayer;
+      return sideMatches && layerMatches;
+    }
+
+    function forEachMeshObject(root, callback) {
+      root.traverse((child) => {
+        if (child.isMesh) callback(child);
+      });
+    }
+
+    function updateVisibility() {
+      const pendingVisible = [];
+      pelvicStructures.forEach((structure) => {
+        const object = meshesById.get(structure.id);
+        if (!object) return;
+        object.visible = shouldShow(structure);
+        if (structure.side === "bilateral") {
+          object.scale.x = activeSide === "right" ? -Math.abs(object.scale.x || 1) : Math.abs(object.scale.x || 1);
+        }
+        if (object.visible && object.userData.pendingModel) pendingVisible.push(structure.nameZh);
+        forEachMeshObject(object, (mesh) => {
+          const selected = selectedId === structure.id;
+          const dimmed = selectedId && selectedId !== structure.id;
+          mesh.material.color.set(selected ? 0xd4b684 : structure.color);
+          mesh.material.emissive = new THREE.Color(selected ? 0x2f2112 : 0x000000);
+          mesh.material.opacity = selected ? 1 : dimmed ? 0.18 : structure.category === "bone" ? 0.48 : 0.84;
+          mesh.material.transparent = true;
+        });
+      });
+      document.querySelector("#modelBadge").textContent = pendingVisible.length
+        ? `目前 ${pendingVisible.slice(0, 4).join("、")}${pendingVisible.length > 4 ? "等" : ""} 使用「模型待補」佔位物，不代表精準解剖模型。`
+        : "GLB 模型已載入；點擊結構可查看 BodyFix 張力判讀。";
+    }
+
+    function findStructureFromObject(object) {
+      let current = object;
+      while (current) {
+        if (current.userData?.id) return pelvicStructures.find((item) => item.id === current.userData.id);
+        current = current.parent;
+      }
+      return null;
+    }
+
+    function setDrawer(state) {
+      drawerState = state;
+      const drawer = document.querySelector("#drawer");
+      drawer.classList.toggle("expanded", state === "expanded");
+      drawer.classList.toggle("full", state === "full");
+    }
+
+    function updateInfoCard(structure) {
+      const isDefault = !structure;
+      const data = structure || {
+        nameZh: "骨盆區張力地圖",
+        nameLa: "BodyFix Pelvic Anatomy Viewer v0.1",
+        layer: "base",
+        relatedFasciaLines: ["選取後顯示"],
+        clientExplanation: "這不是全身解剖百科，而是 BodyFix 用來說明骨盆、臀髖、下背與大腿外側如何一起硬撐的成交與教育工具。",
+        bodyfixInterpretation: "選取結構後，這裡會顯示 BodyFix 的張力判讀、筋膜與動作整合語言。",
+        professionalNote: "避免單一肌肉歸因；以負荷分配、呼吸、支撐策略與外部張力整理作為溝通主軸。",
+        safetyBoundary: "骨盆底與會陰區只用於模型教育與張力判讀，不暗示直接操作敏感區。",
+        homeCue: "先用呼吸、站姿與髖部小範圍活動，感覺身體能不能回到更穩定、有韌性、有彈性的系統。",
+        avoidClaims: ["診斷", "治療", "臨床療效"]
+      };
+      document.querySelector("#nameZh").textContent = data.nameZh;
+      document.querySelector("#nameLa").textContent = data.nameLa;
+      document.querySelector("#layerText").textContent = layerLabels[data.layer] || data.layer;
+      document.querySelector("#fasciaText").textContent = data.relatedFasciaLines.join("、");
+      document.querySelector("#clientExplanation").textContent = data.clientExplanation;
+      document.querySelector("#bodyfixInterpretation").textContent = data.bodyfixInterpretation;
+      document.querySelector("#professionalNote").textContent = data.professionalNote;
+      document.querySelector("#safetyBoundary").textContent = data.safetyBoundary;
+      document.querySelector("#homeCue").textContent = data.homeCue;
+      document.querySelector("#avoidClaims").textContent = Array.isArray(data.avoidClaims) ? data.avoidClaims.join("、") : data.avoidClaims;
+      document.querySelector("#selectedHint").textContent = isDefault ? "點擊模型結構，查看 BodyFix 張力判讀語言。" : `${data.nameZh} · ${data.nameEn}`;
+      const object = structure ? meshesById.get(structure.id) : null;
+      document.querySelector("#pendingPill").classList.toggle("show", Boolean(object?.userData.pendingModel));
+      document.querySelector("#recordText").value = localStorage.getItem(recordKey(structure?.id || "general")) || "";
+    }
+
+    function recordKey(id) {
+      return `bodyfix-pelvic-viewer:v0.1:record:${id}`;
+    }
+
+    function selectStructure(structure) {
+      selectedId = structure?.id || null;
+      updateInfoCard(structure || null);
+      updateVisibility();
+      setDrawer(structure ? "expanded" : "collapsed");
+    }
+
+    function onPointerSelect(event) {
+      const rect = renderer.domElement.getBoundingClientRect();
+      pointer.x = ((event.clientX - rect.left) / rect.width) * 2 - 1;
+      pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
+      raycaster.setFromCamera(pointer, camera);
+      const visibleMeshes = [];
+      meshesById.forEach((object) => {
+        if (!object.visible) return;
+        forEachMeshObject(object, (mesh) => visibleMeshes.push(mesh));
+      });
+      const hit = raycaster.intersectObjects(visibleMeshes, true)[0];
+      selectStructure(hit ? findStructureFromObject(hit.object) : null);
+    }
+
+    renderer.domElement.addEventListener("pointerup", onPointerSelect);
+
+    document.querySelectorAll("[data-layer]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-layer]").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        activeLayer = button.dataset.layer;
+        selectStructure(null);
+        updateVisibility();
+      });
+    });
+
+    document.querySelectorAll("[data-side]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-side]").forEach((item) => item.classList.remove("active"));
+        button.classList.add("active");
+        activeSide = button.dataset.side;
+        updateVisibility();
+      });
+    });
+
+    document.querySelectorAll("[data-tab]").forEach((button) => {
+      button.addEventListener("click", () => {
+        document.querySelectorAll("[data-tab]").forEach((item) => item.classList.remove("active"));
+        document.querySelectorAll("[data-tab-panel]").forEach((panel) => panel.classList.remove("active"));
+        button.classList.add("active");
+        document.querySelector(`[data-tab-panel="${button.dataset.tab}"]`).classList.add("active");
+        if (drawerState === "collapsed") setDrawer("expanded");
+      });
+    });
+
+    document.querySelector("#drawerHandle").addEventListener("click", () => {
+      setDrawer(drawerState === "full" ? "collapsed" : drawerState === "expanded" ? "full" : "expanded");
+    });
+
+    document.querySelector("#saveRecord").addEventListener("click", () => {
+      localStorage.setItem(recordKey(selectedId || "general"), document.querySelector("#recordText").value);
+      document.querySelector("#selectedHint").textContent = "服務紀錄已儲存到本機。";
+    });
+
+    document.querySelector("#clearRecord").addEventListener("click", () => {
+      localStorage.removeItem(recordKey(selectedId || "general"));
+      document.querySelector("#recordText").value = "";
+      document.querySelector("#selectedHint").textContent = "服務紀錄已清除。";
+    });
+
+    const cameraViews = {
+      front: [0, 1.7, 7.2],
+      back: [0, 1.7, -7.2],
+      side: [7.2, 1.6, 0],
+      quarter: [4.8, 2.2, 5.4]
+    };
+
+    document.querySelectorAll("[data-view]").forEach((button) => {
+      button.addEventListener("click", () => {
+        const position = cameraViews[button.dataset.view];
+        camera.position.set(...position);
+        controls.target.set(0, 0.75, 0);
+        controls.update();
+      });
+    });
+
+    window.addEventListener("resize", () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    function animate() {
+      controls.update();
+      renderer.render(scene, camera);
+      requestAnimationFrame(animate);
+    }
+
+    updateInfoCard(null);
+    animate();
+  </script>
+</body>
+</html>

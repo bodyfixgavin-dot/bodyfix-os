@@ -73,6 +73,14 @@ const currentModules: HubModule[] = [
     cta: "前往圖版系統",
     href: "/anatomy-images",
   },
+  {
+    title: "BodyFix Pelvic Viewer",
+    eyebrow: "Pelvic Anatomy Viewer v0.1",
+    description: "骨盆、臀髖與骨盆底張力判讀 3D 原型，支援分層切換、點擊高亮、資訊卡與本機服務紀錄。",
+    status: "MVP",
+    cta: "前往骨盆 3D Viewer",
+    href: "/bodyfix-pelvic-viewer.html",
+  },
 ];
 
 const roadmapSections: HubSection[] = [
