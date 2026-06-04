@@ -65,6 +65,14 @@ const currentModules: HubModule[] = [
     cta: "前往海王雷達 v2",
     href: "/tarot/sea-king-radar",
   },
+  {
+    title: "解剖教材圖版系統",
+    eyebrow: "Anatomy Image System",
+    description: "管理 BF Pelvic Core 教材圖清單，並產生固定格式的 BodyFix 解剖插圖 prompt",
+    status: "MVP",
+    cta: "前往圖版系統",
+    href: "/anatomy-images",
+  },
 ];
 
 const roadmapSections: HubSection[] = [
