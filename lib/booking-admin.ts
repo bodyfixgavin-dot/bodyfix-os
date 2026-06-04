@@ -17,17 +17,19 @@ export async function requireBookingAdmin() {
   const envStatus = getSupabaseAdminEnvStatus();
   const supabase = envStatus.ok ? createSupabaseAdminClient() : null;
   if (!supabase) {
+    const payload = {
+      error: envStatus.errors[0] ?? "Supabase admin environment is not configured",
+      errorType: envStatus.missingEnv.length ? "missing env" : "invalid url",
+      envErrors: envStatus.errors,
+      missingEnv: envStatus.missingEnv,
+      requiredEnv: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"],
+      supportedPublicKeys: ["NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY", "NEXT_PUBLIC_SUPABASE_ANON_KEY"]
+    };
+    console.error("Booking admin Supabase config unavailable", payload);
+
     return {
       ok: false as const,
-      response: NextResponse.json(
-        {
-          error: envStatus.errors[0] ?? "Supabase admin environment is not configured",
-          envErrors: envStatus.errors,
-          missingEnv: envStatus.missingEnv,
-          requiredEnv: ["NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SERVICE_ROLE_KEY"]
-        },
-        { status: 500 }
-      )
+      response: NextResponse.json(payload, { status: 500 })
     };
   }
 

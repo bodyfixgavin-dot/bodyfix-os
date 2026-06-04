@@ -2283,12 +2283,30 @@ main {
   padding: 18px;
 }
 
+.anatomy-filter-card {
+  border: 1px solid rgba(155, 117, 80, .2);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .46);
+  padding: 14px;
+}
+
 .anatomy-toolbar > div > span {
   display: block;
   margin-bottom: 10px;
   color: var(--bf-muted);
   font-size: 13px;
-  font-weight: 700;
+  font-weight: 800;
+  letter-spacing: .03em;
+}
+
+.anatomy-chip-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
 }
 
 .anatomy-chip,
@@ -2300,6 +2318,58 @@ main {
   font-size: 12px;
   font-weight: 700;
   padding: 5px 9px;
+}
+
+.anatomy-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  min-height: 44px;
+  border: 1px solid #D8CEC0;
+  background: #F8F5EE;
+  color: #8A7B68;
+  cursor: pointer;
+  font-weight: 600;
+  padding: 10px 16px;
+  transition: background .18s ease, border-color .18s ease, box-shadow .18s ease, color .18s ease, transform .18s ease;
+}
+
+.anatomy-filter-chip:hover,
+.anatomy-filter-chip:focus-visible {
+  border-color: rgba(15, 29, 51, .34);
+  background: #f1e9dd;
+  box-shadow: 0 5px 14px rgba(15, 29, 51, .1);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.anatomy-filter-chip.is-active {
+  border: 1px solid #0F1D33;
+  background: #0F1D33;
+  color: #FFFFFF;
+  box-shadow: 0 6px 18px rgba(15, 29, 51, 0.16);
+}
+
+.anatomy-chip-dot {
+  width: 7px;
+  height: 7px;
+  margin-right: 7px;
+  border-radius: 999px;
+  background: #C6AA87;
+  box-shadow: 0 0 0 3px rgba(198, 170, 135, .22);
+}
+
+.anatomy-filter-summary {
+  grid-column: 1 / -1;
+  margin: 0;
+  border: 1px solid rgba(15, 29, 51, .1);
+  border-radius: 16px;
+  background: rgba(15, 29, 51, .05);
+  color: #0F1D33;
+  font-size: 14px;
+  font-weight: 800;
+  padding: 12px 14px;
 }
 
 .anatomy-table-card {
