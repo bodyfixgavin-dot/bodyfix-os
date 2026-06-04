@@ -5,6 +5,18 @@ import { CopyPromptButton } from "./CopyPromptButton";
 const statusOptions = ["全部", "待做", "已出圖", "待重做", "已定稿", "已保留"];
 const chapterOptions = ["全部", ...Array.from(new Set(anatomyImages.map((item) => item.chapter)))];
 
+function getWorkflowStatus(status: string) {
+  const hasImage = ["已出圖", "已定稿", "已保留"].includes(status);
+  const hasLogo = ["已定稿", "已保留"].includes(status);
+  const isFinal = ["已定稿", "已保留"].includes(status);
+
+  return [
+    { label: "已生圖", done: hasImage },
+    { label: "已套 Logo", done: hasLogo },
+    { label: "已定稿", done: isFinal },
+  ];
+}
+
 export default function AnatomyImagesPage() {
   const statusCounts = anatomyImages.reduce<Record<string, number>>((counts, item) => {
     counts[item.status] = (counts[item.status] ?? 0) + 1;
@@ -18,8 +30,8 @@ export default function AnatomyImagesPage() {
           <p className="anatomy-kicker">BF Anatomy Image Library</p>
           <h1>BodyFix 解剖教材內頁圖版系統</h1>
           <p>
-            先做 MVP Prompt 控制台：固定版面規則、圖像規格、標籤格式與 BodyFix 視覺語言，
-            讓 BF Pelvic Core 第一批 20 張圖可以用同一套教材版模板穩定產出。
+            先做 MVP Prompt 控制台與固定 Logo 後製流程：AI 只產生解剖主圖與安全留白，
+            BF Logo 一律使用固定 SVG 疊加，讓第一批 20 張教材圖全書一致。
           </p>
         </div>
         <div className="anatomy-hero-actions">
@@ -76,6 +88,7 @@ export default function AnatomyImagesPage() {
                 <th>類型</th>
                 <th>比例</th>
                 <th>狀態</th>
+                <th>流程狀態</th>
                 <th>必要標籤</th>
                 <th>操作</th>
               </tr>
@@ -99,6 +112,13 @@ export default function AnatomyImagesPage() {
                   <td>{item.ratio}</td>
                   <td>
                     <span className={`anatomy-status anatomy-status-${item.status}`}>{item.status}</span>
+                  </td>
+                  <td>
+                    <div className="anatomy-workflow-status" aria-label={`${item.titleZh} 流程狀態`}>
+                      {getWorkflowStatus(item.status).map((step) => (
+                        <span className={step.done ? "is-complete" : undefined} key={step.label}>{step.label}</span>
+                      ))}
+                    </div>
                   </td>
                   <td>
                     <div className="anatomy-label-list">

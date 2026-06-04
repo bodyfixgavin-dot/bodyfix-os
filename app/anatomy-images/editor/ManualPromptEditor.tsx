@@ -1,8 +1,12 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import type { AnatomyImageItem } from "@/lib/anatomy-images";
 import { anatomyImages, buildManualAnatomyPrompt, defaultManualAvoidRules } from "@/lib/anatomy-images";
+
+type LogoPosition = "bottom-right" | "bottom-left" | "top-right" | "top-left";
+type LogoSize = "small" | "medium" | "large";
 
 type EditorForm = Omit<AnatomyImageItem, "view" | "bones" | "muscles" | "fasciaLines" | "labels" | "functionNotes" | "avoid"> & {
   view: string;
@@ -47,6 +51,34 @@ function fromForm(form: EditorForm): AnatomyImageItem {
   };
 }
 
+const logoWidthBySize: Record<LogoSize, number> = {
+  small: 56,
+  medium: 84,
+  large: 112,
+};
+
+const logoPositions: Array<{ value: LogoPosition; label: string }> = [
+  { value: "bottom-right", label: "右下" },
+  { value: "bottom-left", label: "左下" },
+  { value: "top-right", label: "右上" },
+  { value: "top-left", label: "左上" },
+];
+
+const logoSizes: Array<{ value: LogoSize; label: string }> = [
+  { value: "small", label: "小" },
+  { value: "medium", label: "中" },
+  { value: "large", label: "大" },
+];
+
+function loadImage(src: string) {
+  return new Promise<HTMLImageElement>((resolve, reject) => {
+    const image = new Image();
+    image.onload = () => resolve(image);
+    image.onerror = () => reject(new Error("Image failed to load"));
+    image.src = src;
+  });
+}
+
 const blankItem: AnatomyImageItem = {
   id: "custom-manual-image",
   number: "03",
@@ -71,6 +103,13 @@ export function ManualPromptEditor({ initialId }: { initialId?: string }) {
   const initialItem = anatomyImages.find((item) => item.id === initialId) ?? blankItem;
   const [form, setForm] = useState<EditorForm>(() => toForm(initialItem));
   const [copied, setCopied] = useState(false);
+  const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
+  const [sourceImageName, setSourceImageName] = useState("");
+  const [logoPosition, setLogoPosition] = useState<LogoPosition>("bottom-right");
+  const [logoSize, setLogoSize] = useState<LogoSize>("small");
+  const [overlayStatus, setOverlayStatus] = useState("請先上傳 AI 生成圖片");
+  const [downloadUrl, setDownloadUrl] = useState<string | null>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const prompt = useMemo(() => buildManualAnatomyPrompt(fromForm(form)), [form]);
 
@@ -82,6 +121,65 @@ export function ManualPromptEditor({ initialId }: { initialId?: string }) {
     await navigator.clipboard.writeText(prompt);
     setCopied(true);
     window.setTimeout(() => setCopied(false), 1800);
+  }
+
+  function handleImageUpload(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+
+    if (!file) {
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      const result = typeof reader.result === "string" ? reader.result : null;
+      setSourceImageUrl(result);
+      setSourceImageName(file.name);
+      setDownloadUrl(null);
+      setOverlayStatus(result ? "圖片已載入，可套用固定 BF Logo" : "圖片讀取失敗，請重新上傳");
+    };
+    reader.onerror = () => {
+      setOverlayStatus("圖片讀取失敗，請重新上傳");
+    };
+    reader.readAsDataURL(file);
+  }
+
+  async function applyLogoOverlay() {
+    if (!sourceImageUrl || !canvasRef.current) {
+      setOverlayStatus("請先上傳 AI 生成圖片");
+      return;
+    }
+
+    setOverlayStatus("正在套用固定 BF Logo…");
+
+    try {
+      const [sourceImage, logoImage] = await Promise.all([loadImage(sourceImageUrl), loadImage("/brand/bf-logo.svg")]);
+      const canvas = canvasRef.current;
+      const context = canvas.getContext("2d");
+
+      if (!context) {
+        setOverlayStatus("此瀏覽器不支援 Canvas 輸出");
+        return;
+      }
+
+      const margin = 24;
+      const logoWidth = logoWidthBySize[logoSize];
+      const logoHeight = logoWidth * (logoImage.naturalHeight / logoImage.naturalWidth);
+      const x = logoPosition.endsWith("right") ? sourceImage.naturalWidth - logoWidth - margin : margin;
+      const y = logoPosition.startsWith("bottom") ? sourceImage.naturalHeight - logoHeight - margin : margin;
+
+      canvas.width = sourceImage.naturalWidth;
+      canvas.height = sourceImage.naturalHeight;
+      context.clearRect(0, 0, canvas.width, canvas.height);
+      context.drawImage(sourceImage, 0, 0);
+      context.drawImage(logoImage, x, y, logoWidth, logoHeight);
+
+      const outputUrl = canvas.toDataURL("image/png");
+      setDownloadUrl(outputUrl);
+      setOverlayStatus("已套用固定 Logo，可下載 PNG");
+    } catch {
+      setOverlayStatus("Logo 套用失敗，請確認圖片格式後再試一次");
+    }
   }
 
   return (
@@ -193,6 +291,58 @@ export function ManualPromptEditor({ initialId }: { initialId?: string }) {
         </div>
         <pre>{prompt}</pre>
       </aside>
+
+      <section className="anatomy-logo-overlay" aria-labelledby="logo-overlay-title">
+        <div className="anatomy-section-heading">
+          <p>Logo Overlay</p>
+          <h2 id="logo-overlay-title">Logo Overlay｜固定品牌標記</h2>
+        </div>
+        <p className="anatomy-logo-note">
+          Logo 不交給 AI 生成。所有 BF 標記皆由固定 SVG 後製疊加，以確保手冊全書一致。
+        </p>
+
+        <div className="anatomy-logo-controls">
+          <label>
+            上傳 AI 生成圖片
+            <input type="file" accept="image/*" onChange={handleImageUpload} />
+          </label>
+          <label>
+            Logo 位置
+            <select value={logoPosition} onChange={(event) => setLogoPosition(event.target.value as LogoPosition)}>
+              {logoPositions.map((position) => (
+                <option key={position.value} value={position.value}>{position.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Logo 大小
+            <select value={logoSize} onChange={(event) => setLogoSize(event.target.value as LogoSize)}>
+              {logoSizes.map((size) => (
+                <option key={size.value} value={size.value}>{size.label}</option>
+              ))}
+            </select>
+          </label>
+          <label>
+            Logo 邊距
+            <input value="24px" readOnly aria-label="固定 Logo 邊距 24px" />
+          </label>
+        </div>
+
+        <div className="anatomy-logo-actions">
+          <button type="button" onClick={applyLogoOverlay} disabled={!sourceImageUrl}>套用 Logo</button>
+          <span>{sourceImageName || overlayStatus}</span>
+        </div>
+
+        <div className="anatomy-canvas-frame">
+          <canvas ref={canvasRef} aria-label="已套用固定 BF Logo 的輸出預覽" />
+        </div>
+        <p className="anatomy-logo-status">{overlayStatus}</p>
+        {downloadUrl ? (
+          <a className="anatomy-download-link" href={downloadUrl} download={`${form.number}-${form.id}-bf-logo.png`}>
+            下載加 Logo 後的 PNG
+          </a>
+        ) : null}
+      </section>
     </div>
   );
 }
