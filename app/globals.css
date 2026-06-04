@@ -1966,3 +1966,187 @@ main {
 @media (min-width: 640px) {
   .intake-score-grid { grid-template-columns: repeat(11, minmax(0, 1fr)); }
 }
+
+.clinic-page .bf-brand {
+  text-decoration: none;
+}
+
+.clinic-dashboard-card-link {
+  color: inherit;
+  display: grid;
+  gap: 10px;
+  text-decoration: none;
+}
+
+.clinic-dashboard-card-link p {
+  color: var(--bf-muted);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.clinic-dashboard-card-link span {
+  color: var(--bf-bronze);
+  font-weight: 900;
+}
+
+.strategy-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.strategy-tabs button {
+  border: 1px solid rgba(155, 117, 80, .28);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .68);
+  color: var(--bf-navy);
+  cursor: pointer;
+  font-size: 15px;
+  font-weight: 900;
+  min-height: 48px;
+  padding: 12px 16px;
+}
+
+.strategy-tabs button[aria-selected="true"] {
+  background: var(--bf-navy);
+  border-color: var(--bf-navy);
+  color: var(--bf-ivory);
+}
+
+.strategy-tabs span {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  display: inline-grid;
+  font-size: 12px;
+  margin-left: 8px;
+  min-width: 24px;
+  padding: 2px 7px;
+  place-items: center;
+}
+
+.strategy-swot-grid {
+  display: grid;
+  gap: 18px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.strategy-quadrant {
+  border: 1px solid rgba(23, 35, 51, .13);
+  border-radius: 28px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, .84), rgba(251, 250, 246, .94));
+  box-shadow: 0 18px 44px rgba(23, 35, 51, .07);
+  padding: clamp(18px, 3vw, 24px);
+}
+
+.strategy-quadrant-opportunities,
+.strategy-quadrant-strengths {
+  border-color: rgba(155, 117, 80, .30);
+}
+
+.strategy-quadrant-heading p {
+  color: var(--bf-bronze);
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: .16em;
+  margin: 0 0 8px;
+  text-transform: uppercase;
+}
+
+.strategy-quadrant-heading h2 {
+  font-family: "Noto Serif TC", "PingFang TC", serif;
+  font-size: clamp(28px, 5vw, 42px);
+  line-height: 1.1;
+  margin: 0 0 10px;
+}
+
+.strategy-quadrant-heading span {
+  color: var(--bf-muted);
+  display: block;
+  line-height: 1.7;
+}
+
+.strategy-point-list {
+  display: grid;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.strategy-point {
+  border: 1px solid var(--bf-line);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, .72);
+  color: var(--bf-navy);
+  cursor: pointer;
+  display: grid;
+  gap: 8px;
+  line-height: 1.7;
+  padding: 16px;
+  text-align: left;
+  width: 100%;
+}
+
+.strategy-point:hover,
+.strategy-point:focus-visible {
+  border-color: rgba(155, 117, 80, .52);
+  box-shadow: 0 14px 30px rgba(155, 117, 80, .12);
+  outline: none;
+}
+
+.strategy-point-label {
+  font-size: 18px;
+  font-weight: 900;
+}
+
+.strategy-point-summary,
+.strategy-point li {
+  color: var(--bf-muted);
+  font-size: 15px;
+}
+
+.strategy-point ul {
+  margin: 4px 0 0;
+  padding-left: 1.2rem;
+}
+
+.strategy-point-action {
+  color: var(--bf-bronze);
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.strategy-unseen {
+  max-width: 880px;
+}
+
+.strategy-footer {
+  align-items: center;
+  color: var(--bf-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: space-between;
+}
+
+.strategy-footer a {
+  text-decoration: none;
+}
+
+@media (max-width: 820px) {
+  .strategy-tabs button,
+  .strategy-swot-grid {
+    width: 100%;
+  }
+
+  .strategy-swot-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .strategy-point {
+    border-radius: 18px;
+    padding: 15px;
+  }
+
+  .strategy-point-label {
+    font-size: 17px;
+  }
+}

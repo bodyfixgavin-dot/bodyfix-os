@@ -145,6 +145,14 @@ const roadmapSections: HubSection[] = [
         href: "/clinic/business-foundation",
       },
       {
+        title: "策略 SWOT",
+        eyebrow: "BodyFix OS Strategy",
+        description: "檢視 BodyFix OS 的優勢、弱點、機會與風險。",
+        status: "Internal",
+        cta: "前往策略分析",
+        href: "/clinic/strategy-swot",
+      },
+      {
         title: "Commission Calculator 拆帳計算",
         eyebrow: "Commission Calculator",
         description: "計算不同服務、員工等級與成交來源下的分潤規則",

@@ -28,7 +28,7 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
   return (
     <main className="bf-container clinic-page">
       <section className="bf-hero">
-        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Clinic</div>
+        <Link className="bf-brand" href="/clinic" aria-label="回到 BodyFix OS Hub"><span className="bf-logo-box">BF</span> BodyFix Clinic</Link>
         <h1>{title}</h1>
         <p className="bf-subtitle">{subtitle}</p>
         <nav className="clinic-nav">
@@ -43,6 +43,7 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
           <Link href="/clinic/conversion">方案提案 / 成交追蹤</Link>
           <Link href="/clinic/location-dashboard">地區需求中樞</Link>
           <Link href="/clinic/business-foundation">商業規則地基</Link>
+          <Link href="/clinic/strategy-swot">策略 SWOT</Link>
           <Link href="/clinic/ai-copilot">AI 營運副駕</Link>
           <Link href="/clinic/cases">案例素材</Link>
           <Link href="/admin">預約後台</Link>
