@@ -35,6 +35,7 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
           <Link href="/clinic">總覽</Link>
           <Link href="/clinic/clients">客戶列表</Link>
           <Link href="/clinic/clients/new">新增客戶</Link>
+          <Link href="/clinic/intake-submissions">問卷回覆</Link>
           <Link href="/clinic/records/new">新增服務紀錄</Link>
           <Link href="/clinic/calendar-backfill">行事曆回填</Link>
           <Link href="/clinic/followups">追蹤提醒</Link>
