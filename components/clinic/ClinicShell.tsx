@@ -13,9 +13,13 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
 
   useEffect(() => {
     async function loadAdminSession() {
-      const res = await fetch("/api/admin/session", { cache: "no-store" });
-      const data = await res.json().catch(() => ({})) as AdminSessionState;
-      setBypassMode(res.ok && Boolean(data.bypassMode));
+      try {
+        const res = await fetch("/api/admin/session", { cache: "no-store" });
+        const data = await res.json().catch(() => ({})) as AdminSessionState;
+        setBypassMode(res.ok && Boolean(data.bypassMode));
+      } catch {
+        setBypassMode(false);
+      }
     }
 
     loadAdminSession();
@@ -55,17 +59,25 @@ export function useClinicFetch<T>(url: string): LoadState<T> & { reload: () => P
   const [state, setState] = useState<LoadState<T>>({ data: null, error: "", loading: true });
   const load = useCallback(async () => {
     setState((prev) => ({ ...prev, loading: true }));
-    const res = await fetch(url, { cache: "no-store" });
-    if (res.status === 401) {
-      setState({ data: null, error: "請先到 /admin 登入 BodyFix 後台，再回到 Clinic。", loading: false });
+    if (!url.startsWith("/api/")) {
+      setState({ data: null, error: "內部 API 路徑格式錯誤：請使用 /api/...", loading: false });
       return;
     }
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setState({ data: null, error: json.error ?? "載入失敗，請確認 Clinic V1 schema 已套用。", loading: false });
-      return;
+    try {
+      const res = await fetch(url, { cache: "no-store" });
+      if (res.status === 401) {
+        setState({ data: null, error: "請先到 /admin 登入 BodyFix 後台，再回到 Clinic。", loading: false });
+        return;
+      }
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setState({ data: null, error: json.error ?? "載入失敗，請確認 Clinic V1 schema 已套用。", loading: false });
+        return;
+      }
+      setState({ data: json as T, error: "", loading: false });
+    } catch {
+      setState({ data: null, error: "資料模組載入失敗，請檢查 /api/... request path 或網路狀態。", loading: false });
     }
-    setState({ data: json as T, error: "", loading: false });
   }, [url]);
   useEffect(() => { load(); }, [load]);
   return { ...state, reload: load };
