@@ -26,6 +26,14 @@ const currentModules: HubModule[] = [
     href: "/dashboard",
   },
   {
+    title: "預約前問卷",
+    eyebrow: "Public Intake Entry",
+    description: "公開的預約前狀態整理表，讓新客先填寫身體狀態與預約偏好",
+    status: "MVP",
+    cta: "前往 /intake",
+    href: "/intake",
+  },
+  {
     title: "Booking",
     eyebrow: "Public Booking Flow",
     description: "管理前台預約入口與服務流程",
@@ -225,7 +233,7 @@ const phases = [
   {
     label: "Phase 1",
     title: "Current MVP",
-    items: ["Booking", "Booking Admin", "Dashboard", "SADM", "海王雷達 v2"],
+    items: ["Intake", "Booking", "Booking Admin", "Dashboard", "SADM", "海王雷達 v2"],
   },
   {
     label: "Phase 2",
