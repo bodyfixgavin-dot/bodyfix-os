@@ -2,6 +2,18 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { requireBookingAdmin } from "@/lib/booking-admin";
 
+function describeSupabaseError(error: { message?: string; code?: string; details?: string; hint?: string } | null | undefined) {
+  if (!error) return "unknown";
+  const message = error.message ?? "";
+  const text = `${message} ${error.details ?? ""} ${error.hint ?? ""}`.toLowerCase();
+
+  if (error.code === "42P01" || text.includes("does not exist")) return "table not found";
+  if (error.code === "42501" || text.includes("row-level security") || text.includes("rls") || text.includes("permission denied")) return "RLS denied";
+  if (text.includes("invalid api key") || text.includes("jwt") || text.includes("signature")) return "invalid key";
+  if (text.includes("invalid url") || text.includes("failed to fetch")) return "invalid url";
+  return error.code ? `${error.code}: ${message}` : message || "unknown";
+}
+
 const slotSchema = z.object({
   starts_at: z.string().datetime(),
   ends_at: z.string().datetime(),
@@ -33,10 +45,18 @@ export async function GET() {
   ]);
 
   if (bookingError || slotError || serviceError) {
-    return NextResponse.json(
-      { error: bookingError?.message || slotError?.message || serviceError?.message || "Unable to load admin data" },
-      { status: 500 }
-    );
+    const primaryError = bookingError || slotError || serviceError;
+    const payload = {
+      error: primaryError?.message || "Unable to load admin data",
+      errorType: describeSupabaseError(primaryError),
+      details: {
+        booking: bookingError ? describeSupabaseError(bookingError) : null,
+        slots: slotError ? describeSupabaseError(slotError) : null,
+        services: serviceError ? describeSupabaseError(serviceError) : null
+      }
+    };
+    console.error("Unable to load admin data from Supabase", { bookingError, slotError, serviceError, payload });
+    return NextResponse.json(payload, { status: 500 });
   }
 
   return NextResponse.json({ bookings: bookings ?? [], slots: slots ?? [], services: services ?? [] });
@@ -61,7 +81,9 @@ export async function POST(req: Request) {
   });
 
   if (error) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    const payload = { error: error.message, errorType: describeSupabaseError(error) };
+    console.error("Unable to create availability slot in Supabase", { error, payload });
+    return NextResponse.json(payload, { status: 500 });
   }
 
   return NextResponse.json({ ok: true });

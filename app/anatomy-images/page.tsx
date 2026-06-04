@@ -1,3 +1,6 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { anatomyImages, buildManualAnatomyPrompt } from "@/lib/anatomy-images";
 import { CopyPromptButton } from "./CopyPromptButton";
@@ -17,11 +20,41 @@ function getWorkflowStatus(status: string) {
   ];
 }
 
+function FilterChip({ label, active, onClick }: { label: string; active: boolean; onClick: () => void }) {
+  return (
+    <button
+      aria-pressed={active}
+      className={`anatomy-chip anatomy-filter-chip${active ? " is-active" : ""}`}
+      type="button"
+      onClick={onClick}
+    >
+      {active ? <span className="anatomy-chip-dot" aria-hidden="true" /> : null}
+      {label}
+    </button>
+  );
+}
+
 export default function AnatomyImagesPage() {
+  const [selectedChapter, setSelectedChapter] = useState("全部");
+  const [selectedStatus, setSelectedStatus] = useState("全部");
+
   const statusCounts = anatomyImages.reduce<Record<string, number>>((counts, item) => {
     counts[item.status] = (counts[item.status] ?? 0) + 1;
     return counts;
   }, {});
+
+  const filteredImages = useMemo(() => {
+    return anatomyImages.filter((item) => {
+      const chapterMatched = selectedChapter === "全部" || item.chapter === selectedChapter;
+      const statusMatched = selectedStatus === "全部" || item.status === selectedStatus;
+      return chapterMatched && statusMatched;
+    });
+  }, [selectedChapter, selectedStatus]);
+
+  const filterSummary =
+    selectedChapter === "全部" && selectedStatus === "全部"
+      ? "目前篩選：全部圖像"
+      : `目前篩選：${selectedChapter === "全部" ? "全部章節" : `章節 ${selectedChapter}`}｜${selectedStatus === "全部" ? "全部狀態" : `狀態 ${selectedStatus}`}`;
 
   return (
     <main className="anatomy-page">
@@ -53,23 +86,34 @@ export default function AnatomyImagesPage() {
         ))}
       </section>
 
-      <section className="anatomy-toolbar" aria-label="篩選提示">
-        <div>
+      <section className="anatomy-toolbar" aria-label="篩選控制">
+        <div className="anatomy-filter-card">
           <span>章節篩選</span>
-          <div className="anatomy-chip-row">
+          <div className="anatomy-chip-row" role="group" aria-label="章節篩選">
             {chapterOptions.map((chapter) => (
-              <span className="anatomy-chip" key={chapter}>{chapter}</span>
+              <FilterChip
+                active={selectedChapter === chapter}
+                key={chapter}
+                label={chapter}
+                onClick={() => setSelectedChapter(chapter)}
+              />
             ))}
           </div>
         </div>
-        <div>
+        <div className="anatomy-filter-card">
           <span>狀態篩選</span>
-          <div className="anatomy-chip-row">
+          <div className="anatomy-chip-row" role="group" aria-label="狀態篩選">
             {statusOptions.map((status) => (
-              <span className="anatomy-chip" key={status}>{status}</span>
+              <FilterChip
+                active={selectedStatus === status}
+                key={status}
+                label={status}
+                onClick={() => setSelectedStatus(status)}
+              />
             ))}
           </div>
         </div>
+        <p className="anatomy-filter-summary">{filterSummary}（共 {filteredImages.length} 張）</p>
       </section>
 
       <section className="anatomy-table-card" aria-labelledby="anatomy-list-title">
@@ -94,7 +138,7 @@ export default function AnatomyImagesPage() {
               </tr>
             </thead>
             <tbody>
-              {anatomyImages.map((item) => (
+              {filteredImages.map((item) => (
                 <tr key={item.id}>
                   <td>
                     <div className="anatomy-thumb" aria-label={`${item.titleZh} 縮圖佔位`}>
