@@ -5,6 +5,11 @@ type SupabaseNotConnectedStateProps = {
 };
 
 const envVars = ["NEXT_PUBLIC_SUPABASE_URL", "NEXT_PUBLIC_SUPABASE_ANON_KEY"];
+const setupChecks = [
+  "NEXT_PUBLIC_SUPABASE_URL 必須長得像 https://PROJECT_REF.supabase.co",
+  "NEXT_PUBLIC_SUPABASE_URL 不可包含 /rest/v1、/sql、/dashboard 或任何額外 path",
+  "NEXT_PUBLIC_SUPABASE_ANON_KEY 必須設定，但畫面不會顯示 secret value"
+];
 
 export function SupabaseNotConnectedState({ showAdminLink = true }: SupabaseNotConnectedStateProps) {
   return (
@@ -24,6 +29,9 @@ export function SupabaseNotConnectedState({ showAdminLink = true }: SupabaseNotC
         </div>
         <div className="bf-notice bf-section-gap">
           這是系統設定提示，不代表網站故障。完成環境變數設定後，Dashboard 與 Clinic 模組即可讀取資料。
+          <ul>
+            {setupChecks.map((check) => <li key={check}>{check}</li>)}
+          </ul>
         </div>
         <div className="bf-actions">
           <Link className="bf-primary bf-link-button" href="/">返回 BodyFix OS Hub</Link>

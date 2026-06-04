@@ -127,16 +127,22 @@ export default function CalendarBackfillPage() {
 
   async function loadRecent() {
     setLoadingRecent(true);
-    const res = await fetch("/api/clinic/calendar-backfill", { cache: "no-store" });
-    const json = await res.json().catch(() => ({}));
-    if (!res.ok) {
-      setRecentError(json.error ?? "最近匯入紀錄載入失敗。");
+    try {
+      const res = await fetch("/api/clinic/calendar-backfill", { cache: "no-store" });
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        setRecentError(json.error ?? "最近匯入紀錄載入失敗。");
+        setRecent(null);
+      } else {
+        setRecentError("");
+        setRecent(json as RecentData);
+      }
+    } catch {
+      setRecentError("最近匯入紀錄載入失敗：請檢查 /api/clinic/calendar-backfill request path 或網路狀態。");
       setRecent(null);
-    } else {
-      setRecentError("");
-      setRecent(json as RecentData);
+    } finally {
+      setLoadingRecent(false);
     }
-    setLoadingRecent(false);
   }
 
   useEffect(() => {
@@ -164,32 +170,37 @@ export default function CalendarBackfillPage() {
   async function runImport(mode: "dry_run" | "confirm") {
     setBusy(true);
     setSubmitState({ kind: "", message: "" });
-    const res = await fetch("/api/clinic/calendar-backfill", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ mode, ...upload, pasteText, pasteFormat })
-    });
-    const json = await res.json().catch(() => ({}));
-    setBusy(false);
-    if (!res.ok) {
-      const fallback = mode === "dry_run"
-        ? "Dry Run 解析失敗：請檢查貼上資料格式。"
-        : "Confirm Import clients 寫入失敗：請檢查 clients schema 或 server log。";
-      setSubmitState({ kind: "error", message: json.error ?? fallback });
-      return;
-    }
-    setDryRun(json as DryRunResult);
-    if (mode === "dry_run") {
-      setSubmitState({ kind: "success", message: "Dry Run 完成：尚未寫入 Supabase。" });
-    } else {
-      const result = (json as DryRunResult).result;
-      const warningCount = result?.warnings?.length ?? (json as DryRunResult).warnings?.length ?? 0;
-      const skippedRows = result?.skippedRows ?? 0;
-      setSubmitState({
-        kind: "success",
-        message: `正式匯入完成：clients ${result?.clients_created ?? 0} 筆、service_records ${result?.service_records_created ?? 0} 筆、followups ${result?.followups_created ?? 0} 筆；warning ${warningCount} 筆、skipped ${skippedRows} 筆。`
+    try {
+      const res = await fetch("/api/clinic/calendar-backfill", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode, ...upload, pasteText, pasteFormat })
       });
-      await loadRecent();
+      const json = await res.json().catch(() => ({}));
+      if (!res.ok) {
+        const fallback = mode === "dry_run"
+          ? "Dry Run 解析失敗：請檢查貼上資料格式。"
+          : "Confirm Import clients 寫入失敗：請檢查 clients schema 或 server log。";
+        setSubmitState({ kind: "error", message: json.error ?? fallback });
+        return;
+      }
+      setDryRun(json as DryRunResult);
+      if (mode === "dry_run") {
+        setSubmitState({ kind: "success", message: "Dry Run 完成：尚未寫入 Supabase。" });
+      } else {
+        const result = (json as DryRunResult).result;
+        const warningCount = result?.warnings?.length ?? (json as DryRunResult).warnings?.length ?? 0;
+        const skippedRows = result?.skippedRows ?? 0;
+        setSubmitState({
+          kind: "success",
+          message: `正式匯入完成：clients ${result?.clients_created ?? 0} 筆、service_records ${result?.service_records_created ?? 0} 筆、followups ${result?.followups_created ?? 0} 筆；warning ${warningCount} 筆、skipped ${skippedRows} 筆。`
+        });
+        await loadRecent();
+      }
+    } catch {
+      setSubmitState({ kind: "error", message: "匯入請求失敗：請檢查 /api/clinic/calendar-backfill request path 或網路狀態。" });
+    } finally {
+      setBusy(false);
     }
   }
 
