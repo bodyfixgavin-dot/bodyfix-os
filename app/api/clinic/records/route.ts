@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { RECORD_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/records");
   if (!auth.ok) return auth.response;
   const { data, error } = await auth.supabase.from("service_records").select("*").order("service_date", { ascending: false }).limit(80);
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
@@ -10,7 +10,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/records");
   if (!auth.ok) return auth.response;
   const payload = cleanPayload(await readJson(req), RECORD_FIELDS);
   if (!payload.client_id) return NextResponse.json({ error: "client_id is required" }, { status: 400 });

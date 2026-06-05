@@ -8,7 +8,7 @@ const updateStatusSchema = z.object({
 });
 
 export async function POST(req: Request) {
-  const admin = await requireBookingAdmin();
+  const admin = await requireBookingAdmin("/api/admin/bookings/status");
   if (!admin.ok) return admin.response;
 
   const parsed = updateStatusSchema.safeParse(await req.json());

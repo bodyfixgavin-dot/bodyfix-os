@@ -8,7 +8,7 @@ import type { AiLogStatus, AiModuleKey } from "@/src/bodyfix-ai/types";
 type SupabaseAdmin = { from: (table: string) => any };
 
 export async function withAiAdmin(handler: (auth: { supabase: SupabaseAdmin }, body: Record<string, unknown>) => Promise<NextResponse>, req?: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/ai-copilot");
   if (!auth.ok) return auth.response;
   const body = req ? await readJson(req) : {};
   return handler({ supabase: auth.supabase as SupabaseAdmin }, body as Record<string, unknown>);

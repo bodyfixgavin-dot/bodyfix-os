@@ -4,7 +4,7 @@ import { requireClinicAdmin } from "@/lib/clinic-api";
 import { validateLogStatus } from "../../_helpers";
 
 export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/ai-copilot/logs/[id]");
   if (!auth.ok) return auth.response;
   const { id } = await params;
   const body = await readJson(req);

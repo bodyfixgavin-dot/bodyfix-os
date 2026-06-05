@@ -4,7 +4,7 @@ import { CLIENT_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib
 type Params = { params: Promise<{ id: string }> };
 
 export async function GET(_req: Request, ctx: Params) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/clients/[id]");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const [client, serviceRecords, homeworkTasks, followups, planCandidates, caseAssets] = await Promise.all([
@@ -22,7 +22,7 @@ export async function GET(_req: Request, ctx: Params) {
 }
 
 export async function PATCH(req: Request, ctx: Params) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/clients/[id]");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const payload = cleanPayload(await readJson(req), CLIENT_FIELDS);

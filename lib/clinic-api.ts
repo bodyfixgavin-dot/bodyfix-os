@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { requireBookingAdmin } from "@/lib/booking-admin";
 
-export async function requireClinicAdmin() {
-  return requireBookingAdmin();
+export async function requireClinicAdmin(requestPath = "clinic data request") {
+  return requireBookingAdmin(requestPath);
 }
 
 export async function readJson(req: Request) {

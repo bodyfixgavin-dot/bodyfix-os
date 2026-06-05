@@ -5,10 +5,10 @@ import { ClinicNotice, ClinicShell, planLabels, stageLabels, useClinicFetch } fr
 type Dashboard = { today_followups: any[]; recent_clients: any[]; plan_candidates: any[]; case_candidates: any[] };
 
 export default function ClinicDashboardPage() {
-  const { data, loading, error } = useClinicFetch<Dashboard>("/api/clinic/dashboard");
+  const { data, loading, error, diagnostics } = useClinicFetch<Dashboard>("/api/clinic/dashboard");
   return (
     <ClinicShell title="Clinic Dashboard" subtitle="判讀 → 整理 → 整合 → 接回使用。這裡是客戶紀錄與身體狀態管理中樞。">
-      <ClinicNotice loading={loading} error={error} />
+      <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
       {data && <>
         <section className="clinic-quick bf-section-gap">
           <Link className="bf-primary" href="/clinic/clients/new">快速新增客戶</Link>

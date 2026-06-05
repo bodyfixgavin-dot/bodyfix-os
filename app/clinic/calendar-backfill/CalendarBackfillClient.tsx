@@ -70,6 +70,21 @@ type UploadState = {
 
 type PasteFormat = "auto" | "tsv" | "csv";
 type SubmitState = { kind: "" | "success" | "error"; message: string };
+type AdminDiagnostics = {
+  loginState?: "unauthenticated" | "authenticated";
+  databaseState?: "not_checked" | "failed" | "ready";
+  requestPath?: string;
+  failedRequest?: string;
+  errorReason?: string;
+  envErrors?: string[];
+  missingEnv?: string[];
+  nextStep?: string;
+};
+
+function formatBackfillError(json: { error?: string; diagnostics?: AdminDiagnostics; requestPath?: string; failedRequest?: string }, fallback: string) {
+  if (json.diagnostics?.envErrors?.length) return `載入後台資料失敗：${json.diagnostics.envErrors.join("；")}。`;
+  return json.error ? `${json.error}（request path：${json.failedRequest ?? json.requestPath ?? json.diagnostics?.failedRequest ?? json.diagnostics?.requestPath ?? "/api/clinic/calendar-backfill"}）` : fallback;
+}
 
 const pasteExample = `client_name\tcontact_method\tcontact_value\tservice_date\tservice_type\tservice_name\tduration_min\tlocation\tpayment_status\tamount\tpriority\tnote
 小宇\tLINE\t\t2026-06-01\t筋膜整理\t筋膜鏈整理 60 分鐘\t60\t六張犁\t已收\t2200\tP1\t行事曆回填
@@ -113,10 +128,11 @@ function hasCsv(upload: UploadState) {
   return Boolean(upload.clientsCsv || upload.serviceRecordsCsv || upload.followupsCsv);
 }
 
-export default function CalendarBackfillPage() {
+export default function CalendarBackfillPage({ initialError = "" }: { initialError?: string }) {
   const [recent, setRecent] = useState<RecentData | null>(null);
   const [loadingRecent, setLoadingRecent] = useState(true);
-  const [recentError, setRecentError] = useState("");
+  const [recentError, setRecentError] = useState(initialError);
+  const [recentDiagnostics, setRecentDiagnostics] = useState<AdminDiagnostics | null>(initialError ? { loginState: "authenticated", databaseState: "failed", requestPath: "/api/clinic/calendar-backfill", failedRequest: "/api/clinic/calendar-backfill", errorReason: initialError } : null);
   const [upload, setUpload] = useState<UploadState>({ clientsCsv: "", serviceRecordsCsv: "", followupsCsv: "" });
   const [fileNames, setFileNames] = useState({ clients: "", services: "", followups: "" });
   const [pasteText, setPasteText] = useState("");
@@ -131,14 +147,17 @@ export default function CalendarBackfillPage() {
       const res = await fetch("/api/clinic/calendar-backfill", { cache: "no-store" });
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setRecentError(json.error ?? "最近匯入紀錄載入失敗。");
+        setRecentError(formatBackfillError(json, "最近匯入紀錄載入失敗。"));
+        setRecentDiagnostics(json.diagnostics ?? null);
         setRecent(null);
       } else {
         setRecentError("");
+        setRecentDiagnostics({ loginState: "authenticated", databaseState: "ready", requestPath: "/api/clinic/calendar-backfill" });
         setRecent(json as RecentData);
       }
     } catch {
       setRecentError("最近匯入紀錄載入失敗：請檢查 /api/clinic/calendar-backfill request path 或網路狀態。");
+      setRecentDiagnostics({ loginState: "authenticated", databaseState: "failed", requestPath: "/api/clinic/calendar-backfill", failedRequest: "/api/clinic/calendar-backfill", errorReason: "request path 或網路狀態錯誤" });
       setRecent(null);
     } finally {
       setLoadingRecent(false);
@@ -243,11 +262,11 @@ export default function CalendarBackfillPage() {
       title="行事曆 / 客戶總表回填"
       subtitle="將過去服務紀錄與客戶資料整理進 BodyFix OS。"
     >
-      <ClinicNotice loading={loadingRecent} error={recentError} />
+      <ClinicNotice loading={loadingRecent} error={recentError} diagnostics={recentDiagnostics} />
 
       <section className="bf-card bf-section-gap calendar-backfill-intro">
         <h2 className="bf-section-title">內部 admin / migration 工具</h2>
-        <p>此工具為 admin-only 內部資料回填工具。建議手機使用「貼上資料匯入」，從 Google Sheet / Numbers / 備忘錄複製表格文字後貼上；Dry Run 不會寫入 Supabase，也不會自動扣 balances。</p>
+        <p>此工具為 admin-only 內部資料回填工具。建議手機使用「貼上資料匯入」，從 Google Sheet / Numbers / 備忘錄複製表格文字後貼上；Dry Run 不會寫入 Supabase，也不會自動扣 balances。Preview 測試模式請勿匯入正式客戶資料。</p>
         <div className="bf-tag-row">
           <span className="bf-tag">Paste Import</span>
           <span className="bf-tag">優先支援 TSV</span>

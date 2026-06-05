@@ -23,7 +23,7 @@ function safeCount(items: Record<string, unknown>[], predicate: (item: Record<st
 }
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/conversion");
   if (!auth.ok) return auth.response;
 
   const [{ data: candidates, error: candidateError }, { data: clients, error: clientError }] = await Promise.all([

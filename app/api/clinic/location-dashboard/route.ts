@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/location-dashboard");
   if (!auth.ok) return auth.response;
   const [city, zones, areas, blocks, leads] = await Promise.all([
     auth.supabase.from("city_market_dashboard").select("*").order("registered_count", { ascending: false }),

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/intake-submissions");
   if (!auth.ok) return auth.response;
 
   const { data, error } = await auth.supabase

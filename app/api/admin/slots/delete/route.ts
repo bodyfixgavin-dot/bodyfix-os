@@ -5,7 +5,7 @@ import { requireBookingAdmin } from "@/lib/booking-admin";
 const deleteSlotSchema = z.object({ id: z.string().uuid() });
 
 export async function POST(req: Request) {
-  const admin = await requireBookingAdmin();
+  const admin = await requireBookingAdmin("/api/admin/slots/delete");
   if (!admin.ok) return admin.response;
 
   const parsed = deleteSlotSchema.safeParse(await req.json());
