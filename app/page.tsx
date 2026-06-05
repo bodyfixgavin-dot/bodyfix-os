@@ -19,6 +19,14 @@ type HubSection = {
 
 const currentModules: HubModule[] = [
   {
+    title: "BodyFix 官網",
+    eyebrow: "Official Website Draft",
+    description: "以新的筋膜整理核心語言建立的公開官網草稿，包含方法、服務、紫微塔羅、城市場次與預約導流。",
+    status: "MVP",
+    cta: "前往官網",
+    href: "/website",
+  },
+  {
     title: "Dashboard",
     eyebrow: "Operations Overview",
     description: "查看整體系統狀態與營運總覽",
