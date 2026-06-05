@@ -570,7 +570,7 @@ function buildDryRunResponse(dryRun: ReturnType<typeof analyze>, schemaWarnings:
 }
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/calendar-backfill");
   if (!auth.ok) return auth.response;
 
   const { data, error } = await auth.supabase
@@ -580,12 +580,12 @@ export async function GET() {
     .order("created_at", { ascending: false })
     .limit(20);
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) return NextResponse.json({ error: error.message, requestPath: "/api/clinic/calendar-backfill", failedRequest: "Supabase service_records select" }, { status: 500 });
   return NextResponse.json({ records: data ?? [] });
 }
 
 export async function POST(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/calendar-backfill");
   if (!auth.ok) return auth.response;
 
   const body = await readJson(req) as ImportPayload;

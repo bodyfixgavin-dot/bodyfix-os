@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
+import { ClinicNotice, ClinicShell } from "@/components/clinic/ClinicShell";
+import { requireClinicAdmin } from "@/lib/clinic-api";
 import { StrategySwotDashboard } from "./StrategySwotDashboard";
 
 export const metadata: Metadata = {
@@ -13,11 +13,28 @@ export const metadata: Metadata = {
 };
 
 export default async function StrategySwotPage() {
-  const cookieStore = await cookies();
-  const token = cookieStore.get(ADMIN_SESSION_COOKIE)?.value;
+  const auth = await requireClinicAdmin("/clinic/strategy-swot");
 
-  if (!verifyAdminSessionToken(token)) {
-    redirect("/admin");
+  if (!auth.ok) {
+    if (auth.response.status === 401) {
+      redirect("/admin");
+    }
+
+    return (
+      <ClinicShell title="BodyFix OS 策略全局分析" subtitle="內部 admin-only 決策支援頁：檢視 BodyFix OS 的優勢、弱點、機會與風險。">
+        <ClinicNotice
+          error="後台已登入，但 Supabase 與後台環境變數檢查失敗。請確認 Vercel Environment Variables 後重新部署。"
+          diagnostics={{
+            loginState: "authenticated",
+            databaseState: "failed",
+            requestPath: "/clinic/strategy-swot",
+            failedRequest: "/clinic/strategy-swot",
+            errorReason: "Supabase 與後台環境變數檢查失敗",
+            nextStep: "請確認 Vercel env 後重新部署。"
+          }}
+        />
+      </ClinicShell>
+    );
   }
 
   return <StrategySwotDashboard />;

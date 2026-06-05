@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { LOCATION_LEAD_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/location-leads");
   if (!auth.ok) return auth.response;
   const { searchParams } = new URL(req.url);
   let query = auth.supabase.from("location_demand_leads").select("*");
@@ -18,7 +18,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/location-leads");
   if (!auth.ok) return auth.response;
   const payload = cleanPayload(await readJson(req), LOCATION_LEAD_FIELDS) as Record<string, unknown>;
   payload.source ||= "clinic_admin";

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/dashboard");
   if (!auth.ok) return auth.response;
   const { supabase } = auth;
   const [todayFollowups, recentClients, planCandidates, caseCandidates] = await Promise.all([
@@ -12,7 +12,16 @@ export async function GET() {
     supabase.from("case_asset_candidates").select("*").limit(12)
   ]);
   const error = todayFollowups.error || recentClients.error || planCandidates.error || caseCandidates.error;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  if (error) {
+    const failedRequest = todayFollowups.error
+      ? "Supabase today_followups select"
+      : recentClients.error
+        ? "Supabase client_progress_summary select"
+        : planCandidates.error
+          ? "Supabase plan_candidate_summary select"
+          : "Supabase case_asset_candidates select";
+    return NextResponse.json({ error: error.message, requestPath: "/api/clinic/dashboard", failedRequest }, { status: 500 });
+  }
   return NextResponse.json({
     today_followups: todayFollowups.data ?? [],
     recent_clients: recentClients.data ?? [],

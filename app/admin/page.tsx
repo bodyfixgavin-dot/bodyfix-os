@@ -3,6 +3,57 @@
 import { useEffect, useState } from "react";
 import type { AvailabilitySlot, BookingRequest, BookingService, BookingStatus } from "@/types/booking";
 
+type AdminDiagnostics = {
+  loginState?: "unauthenticated" | "authenticated";
+  databaseState?: "not_checked" | "failed" | "ready";
+  requestPath?: string;
+  failedRequest?: string;
+  errorReason?: string;
+  envErrors?: string[];
+  missingEnv?: string[];
+  checkedEnv?: string[];
+  requiredEnv?: string[];
+  nextStep?: string;
+};
+
+function buildAdminErrorMessage(data: { error?: string; diagnostics?: AdminDiagnostics; missingEnv?: string[]; requestPath?: string; failedRequest?: string } | null) {
+  const diagnostics = data?.diagnostics;
+  const envErrors = diagnostics?.envErrors ?? [];
+  const missingEnv = diagnostics?.missingEnv ?? data?.missingEnv ?? [];
+  if (envErrors.length > 0) {
+    return `載入後台資料失敗：${envErrors.join("；")}。`;
+  }
+  if (missingEnv.length > 0) {
+    return `載入後台資料失敗：缺少 ${missingEnv.join("、")}。請確認 Vercel Environment Variables 後重新部署。`;
+  }
+  if (data?.failedRequest || data?.requestPath) {
+    return `載入後台資料失敗，request path：${data.failedRequest ?? data.requestPath}。`;
+  }
+  return data?.error ? `載入後台資料失敗：${data.error}` : "載入後台資料失敗，請確認 Supabase 與後台環境變數。";
+}
+
+function AdminDataStatusCard({ diagnostics, errorMessage }: { diagnostics: AdminDiagnostics | null; errorMessage: string }) {
+  if (!errorMessage && diagnostics?.databaseState !== "failed") return null;
+
+  return (
+    <section className="bf-card bf-section-gap" role="alert">
+      <h2 className="bf-section-title">後台資料庫狀態</h2>
+      <p>登入狀態：{diagnostics?.loginState === "authenticated" ? "已通過" : "未登入"}</p>
+      <p>資料庫狀態：{diagnostics?.databaseState === "failed" ? "失敗" : "未完成檢查"}</p>
+      <p>錯誤原因：{diagnostics?.errorReason ?? errorMessage}</p>
+      {diagnostics?.missingEnv?.length ? <p>缺少 env：{diagnostics.missingEnv.join("、")}</p> : null}
+      {diagnostics?.envErrors?.length ? (
+        <ul>
+          {diagnostics.envErrors.map((envError) => <li key={envError}>{envError}</li>)}
+        </ul>
+      ) : null}
+      <p>Request path：{diagnostics?.failedRequest ?? diagnostics?.requestPath ?? "/api/admin/slots"}</p>
+      <p>下一步：{diagnostics?.nextStep ?? "請確認 Vercel env 後重新部署。"}</p>
+      {diagnostics?.checkedEnv?.length ? <p>已檢查 env：{diagnostics.checkedEnv.join("、")}（不顯示任何 secret value）</p> : null}
+    </section>
+  );
+}
+
 function fmt(dt: string) {
   return new Intl.DateTimeFormat("zh-TW", {
     month: "numeric",
@@ -26,10 +77,12 @@ export default function AdminPage() {
   const [slotType, setSlotType] = useState<AvailabilitySlot["slot_type"]>("normal");
   const [note, setNote] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+  const [diagnostics, setDiagnostics] = useState<AdminDiagnostics | null>(null);
   const [bypassMode, setBypassMode] = useState(false);
 
   async function loadAdminData() {
     setErrorMessage("");
+    setDiagnostics(null);
     const res = await fetch("/api/admin/slots", { cache: "no-store" });
 
     if (res.status === 401) {
@@ -40,18 +93,15 @@ export default function AdminPage() {
     const data = await res.json().catch(() => null);
 
     if (!res.ok) {
-      const missingEnv = Array.isArray(data?.missingEnv) ? data.missingEnv.join("、") : "";
-      setErrorMessage(
-        missingEnv
-          ? `載入後台資料失敗，Preview 缺少環境變數：${missingEnv}。請在 Vercel Preview 設定後重新部署。`
-          : "載入後台資料失敗，請確認 Supabase 與後台環境變數。"
-      );
+      setDiagnostics((data?.diagnostics ?? null) as AdminDiagnostics | null);
+      setErrorMessage(buildAdminErrorMessage(data));
       return;
     }
 
     setBookings((data.bookings ?? []) as BookingRequest[]);
     setSlots((data.slots ?? []) as AvailabilitySlot[]);
     setServices((data.services ?? []) as BookingService[]);
+    setDiagnostics({ loginState: "authenticated", databaseState: "ready", requestPath: "/api/admin/slots" });
   }
 
   async function login() {
@@ -190,7 +240,7 @@ export default function AdminPage() {
               <button className="bf-small-btn" type="button" onClick={bypassLogin}>免密碼測試登入</button>
             )}
             {bypassMode && (
-              <div className="bf-notice">目前為 Preview 免密碼測試模式，請勿匯入正式客戶資料。</div>
+              <div className="bf-notice">目前為 Preview 測試模式，已啟用免密碼後台進入。<br />請勿匯入正式客戶資料。</div>
             )}
             {errorMessage && <div className="bf-notice">{errorMessage}</div>}
           </div>
@@ -209,9 +259,10 @@ export default function AdminPage() {
       </section>
 
       {bypassMode && (
-        <div className="bf-notice bf-admin-notice">目前為 Preview 免密碼測試模式，請勿匯入正式客戶資料。</div>
+        <div className="bf-notice bf-admin-notice">目前為 Preview 測試模式，已啟用免密碼後台進入。<br />請勿匯入正式客戶資料。</div>
       )}
       {errorMessage && <div className="bf-notice bf-admin-notice">{errorMessage}</div>}
+      <AdminDataStatusCard diagnostics={diagnostics} errorMessage={errorMessage} />
 
       <section className="bf-card bf-section-gap">
         <h2 className="bf-section-title">新增可約時段</h2>

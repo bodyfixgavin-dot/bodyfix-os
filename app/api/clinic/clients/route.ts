@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { CLIENT_FIELDS, cleanPayload, makeClientCode, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/clients");
   if (!auth.ok) return auth.response;
   const { searchParams } = new URL(req.url);
   const q = searchParams.get("q")?.trim();
@@ -17,7 +17,7 @@ export async function GET(req: Request) {
 }
 
 export async function POST(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/clients");
   if (!auth.ok) return auth.response;
   const body = await readJson(req);
   const payload = cleanPayload(body, CLIENT_FIELDS) as Record<string, unknown>;

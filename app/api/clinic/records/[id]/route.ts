@@ -3,7 +3,7 @@ import { RECORD_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib
 
 type Params = { params: Promise<{ id: string }> };
 export async function PATCH(req: Request, ctx: Params) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/records/[id]");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const payload = cleanPayload(await readJson(req), RECORD_FIELDS);

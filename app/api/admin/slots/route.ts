@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
+import { buildAdminDataErrorPayload } from "@/lib/admin-diagnostics";
 import { requireBookingAdmin } from "@/lib/booking-admin";
 
 const slotSchema = z.object({
@@ -14,7 +15,7 @@ const slotSchema = z.object({
 });
 
 export async function GET() {
-  const admin = await requireBookingAdmin();
+  const admin = await requireBookingAdmin("/api/admin/slots");
   if (!admin.ok) return admin.response;
 
   const [{ data: bookings, error: bookingError }, { data: slots, error: slotError }, { data: services, error: serviceError }] = await Promise.all([
@@ -34,7 +35,11 @@ export async function GET() {
 
   if (bookingError || slotError || serviceError) {
     return NextResponse.json(
-      { error: bookingError?.message || slotError?.message || serviceError?.message || "Unable to load admin data" },
+      {
+        ...buildAdminDataErrorPayload("/api/admin/slots", bookingError?.message || slotError?.message || serviceError?.message || "Unable to load admin data"),
+        error: bookingError?.message || slotError?.message || serviceError?.message || "Unable to load admin data",
+        failedRequest: bookingError ? "Supabase booking_requests select" : slotError ? "Supabase availability_slots select" : "Supabase services select"
+      },
       { status: 500 }
     );
   }
@@ -43,7 +48,7 @@ export async function GET() {
 }
 
 export async function POST(req: Request) {
-  const admin = await requireBookingAdmin();
+  const admin = await requireBookingAdmin("/api/admin/slots");
   if (!admin.ok) return admin.response;
 
   const parsed = slotSchema.safeParse(await req.json());

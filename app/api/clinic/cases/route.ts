@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { CASE_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 export async function GET() {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/cases");
   if (!auth.ok) return auth.response;
   const [assets, candidates] = await Promise.all([
     auth.supabase.from("case_assets").select("*, clients(client_code, display_name)").order("created_at", { ascending: false }).limit(80),
@@ -12,7 +12,7 @@ export async function GET() {
   return NextResponse.json({ case_assets: assets.data ?? [], case_candidates: candidates.data ?? [] });
 }
 export async function POST(req: Request) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/cases");
   if (!auth.ok) return auth.response;
   const payload = cleanPayload(await readJson(req), CASE_FIELDS);
   const { data, error } = await auth.supabase.from("case_assets").insert(payload).select("*").single();

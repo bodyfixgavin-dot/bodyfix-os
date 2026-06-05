@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { STUDIO_BLOCK_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 type Params = { params: Promise<{ id: string }> };
 export async function PATCH(req: Request, ctx: Params) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/taipei-studio-blocks/[id]");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const payload = cleanPayload(await readJson(req), STUDIO_BLOCK_FIELDS) as Record<string, unknown>;

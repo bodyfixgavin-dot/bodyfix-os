@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireClinicAdmin, withoutIdentity } from "@/lib/clinic-api";
 type Params = { params: Promise<{ id: string }> };
 export async function GET(_req: Request, ctx: Params) {
-  const auth = await requireClinicAdmin();
+  const auth = await requireClinicAdmin("/api/clinic/clients/[id]/summary");
   if (!auth.ok) return auth.response;
   const { id } = await ctx.params;
   const [client, records, plans] = await Promise.all([
