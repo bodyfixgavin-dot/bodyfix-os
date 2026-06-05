@@ -1,0 +1,31 @@
+{
+  "profile": {
+    "name": "Gavin",
+    "birth": "1994-11-08 12:15",
+    "birthplace": "New Taipei City, Taiwan",
+    "system": "Vedic Astrology"
+  },
+  "settings": {
+    "zodiac": "sidereal",
+    "ayanamsa": "Lahiri",
+    "houseSystem": "Whole Sign",
+    "note": "第一版為手動整理資料，尚非自動天文計算"
+  },
+  "charts": {
+    "D1": [
+      { "house": 1, "sign": "Libra", "graha": ["Lagna"], "nakshatra": "Chitra", "note": "示範資料，後續可校正" },
+      { "house": 2, "sign": "Scorpio", "graha": ["Sun", "Venus"], "nakshatra": "Anuradha", "note": "關係價值與表達示範" },
+      { "house": 3, "sign": "Sagittarius", "graha": ["Rahu"], "nakshatra": "Mula", "note": "Rahu 為月交點／影子行星" },
+      { "house": 4, "sign": "Capricorn", "graha": [], "nakshatra": "Shravana", "note": "內在安全感示範" },
+      { "house": 5, "sign": "Aquarius", "graha": ["Moon"], "nakshatra": "Shatabhisha", "note": "吸引模式示範" },
+      { "house": 6, "sign": "Pisces", "graha": [], "nakshatra": "Uttara Bhadrapada", "note": "日常壓力示範" },
+      { "house": 7, "sign": "Aries", "graha": ["Ketu"], "nakshatra": "Ashwini", "note": "Ketu 為月交點／影子行星" },
+      { "house": 8, "sign": "Taurus", "graha": [], "nakshatra": "Rohini", "note": "親密深層議題示範" },
+      { "house": 9, "sign": "Gemini", "graha": ["Mercury"], "nakshatra": "Ardra", "note": "信念與學習示範" },
+      { "house": 10, "sign": "Cancer", "graha": [], "nakshatra": "Pushya", "note": "公開角色示範" },
+      { "house": 11, "sign": "Leo", "graha": ["Mars", "Jupiter"], "nakshatra": "Magha", "note": "社群與願景示範" },
+      { "house": 12, "sign": "Virgo", "graha": ["Saturn"], "nakshatra": "Hasta", "note": "隱密壓力與收束示範" }
+    ],
+    "D9": []
+  }
+}
