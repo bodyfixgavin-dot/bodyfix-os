@@ -1,3 +1,5 @@
+import Link from 'next/link';
+
 import styles from './BodyFixWebsite.module.css';
 
 const corePhrases = [
@@ -30,24 +32,31 @@ const methodSteps = [
   ['04', 'Return｜接回', '讓你能真正使用身體、訓練與恢復，而不只是停在短暫放鬆。'],
 ];
 
-const services = [
+const serviceEntrances = [
   {
-    num: 'A · 01',
-    title: '身體整理 Body Reset',
-    text: '在低痛感、可呼吸、身體能接受的深度裡，讓肌肉與外層筋膜一起放下張力。',
-    items: ['筋膜鏈整理', '筋膜鏈延長整理', '骨盆核心整理', '12 次結構整合完整計畫'],
+    num: '01',
+    title: '筋膜張力整理',
+    text: '低痛感、可呼吸、身體能接受的深度。',
   },
   {
-    num: 'B · 02',
-    title: '動作整合 Movement Integration',
-    text: '把整理過的身體接回訓練與日常動作，讓改善不是只停在按摩床上。',
-    items: ['教練課', 'TRX 訓練整合', '重訓動作整合', '訓練前後狀態整理'],
+    num: '02',
+    title: '教練課 / 動作整合',
+    text: '判讀、整理、整合，讓訓練回到更穩定的系統。',
   },
   {
-    num: 'C · 03',
-    title: '結構與狀態 Structure & Status',
-    text: '以紫微結構與塔羅狀態整理當下卡住的點，不替你決定未來，幫你看清現在。',
-    items: ['紫微結構解析', '塔羅狀態整理', '紫微 × 塔羅整合諮詢', 'SADM 關係決策整理'],
+    num: '03',
+    title: '骨盆核心整理',
+    text: '從骨盆、髖、呼吸與深層核心重新找回穩定。',
+  },
+  {
+    num: '04',
+    title: '紫微結構解析',
+    text: '用結構的眼光，看懂命盤節奏與人生配置。',
+  },
+  {
+    num: '05',
+    title: '塔羅狀態整理',
+    text: '不是替你決定未來，而是幫你看清現在。',
   },
 ];
 
@@ -70,7 +79,7 @@ export default function BodyFixWebsitePage() {
     <main className={styles.page}>
       <nav className={styles.nav} aria-label="BodyFix official website navigation">
         <div className={styles.navInner}>
-          <a className={styles.logo} href="#top">BodyFix<span>.</span></a>
+          <Link className={styles.logo} href="/" aria-label="BodyFix 回首頁"><span className={styles.logoMark}>BF</span><span>BodyFix</span></Link>
           <div className={styles.navLinks}>
             <a href="#method">方法</a>
             <a href="#services">服務</a>
@@ -96,9 +105,14 @@ export default function BodyFixWebsitePage() {
             </div>
           </div>
           <aside className={styles.heroCard}>
+            <span className={styles.smallLabel}>Brand Language v1.0</span>
+            <div className={styles.brandRules}>
+              <span>中文負責專業。</span>
+              <span>台語負責打進心裡。</span>
+            </div>
             <h2>毋是愛你忍痛，是愛你的身體願意放下來。</h2>
             <p>
-              我不會用硬壓讓你忍痛。我會看你身體的反應，調整力道跟方向，讓肌肉和外層筋膜在比較舒服、可接受的狀態下慢慢放鬆。
+              我會看你身體的反應，調整力道與方向；不是要你忍住，而是在可呼吸、身體能接受的深度裡，讓張力慢慢放下來。
             </p>
           </aside>
         </div>
@@ -142,21 +156,18 @@ export default function BodyFixWebsitePage() {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>02</span>
-            <h2 className={styles.title}>三個服務入口</h2>
+            <h2 className={styles.title}>選擇你現在需要的 BodyFix 入口</h2>
             <span className={styles.subtitle}>— Services</span>
           </div>
           <p className={styles.copyWide}>
-            你可以從身體整理開始，也可以從動作整合或結構狀態分析切入。三個入口最後都會回到同一件事：讓身體、動作與決策狀態更清楚。
+            五個入口對應五種狀態：身體張力、訓練動作、骨盆核心、紫微結構與塔羅狀態。先選最貼近現在的那一張，再進到預約前問卷整理需求。
           </p>
           <div className={styles.serviceGrid}>
-            {services.map((service) => (
+            {serviceEntrances.map((service) => (
               <article className={styles.serviceCard} key={service.title}>
                 <span className={styles.cardNum}>{service.num}</span>
                 <h3>{service.title}</h3>
                 <p>{service.text}</p>
-                <ul className={styles.serviceList}>
-                  {service.items.map((item) => <li key={item}>{item}</li>)}
-                </ul>
               </article>
             ))}
           </div>
@@ -260,7 +271,7 @@ export default function BodyFixWebsitePage() {
           <div className={styles.footerGrid}>
             <div>
               <h3>BodyFix.</h3>
-              <p>以筋膜與張力整理為核心，介於一般放鬆與正式醫療之間的功能型身體服務。</p>
+              <p>以筋膜與張力整理為核心，把身體狀態、動作使用與日常節奏整理得更清楚。</p>
             </div>
             <div><h4>Services</h4><ul><li>身體整理</li><li>動作整合</li><li>結構與狀態</li></ul></div>
             <div><h4>Locations</h4><ul><li>台北常駐</li><li>台中巡迴</li><li>高雄巡迴</li></ul></div>

@@ -40,13 +40,25 @@
 }
 
 .logo {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 9px;
   font-family: var(--serif);
-  font-size: 1.45rem;
+  font-size: 1.34rem;
   font-style: italic;
   color: var(--navy);
 }
 
-.logo span { color: var(--bronze); }
+.logoMark {
+  color: var(--navy);
+  font-family: var(--sans);
+  font-size: 1.55rem;
+  font-style: normal;
+  font-weight: 900;
+  letter-spacing: -0.08em;
+}
+
+.logo span:last-child { color: var(--bronze); }
 
 .navLinks {
   display: flex;
@@ -195,6 +207,18 @@
 
 .heroCard p { margin: 0; color: var(--stone); line-height: 1.9; }
 
+.brandRules {
+  display: grid;
+  gap: 8px;
+  margin: 0 0 28px;
+  padding: 18px 0;
+  border-top: 1px solid var(--hairline);
+  border-bottom: 1px solid var(--hairline);
+  color: var(--navy);
+  font-size: 1.02rem;
+  line-height: 1.6;
+}
+
 .coreStrip {
   border-top: 1px solid var(--hairline);
   border-bottom: 1px solid var(--hairline);
@@ -274,7 +298,7 @@
 }
 
 .methodGrid { grid-template-columns: repeat(4, 1fr); }
-.serviceGrid { grid-template-columns: repeat(3, 1fr); }
+.serviceGrid { grid-template-columns: repeat(5, 1fr); }
 .cityGrid { grid-template-columns: repeat(3, 1fr); }
 .igGrid { grid-template-columns: repeat(5, 1fr); }
 
@@ -298,7 +322,7 @@
 }
 
 .methodCard h3 { font-size: 1.55rem; }
-.serviceCard h3 { font-size: 1.45rem; }
+.serviceCard h3 { font-size: clamp(1.18rem, 1.8vw, 1.45rem); }
 .cityCard h3 { font-size: 1.55rem; }
 .igCard h3 { font-size: 1.18rem; }
 
