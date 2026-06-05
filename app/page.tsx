@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { featuredProducts, productCategoryGuides } from "@/lib/product-catalog";
 
 type HubModule = {
   title: string;
@@ -365,6 +366,46 @@ function HubSectionBlock({ section }: { section: HubSection }) {
   );
 }
 
+function ProductCatalogPreview() {
+  return (
+    <div className="hub-field-plan" aria-labelledby="space-product-catalog-title">
+      <p className="hub-card-eyebrow cosmic-meta">Space Product Catalog</p>
+      <h3 id="space-product-catalog-title">進修植物之地｜空間配置商品入口</h3>
+      <p className="hub-section-copy">
+        這一區先放在紫微規劃區下方，作為空間配置商品資料的前台預覽。商品資料已由 `lib/product-catalog.ts` 統一管理，後續可再接到測驗結果、LINE 私訊或正式購物流程。
+      </p>
+      <div className="hub-phase-list">
+        {productCategoryGuides.map((guide) => (
+          <article className="hub-phase" key={guide.categoryKey}>
+            <div>
+              <span>{guide.buyerIntent}</span>
+              <h3>{guide.title}</h3>
+            </div>
+            <ul>
+              <li>{guide.subtitle}</li>
+            </ul>
+          </article>
+        ))}
+      </div>
+      <div className="hub-module-grid">
+        {featuredProducts.map((product) => (
+          <article className="hub-module-card" key={product.id}>
+            <div className="hub-card-topline">
+              <span className="hub-status hub-status-tool">{product.category}</span>
+            </div>
+            <p className="hub-card-eyebrow">{product.deliveryType}</p>
+            <h3>{product.name}</h3>
+            <p>{product.headline}</p>
+            <p className="hub-card-eyebrow">{product.price}｜{product.shortTag}</p>
+            <p>{product.description}</p>
+            <span className="hub-card-cta hub-card-cta-disabled">{product.cta}</span>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   return (
     <main className="hub-page">
@@ -463,8 +504,8 @@ export default function HomePage() {
                 ))}
               </div>
             </div>
+            <ProductCatalogPreview />
           </div>
-
         </section>
 
         <footer className="hub-footer">
