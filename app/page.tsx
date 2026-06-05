@@ -67,6 +67,14 @@ const currentModules: HubModule[] = [
     href: "/tarot/sadm",
   },
   {
+    title: "Gavin 雙系統命理解析",
+    eyebrow: "ZI WEI × VEDIC RELATIONSHIP READING",
+    description: "傳統命盤展示、雙系統交叉判讀與親密關係模式整理的公開網站原型。",
+    status: "MVP",
+    cta: "前往 Gavin Astrology",
+    href: "/gavin-astrology",
+  },
+  {
     title: "海王雷達 v2",
     eyebrow: "Risk Signal Radar",
     description: "快速檢測關係中的高風險互動訊號",

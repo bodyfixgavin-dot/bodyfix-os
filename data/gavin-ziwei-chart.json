@@ -1,0 +1,122 @@
+{
+  "profile": {
+    "name": "Gavin",
+    "birth": "1994-11-08 12:15",
+    "gender": "male",
+    "system": "Zi Wei Dou Shu"
+  },
+  "settings": {
+    "school": "三合派",
+    "note": "第一版為手動整理資料，尚非自動排盤引擎"
+  },
+  "palaces": [
+    {
+      "name": "命宮",
+      "branch": "巳",
+      "mainStars": ["天相"],
+      "subStars": ["天廚"],
+      "transformations": [],
+      "tags": ["人格核心", "身宮同宮"],
+      "note": "示範資料，後續可由 Gavin 修正"
+    },
+    {
+      "name": "兄弟宮",
+      "branch": "午",
+      "mainStars": ["天梁"],
+      "subStars": ["文昌"],
+      "transformations": ["科"],
+      "tags": ["互動資源"],
+      "note": "示範資料"
+    },
+    {
+      "name": "夫妻宮",
+      "branch": "未",
+      "mainStars": ["廉貞", "七殺"],
+      "subStars": ["天鉞"],
+      "transformations": ["忌"],
+      "tags": ["關係腳本", "吸引模式"],
+      "note": "示範資料"
+    },
+    {
+      "name": "子女宮",
+      "branch": "申",
+      "mainStars": ["破軍"],
+      "subStars": ["左輔"],
+      "transformations": [],
+      "tags": ["創造力", "親密延伸"],
+      "note": "示範資料"
+    },
+    {
+      "name": "財帛宮",
+      "branch": "酉",
+      "mainStars": ["太陽"],
+      "subStars": ["天魁"],
+      "transformations": ["祿"],
+      "tags": ["價值交換"],
+      "note": "示範資料"
+    },
+    {
+      "name": "疾厄宮",
+      "branch": "戌",
+      "mainStars": ["武曲"],
+      "subStars": ["地劫"],
+      "transformations": [],
+      "tags": ["壓力反應"],
+      "note": "示範資料"
+    },
+    {
+      "name": "遷移宮",
+      "branch": "亥",
+      "mainStars": ["天同"],
+      "subStars": ["右弼"],
+      "transformations": [],
+      "tags": ["外在場域"],
+      "note": "示範資料"
+    },
+    {
+      "name": "僕役宮",
+      "branch": "子",
+      "mainStars": ["紫微"],
+      "subStars": ["擎羊"],
+      "transformations": ["權"],
+      "tags": ["社群角色"],
+      "note": "示範資料"
+    },
+    {
+      "name": "官祿宮",
+      "branch": "丑",
+      "mainStars": ["天府"],
+      "subStars": ["火星"],
+      "transformations": [],
+      "tags": ["工作節奏"],
+      "note": "示範資料"
+    },
+    {
+      "name": "田宅宮",
+      "branch": "寅",
+      "mainStars": ["巨門"],
+      "subStars": ["鈴星"],
+      "transformations": [],
+      "tags": ["安全感"],
+      "note": "示範資料"
+    },
+    {
+      "name": "福德宮",
+      "branch": "卯",
+      "mainStars": ["貪狼"],
+      "subStars": ["天空"],
+      "transformations": [],
+      "tags": ["慾望結構", "情感慣性"],
+      "note": "示範資料"
+    },
+    {
+      "name": "父母宮",
+      "branch": "辰",
+      "mainStars": ["太陰"],
+      "subStars": ["文曲"],
+      "transformations": [],
+      "tags": ["原生模式"],
+      "note": "示範資料"
+    }
+  ]
+}

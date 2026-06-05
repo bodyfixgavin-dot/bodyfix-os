@@ -1,0 +1,598 @@
+.pageShell {
+  --night: #0c0e16;
+  --night-2: #161a27;
+  --ivory: #f3ece0;
+  --gold: #d9a441;
+  --blue: #8fa6e3;
+  --muted: rgba(243, 236, 224, 0.72);
+  --line: rgba(217, 164, 65, 0.26);
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 16% 8%, rgba(143, 166, 227, 0.22), transparent 28%),
+    radial-gradient(circle at 82% 4%, rgba(217, 164, 65, 0.16), transparent 26%),
+    radial-gradient(circle at 50% 110%, rgba(143, 166, 227, 0.12), transparent 34%),
+    var(--night);
+  color: var(--ivory);
+  font-family: "Noto Sans TC", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+.pageShell::before {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background-image:
+    radial-gradient(circle, rgba(243, 236, 224, 0.34) 1px, transparent 1px),
+    linear-gradient(rgba(217, 164, 65, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(217, 164, 65, 0.04) 1px, transparent 1px);
+  background-size: 86px 86px, 56px 56px, 56px 56px;
+  mask-image: linear-gradient(to bottom, rgba(0,0,0,0.75), transparent 82%);
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 34px 0 72px;
+}
+
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 16px 0;
+  backdrop-filter: blur(18px);
+}
+
+.nav a {
+  text-decoration: none;
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--ivory);
+  font-size: 0.82rem;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.brand span {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(217, 164, 65, 0.12);
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+}
+
+.nav div:last-child {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.nav div:last-child a {
+  border: 1px solid rgba(243, 236, 224, 0.12);
+  border-radius: 999px;
+  padding: 8px 12px;
+  color: rgba(243, 236, 224, 0.74);
+  background: rgba(22, 26, 39, 0.62);
+  font-size: 0.86rem;
+}
+
+.hero,
+.section,
+.essaySection,
+.footer {
+  border: 1px solid var(--line);
+  border-radius: 34px;
+  background:
+    linear-gradient(135deg, rgba(22, 26, 39, 0.94), rgba(12, 14, 22, 0.86)),
+    rgba(22, 26, 39, 0.72);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.24);
+}
+
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1.28fr) minmax(300px, 0.72fr);
+  gap: 28px;
+  min-height: 620px;
+  padding: clamp(28px, 5vw, 70px);
+  overflow: hidden;
+  position: relative;
+}
+
+.hero::after {
+  content: "";
+  position: absolute;
+  right: -170px;
+  top: -170px;
+  width: 520px;
+  height: 520px;
+  border: 1px solid rgba(217, 164, 65, 0.26);
+  border-radius: 50%;
+}
+
+.heroCopy,
+.heroChart,
+.sectionHeading,
+.chartPanel,
+.systemCard,
+.methodCard,
+.frameworkCard,
+.serviceCard,
+.essayBody,
+.intakeForm,
+.footer > * {
+  position: relative;
+  z-index: 1;
+}
+
+.kicker {
+  margin: 0 0 14px;
+  color: var(--gold);
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+}
+
+.hero h1,
+.sectionHeading h2,
+.essaySection h2 {
+  margin: 0;
+  font-family: "Noto Serif TC", Georgia, "Times New Roman", serif;
+  font-weight: 700;
+  line-height: 1.18;
+  letter-spacing: -0.035em;
+}
+
+.hero h1 {
+  max-width: 840px;
+  font-size: clamp(2.35rem, 6vw, 5.2rem);
+}
+
+.heroCopy > p:not(.kicker) {
+  max-width: 760px;
+  margin: 24px 0 0;
+  color: var(--muted);
+  font-size: clamp(1rem, 1.8vw, 1.22rem);
+  line-height: 2;
+}
+
+.actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.primaryButton,
+.secondaryButton {
+  border-radius: 999px;
+  padding: 13px 20px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+}
+
+.primaryButton {
+  border: 0;
+  color: #171308;
+  background: linear-gradient(135deg, #f0cf83, var(--gold));
+  box-shadow: 0 12px 34px rgba(217, 164, 65, 0.18);
+}
+
+.secondaryButton {
+  border: 1px solid rgba(143, 166, 227, 0.38);
+  color: var(--ivory);
+  background: rgba(143, 166, 227, 0.1);
+}
+
+.heroChart {
+  align-self: center;
+  display: grid;
+  place-items: center;
+  gap: 16px;
+  min-height: 380px;
+  border: 1px solid rgba(143, 166, 227, 0.22);
+  border-radius: 30px;
+  background:
+    radial-gradient(circle at center, rgba(143, 166, 227, 0.18), transparent 44%),
+    rgba(255, 255, 255, 0.03);
+  text-align: center;
+  padding: 26px;
+}
+
+.orbit {
+  width: min(260px, 58vw);
+  aspect-ratio: 1;
+  border: 1px solid rgba(217, 164, 65, 0.38);
+  border-radius: 50%;
+  box-shadow: inset 0 0 0 38px rgba(217, 164, 65, 0.03), inset 0 0 0 78px rgba(143, 166, 227, 0.035);
+}
+
+.chartGlyph {
+  position: absolute;
+  width: 92px;
+  height: 92px;
+  display: grid;
+  place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  background: var(--night);
+  color: var(--gold);
+  font-family: "Noto Serif TC", serif;
+  font-size: 2.4rem;
+}
+
+.heroChart span {
+  color: var(--blue);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.heroChart strong {
+  max-width: 320px;
+  color: rgba(243, 236, 224, 0.84);
+  line-height: 1.8;
+}
+
+.section,
+.essaySection {
+  margin-top: 26px;
+  padding: clamp(24px, 4vw, 46px);
+}
+
+.sectionHeading {
+  max-width: 840px;
+  margin-bottom: 24px;
+}
+
+.sectionHeading h2 {
+  font-size: clamp(1.8rem, 4vw, 3.05rem);
+}
+
+.sectionHeading > p:last-child:not(.kicker) {
+  color: var(--muted);
+  line-height: 1.9;
+  margin: 14px 0 0;
+}
+
+.chartIntroGrid,
+.chartPanels,
+.servicesGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.systemCard,
+.chartPanel,
+.methodCard,
+.frameworkCard,
+.serviceCard {
+  border: 1px solid rgba(243, 236, 224, 0.12);
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.045);
+  padding: 22px;
+}
+
+.systemLabel,
+.panelHeader small,
+.nodeNote {
+  color: rgba(143, 166, 227, 0.78);
+  font-size: 0.78rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.systemCard h3,
+.methodCard h3,
+.frameworkCard h3,
+.serviceCard h3,
+.ethicsBox h3 {
+  margin: 6px 0 10px;
+  color: var(--ivory);
+  font-family: "Noto Serif TC", serif;
+  font-size: 1.35rem;
+}
+
+.systemCard p:not(.systemLabel),
+.methodCard p,
+.frameworkCard p,
+.serviceCard p,
+.ethicsBox,
+.essayBody,
+.footer p {
+  color: var(--muted);
+  line-height: 1.85;
+}
+
+.modelNotice,
+.weightNotice {
+  margin: 18px 0;
+  border-left: 3px solid var(--gold);
+  border-radius: 0 16px 16px 0;
+  background: rgba(217, 164, 65, 0.11);
+  padding: 14px 16px;
+  color: rgba(243, 236, 224, 0.84);
+  line-height: 1.75;
+}
+
+.panelHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 14px;
+}
+
+.panelHeader span {
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.chartScroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.ziweiGrid,
+.vedicGrid {
+  display: grid;
+  min-width: 620px;
+  gap: 8px;
+}
+
+.ziweiGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.vedicGrid {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.palaceCell,
+.houseCell {
+  min-height: 138px;
+  border: 1px solid rgba(217, 164, 65, 0.22);
+  border-radius: 16px;
+  background: rgba(12, 14, 22, 0.48);
+  padding: 12px;
+}
+
+.cellTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  color: var(--ivory);
+}
+
+.cellTop span,
+.houseCell span {
+  color: var(--gold);
+  font-weight: 900;
+}
+
+.palaceCell p,
+.houseCell p {
+  color: var(--blue);
+  margin: 12px 0 4px;
+  font-weight: 900;
+}
+
+.palaceCell small,
+.houseCell small {
+  color: rgba(243, 236, 224, 0.62);
+}
+
+.palaceCell b {
+  display: inline-flex;
+  margin-top: 8px;
+  border: 1px solid rgba(217, 164, 65, 0.3);
+  border-radius: 999px;
+  padding: 2px 8px;
+  color: var(--gold);
+}
+
+.houseCell strong {
+  display: block;
+  margin-top: 4px;
+  color: var(--ivory);
+}
+
+.nodeNote {
+  margin: 12px 0 0;
+  text-transform: none;
+  letter-spacing: 0.02em;
+}
+
+.methodGrid,
+.frameworkGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.methodCard span,
+.frameworkCard > span,
+.serviceCard > span {
+  color: var(--gold);
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+}
+
+.frameworkCard strong {
+  color: rgba(243, 236, 224, 0.9);
+}
+
+.ethicsBox {
+  margin-top: 18px;
+  border: 1px solid rgba(143, 166, 227, 0.24);
+  border-radius: 24px;
+  background: rgba(143, 166, 227, 0.075);
+  padding: 24px;
+}
+
+.ethicsBox ol {
+  padding-left: 22px;
+}
+
+.ethicsBox li + li {
+  margin-top: 8px;
+}
+
+.essaySection {
+  display: grid;
+  grid-template-columns: 0.85fr 1.15fr;
+  gap: 28px;
+}
+
+.essayBody {
+  border-left: 1px solid var(--line);
+  padding-left: 26px;
+}
+
+.intakeForm {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.intakeForm label {
+  display: grid;
+  gap: 7px;
+  color: rgba(243, 236, 224, 0.78);
+  font-weight: 800;
+}
+
+.intakeForm input,
+.intakeForm select,
+.intakeForm textarea {
+  width: 100%;
+  border: 1px solid rgba(243, 236, 224, 0.14);
+  border-radius: 16px;
+  background: rgba(12, 14, 22, 0.72);
+  color: var(--ivory);
+  padding: 13px 14px;
+  font: inherit;
+  outline: none;
+}
+
+.intakeForm textarea {
+  min-height: 122px;
+  resize: vertical;
+}
+
+.fullField,
+.consent {
+  grid-column: 1 / -1;
+}
+
+.consent {
+  grid-template-columns: auto 1fr !important;
+  align-items: start;
+  font-weight: 500 !important;
+  line-height: 1.7;
+}
+
+.consent input {
+  width: auto;
+  margin-top: 6px;
+  accent-color: var(--gold);
+}
+
+.intakeForm button {
+  justify-self: start;
+  cursor: default;
+}
+
+.footer {
+  margin-top: 26px;
+  padding: 28px;
+  text-align: center;
+}
+
+.footer strong {
+  color: var(--gold);
+  font-family: "Noto Serif TC", serif;
+  font-size: 1.35rem;
+}
+
+@media (max-width: 960px) {
+  .nav {
+    position: static;
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .nav div:last-child {
+    justify-content: flex-start;
+  }
+
+  .hero,
+  .essaySection,
+  .chartPanels,
+  .chartIntroGrid,
+  .servicesGrid,
+  .intakeForm {
+    grid-template-columns: 1fr;
+  }
+
+  .methodGrid,
+  .frameworkGrid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .hero {
+    min-height: auto;
+  }
+
+  .essayBody {
+    border-left: 0;
+    padding-left: 0;
+  }
+}
+
+@media (max-width: 640px) {
+  .shell {
+    width: min(100% - 22px, 1180px);
+  }
+
+  .hero,
+  .section,
+  .essaySection,
+  .footer {
+    border-radius: 24px;
+  }
+
+  .methodGrid,
+  .frameworkGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .heroChart {
+    min-height: 300px;
+  }
+
+  .ziweiGrid,
+  .vedicGrid {
+    min-width: 520px;
+  }
+}
