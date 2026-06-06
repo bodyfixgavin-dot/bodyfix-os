@@ -106,18 +106,60 @@ function SectionHeading({ kicker, title, children }: { kicker: string; title: st
   );
 }
 
+const ziweiPositions = [
+  [1, 1], [1, 2], [1, 3], [1, 4], [2, 4], [3, 4],
+  [4, 4], [4, 3], [4, 2], [4, 1], [3, 1], [2, 1]
+];
+
+const vedicPositions = [
+  [50, 23], [26, 13], [13, 27], [25, 50], [13, 73], [26, 87],
+  [50, 77], [74, 87], [87, 73], [75, 50], [87, 27], [74, 13]
+];
+
+function ShareHeader({ title, subtitle }: { title: string; subtitle: string }) {
+  return (
+    <header className={styles.shareHeader}>
+      <div><span className={styles.shareMonogram}>G</span><strong>Gavin Dual Astrology</strong></div>
+      <div className={styles.shareTitle}><h3>{title}</h3><p>{subtitle}</p></div>
+      <span className={styles.referenceBadge}>命盤展示版 · For reference only</span>
+    </header>
+  );
+}
+
 function ZiWeiChart({ palaces }: { palaces: ZiWeiPalace[] }) {
   return (
-    <div className={styles.chartScroll} aria-label="紫微斗數十二宮靜態展示">
-      <div className={styles.ziweiGrid}>
-        {palaces.map((palace) => (
-          <article className={styles.palaceCell} key={`${palace.name}-${palace.branch}`}>
-            <div className={styles.cellTop}><strong>{palace.name}</strong><span>{palace.branch}</span></div>
-            <p>{palace.mainStars.join("、") || "待補"}</p>
-            <small>{palace.subStars.join("、") || "副星待補"}</small>
-            {palace.transformations.length ? <b>{palace.transformations.join(" / ")}</b> : null}
-          </article>
-        ))}
+    <div className={styles.chartScroll} aria-label="紫微斗數十二宮命盤展示">
+      <div className={`${styles.shareSheet} ${styles.ziweiSheet}`}>
+        <ShareHeader title="Zi Wei Dou Shu Chart" subtitle="紫微斗數 · 十二宮格命盤" />
+        <div className={styles.ziweiGrid}>
+          {palaces.map((palace, index) => {
+            const isLife = palace.name === "命宮";
+            const isBody = palace.tags.includes("身宮同宮");
+            return (
+              <article
+                className={`${styles.palaceCell} ${isLife ? styles.lifePalace : ""}`}
+                key={`${palace.name}-${palace.branch}`}
+                style={{ gridRow: ziweiPositions[index][0], gridColumn: ziweiPositions[index][1] }}
+              >
+                <div className={styles.cellTop}><strong>{palace.name}</strong><span>{palace.branch}</span></div>
+                <p>{palace.mainStars.join("、") || "待補"}</p>
+                <small>{palace.subStars.join("、") || "副星待補"}</small>
+                <div className={styles.palaceMarks}>
+                  {isLife ? <em>命宮</em> : null}{isBody ? <em>身宮</em> : null}
+                  {palace.transformations.map((item) => <b key={item}>化{item}</b>)}
+                </div>
+              </article>
+            );
+          })}
+          <div className={styles.ziweiCenter}>
+            <span>紫微斗數</span>
+            <strong>{ziweiChart.profile.name}</strong>
+            <p>{ziweiChart.profile.birth}</p>
+            <dl><div><dt>命宮</dt><dd>巳 · 天相</dd></div><div><dt>身宮</dt><dd>命宮同宮</dd></div></dl>
+            <small>三合派 · 手動整理展示</small>
+          </div>
+        </div>
+        <footer className={styles.shareFooter}><span>GAVIN DUAL ASTROLOGY</span><span>/gavin-astrology</span></footer>
       </div>
     </div>
   );
@@ -125,51 +167,90 @@ function ZiWeiChart({ palaces }: { palaces: ZiWeiPalace[] }) {
 
 function VedicChart({ houses }: { houses: VedicHouse[] }) {
   return (
-    <div className={styles.chartScroll} aria-label="吠陀占星 D1 靜態展示">
-      <div className={styles.vedicGrid}>
-        {houses.map((house) => (
-          <article className={styles.houseCell} key={house.house}>
-            <span>House {house.house}</span>
-            <strong>{house.sign || "Sign 待補"}</strong>
-            <p>{house.graha.length ? house.graha.join(" · ") : "Graha 待補"}</p>
-            <small>{house.nakshatra || "Nakshatra 待補"}</small>
-          </article>
-        ))}
+    <div className={styles.chartScroll} aria-label="吠陀占星 North Indian D1 命盤展示">
+      <div className={`${styles.shareSheet} ${styles.vedicSheet}`}>
+        <ShareHeader title="Vedic Astrology Chart" subtitle="North Indian Style · D1 Rāśi Chart" />
+        <div className={styles.northChart}>
+          <svg viewBox="0 0 100 100" aria-hidden="true">
+            <rect x="1" y="1" width="98" height="98" />
+            <path d="M1 1 L99 99 M99 1 L1 99 M50 1 L99 50 L50 99 L1 50 Z" />
+          </svg>
+          {houses.map((house, index) => {
+            const isNode = house.graha.some((item) => item === "Rahu" || item === "Ketu");
+            return (
+              <article
+                className={`${styles.vedicHouse} ${isNode ? styles.nodeHouse : ""}`}
+                key={house.house}
+                style={{ left: `${vedicPositions[index][0]}%`, top: `${vedicPositions[index][1]}%` }}
+              >
+                <span>H{house.house}</span><strong>{house.sign}</strong>
+                <p>{house.graha.length ? house.graha.join(" · ") : "—"}</p>
+              </article>
+            );
+          })}
+          <div className={styles.vedicCenterMark}><b>D1</b><span>RĀŚI</span></div>
+        </div>
+        <div className={styles.vedicLegend}>
+          <span><b>Lagna</b> Libra · Chitra</span><span><b>Moon</b> Aquarius · Shatabhisha</span><span><b>Nodes</b> Rahu H3 ↔ Ketu H7</span>
+        </div>
+        <footer className={styles.shareFooter}><span>GAVIN DUAL ASTROLOGY</span><span>/gavin-astrology</span></footer>
       </div>
     </div>
   );
 }
 
+function ChartGeneratorPreview() {
+  return (
+    <div className={styles.generatorBox}>
+      <div><p className={styles.systemLabel}>YOUR CHART · PREVIEW</p><h3>先留下出生資料，未來即可生成你的雙系統命盤。</h3><p>目前按鈕為 UI 預留；本頁展示使用 Gavin 的手動整理示範資料，並非完整自動排盤結果。</p></div>
+      <form className={styles.generatorForm}>
+        <label>出生年月日<input type="date" name="chartBirthDate" /></label>
+        <label>出生時間<input type="time" name="chartBirthTime" /></label>
+        <label>出生地點<input type="text" name="chartBirthPlace" placeholder="城市、國家" /></label>
+        <button type="button" className={styles.primaryButton}>生成雙系統命盤</button>
+      </form>
+    </div>
+  );
+}
+
+function InsightCards({ type }: { type: "ziwei" | "vedic" }) {
+  const items = type === "ziwei" ? [
+    ["命宮主星", "天相坐命", "重視平衡、角色與互動秩序。"],
+    ["身宮位置", "身宮同命宮", "外在行動與人格核心較為一致。"],
+    ["夫妻宮重點", "廉貞 · 七殺 · 化忌", "關係張力與界線是重要觀察題。"],
+    ["福德宮重點", "貪狼 · 天空", "慾望結構與情感慣性值得深讀。"]
+  ] : [
+    ["Lagna", "Libra · Chitra", "關係感與美感是人格入口。"],
+    ["Moon", "Aquarius · Shatabhisha", "情緒需要空間與觀察距離。"],
+    ["Venus", "Scorpio · H2", "價值、親密與表達彼此牽動。"],
+    ["Rahu / Ketu", "H3 ↔ H7 Axis", "月交點／影子行星，非實體行星。"],
+    ["D1 Chart Note", "Rāśi · Whole Sign", "本命盤展示版，資料仍待天文校正。"]
+  ];
+  return <div className={styles.insightGrid}>{items.map(([label, title, copy]) => <article key={label}><span>{label}</span><strong>{title}</strong><p>{copy}</p></article>)}</div>;
+}
+
 function TraditionalChartSection() {
   return (
     <section className={styles.section} id="charts">
-      <SectionHeading kicker="Traditional Chart" title="先有命盤，才有判讀。">
-        我不把命理當成一句神祕結論，而是從傳統命盤結構開始，看宮位、星曜、四化、Graha、House 與 Nakshatra 如何共同描述一個人的內在模式。
+      <SectionHeading kicker="Traditional Chart · Visualized" title="先看見命盤，再開始理解自己。">
+        兩張命盤皆以「可讀、可截圖、可分享」設計：保留傳統結構辨識度，也讓第一次接觸命理的人知道下一步該看哪裡。
       </SectionHeading>
-      <div className={styles.chartIntroGrid}>
-        <article className={styles.systemCard}>
-          <p className={styles.systemLabel}>ZI WEI DOU SHU CHART</p>
-          <h3>紫微斗數命盤</h3>
-          <p>以命宮、身宮、夫妻宮、福德宮與四化為核心，看人格骨架、情感慣性與人生節奏。</p>
-        </article>
-        <article className={styles.systemCard}>
-          <p className={styles.systemLabel}>VEDIC ASTROLOGY CHART</p>
-          <h3>吠陀占星命盤</h3>
-          <p>以 Lagna、Moon、Venus、Rahu / Ketu、7th / 8th / 12th House 與 Nakshatra 為核心，看吸引模式、情感依附與關係裡的深層動機。</p>
-        </article>
-      </div>
-      <p className={styles.modelNotice}>此為第一版命盤展示模型，完整排盤與校正將於後續版本加入。</p>
+      <ChartGeneratorPreview />
+      <p className={styles.modelNotice}>以下為 Gavin 示範命盤。資料來自手動整理 JSON，尚非完整自動排盤或天文計算引擎。</p>
       <div className={styles.chartPanels}>
         <article className={styles.chartPanel}>
-          <div className={styles.panelHeader}><span>Zi Wei Chart Placeholder</span><small>{ziweiChart.settings.note}</small></div>
+          <div className={styles.panelHeader}><div><span>紫微斗數 · 12 PALACES</span><h3>十二宮格與中央命盤資料區</h3></div><small>{ziweiChart.settings.note}</small></div>
           <ZiWeiChart palaces={ziweiChart.palaces} />
+          <InsightCards type="ziwei" />
         </article>
         <article className={styles.chartPanel}>
-          <div className={styles.panelHeader}><span>Vedic Chart Placeholder</span><small>{vedicChart.settings.note}</small></div>
+          <div className={styles.panelHeader}><div><span>VEDIC ASTROLOGY · D1</span><h3>North Indian 菱形本命盤</h3></div><small>{vedicChart.settings.note}</small></div>
           <VedicChart houses={vedicChart.charts.D1} />
-          <p className={styles.nodeNote}>Rahu / Ketu 標註為月交點／影子行星，非實體行星。D9 與 Dasha 先預留。</p>
+          <p className={styles.nodeNote}>Rahu / Ketu 已明確標示為月交點／影子行星，非實體行星。Nakshatra 摘要置於命盤下方資訊卡。</p>
+          <InsightCards type="vedic" />
         </article>
       </div>
+      <div className={styles.chartCta}><div><span>看見命盤，卻不知道它正在說什麼？</span><strong>下一步，用雙系統交叉比對，把符號轉成可理解的關係模式。</strong></div><a className={styles.primaryButton} href="#method">往下看 Gavin 的方法</a></div>
     </section>
   );
 }
