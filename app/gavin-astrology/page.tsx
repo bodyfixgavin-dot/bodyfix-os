@@ -1,394 +1,120 @@
-import type { Metadata } from "next";
+"use client";
+
+import { FormEvent, useState } from "react";
 import ziweiChart from "@/data/gavin-ziwei-chart.json";
-import vedicChart from "@/data/gavin-vedic-chart.json";
 import styles from "./page.module.css";
 
-export const metadata: Metadata = {
-  title: "Gavin｜紫微斗數 × 吠陀占星關係解析",
-  description: "傳統命盤展示、雙系統交叉判讀與親密關係模式整理的網站原型。"
-};
-
 type ZiWeiPalace = (typeof ziweiChart.palaces)[number];
-type VedicHouse = (typeof vedicChart.charts.D1)[number];
 
-const methodSteps = [
-  ["01", "定主題", "先確認這次要整理的是人格、關係、情感模式，還是某一段具體關係。"],
-  ["02", "排出傳統命盤", "紫微斗數看宮位、星曜、四化；吠陀占星看 Graha、House、Nakshatra 與節點。"],
-  ["03", "紫微斗數判讀", "從命宮、身宮、夫妻宮、福德宮、大限流年，整理人格骨架與關係慣性。"],
-  ["04", "吠陀占星判讀", "從 Lagna、Moon、Venus、Rahu / Ketu、7th / 8th / 12th House，整理吸引模式與深層動機。"],
-  ["05", "交叉比對", "當兩套系統指向相同主題時，判讀才更有重量；若兩套系統矛盾，則標記為需要更多現實資料確認。"],
-  ["06", "現代轉譯", "把古典命理語言轉成能理解、能選擇、能行動的關係建議。"]
+const navagraha = [
+  ["☉", "太陽", "Surya / Sun", "सूर्य", "蘇哩呀", "自我、生命力、父親、權威、中心感", "看一個人如何發光、如何建立自我與存在感。"],
+  ["☾", "月亮", "Chandra / Moon", "चन्द्र", "羌德拉", "情緒、感受、母親、安全感、內在需求", "看一個人的情緒反應、依附模式與內在安全感。"],
+  ["△", "火星", "Mangala / Mars", "मङ्गल", "芒嘎拉", "行動、衝突、慾望、勇氣、身體火力", "看一個人如何出手、如何競爭，也看衝動與攻擊性。"],
+  ["◇", "水星", "Budha / Mercury", "बुध", "布達", "思考、語言、學習、交易、彈性", "看一個人如何思考、溝通、學習與交換資訊。"],
+  ["✦", "木星", "Guru / Jupiter", "गुरु", "咕嚕", "智慧、信念、老師、擴張、祝福", "看一個人的信念系統、成長方向與生命中的貴人力量。"],
+  ["○", "金星", "Shukra / Venus", "शुक्र", "舒克拉", "愛、美感、享受、關係、吸引力", "看一個人如何愛、如何享受，也看審美與吸引模式。"],
+  ["□", "土星", "Shani / Saturn", "शनि", "夏尼", "責任、限制、時間、壓力、成熟", "看一個人需要面對的功課、延遲、紀律與長期承擔。"],
+  ["☊", "羅睺", "Rahu / North Node", "राहु", "拉呼", "執著、上癮、異常吸引、野心、未知欲望", "Rahu 不是實體行星，而是月交點。它像一股讓人想突破、想得到、想靠近的強烈拉力。"],
+  ["☋", "計都", "Ketu / South Node", "केतु", "給土", "疏離、切斷、前世慣性、靈性、抽離", "Ketu 不是實體行星，而是月交點。它像一股讓人放手、疏離、往內走的力量。"]
 ];
 
-const frameworkModules = [
-  {
-    code: "A",
-    title: "關係腳本彈性",
-    axis: "你是否容易跳脫傳統關係模板",
-    ziwei: "夫妻宮、福德宮、四化、煞星結構",
-    vedic: "7th House、7th Lord、Rahu / Ketu"
-  },
-  {
-    code: "B",
-    title: "吸引模式流動性",
-    axis: "你容易被什麼樣的人、氣質或狀態吸引",
-    ziwei: "夫妻宮、貪狼、太陽、福德宮",
-    vedic: "Venus、Moon、5th House、Nakshatra"
-  },
-  {
-    code: "C",
-    title: "情感需求落差",
-    axis: "你內在真正想要的，和你表面選擇的是否一致",
-    ziwei: "福德宮、命宮、夫妻宮互動",
-    vedic: "Moon、4th House、8th House"
-  },
-  {
-    code: "D",
-    title: "關係角色彈性",
-    axis: "你在關係裡是否容易不服從固定角色",
-    ziwei: "命宮主星、中性星曜、夫妻宮結構",
-    vedic: "Mercury、Venus、Mars、Sun 的互動"
-  },
-  {
-    code: "E",
-    title: "隱密關係壓力",
-    axis: "你是否容易進入不能明講、不能公開或難以定義的關係",
-    ziwei: "化忌、空劫、福德宮、夫妻宮",
-    vedic: "8th House、12th House、Venus、Moon"
-  },
-  {
-    code: "F",
-    title: "關係模式觸發器",
-    axis: "哪些流年、星曜或宮位容易讓舊模式被啟動",
-    ziwei: "大限、流年、四化觸發",
-    vedic: "Dasha、Transit、Rahu / Ketu Return"
-  }
+const methodSteps = [
+  ["01", "先產生命盤", "先讓你看見命盤本體，而不是只聽抽象解釋。"],
+  ["02", "紫微斗數看結構", "看命宮、身宮、夫妻宮、福德宮與四化如何描述人格與關係慣性。"],
+  ["03", "吠陀占星看力量", "看 Lagna、Moon、Venus、Rahu / Ketu、Nakshatra 與 Dasha 如何描述吸引與時間週期。"],
+  ["04", "交叉比對", "兩套系統都指向同一個主題，才是值得深入看的線索。"],
+  ["05", "轉成白話", "把古典語言翻成你聽得懂、能拿回生活裡使用的提醒。"],
+  ["06", "申請深度解析", "如果你想看完整脈絡，可以申請 Gavin 的雙系統命盤解析。"]
+];
+
+const frameworks = [
+  ["A", "關係腳本彈性", "觀察你是否容易跳脫傳統關係模板。"], ["B", "吸引模式流動性", "觀察你容易被什麼樣的人、氣質或狀態吸引。"],
+  ["C", "情感需求落差", "觀察你內在真正想要的，和你表面選擇的是否一致。"], ["D", "關係角色彈性", "觀察你在關係裡是否容易不服從固定角色。"],
+  ["E", "隱密關係壓力", "觀察你是否容易進入不能明講、不能公開或難以定義的關係。"], ["F", "關係模式觸發器", "觀察哪些流年、星曜或宮位容易讓舊模式被啟動。"]
 ];
 
 const services = [
-  ["關係模式解析", "適合一直暈同一種人、總是進入相似關係劇本、想知道自己為什麼會被某些人吸引的人。"],
-  ["紫微 × 吠陀雙系統人格整理", "用兩套命理系統交叉比對人格結構、情緒慣性、選擇模式與人生節奏。"],
-  ["曖昧與暈船狀態整理", "不是問對方愛不愛你，而是看這段關係對你來說是滋養、上癮，還是消耗。"],
-  ["非主流關係腳本分析", "適合同性戀、雙性戀、流動關係、開放式關係、曖昧不明，或關係形式不容易被傳統模板定義的人。"]
+  ["紫微斗數命盤解析", "看命宮、身宮、夫妻宮、福德宮與四化，整理人格結構與人生節奏。"],
+  ["吠陀占星入門解析", "從九曜、上升、月亮、Rahu / Ketu 與星宿，理解另一套生命地圖。"],
+  ["雙系統關係模式解析", "用紫微與吠陀交叉比對，看你在親密關係裡反覆出現的選擇。"],
+  ["曖昧與暈船狀態整理", "不是問對方愛不愛你，而是看這段關係對你來說是滋養、上癮，還是消耗。"]
 ];
 
-function HeroSection() {
-  return (
-    <section className={styles.hero}>
-      <div className={styles.heroCopy}>
-        <p className={styles.kicker}>Zi Wei Dou Shu × Vedic Astrology Relationship Reading</p>
-        <h1>紫微斗數 × 吠陀占星<br />看懂你在關係裡，為什麼總是被同一種模式拉回去。</h1>
-        <p>
-          我用紫微斗數與吠陀占星，整理人格結構、情感慣性、吸引模式與親密關係裡反覆出現的選擇。不是替你預言會遇見誰，而是幫你看懂：你為什麼總是被某種人、某種關係、某種劇本拉回去。
-        </p>
-        <div className={styles.actions}>
-          <a className={styles.primaryButton} href="#intake">申請命盤解析</a>
-          <a className={styles.secondaryButton} href="#method">查看雙系統方法</a>
-        </div>
-      </div>
-      <div className={styles.heroChart} aria-hidden="true">
-        <div className={styles.orbit} />
-        <div className={styles.chartGlyph}>命</div>
-        <span>Gavin</span>
-        <strong>傳統命盤不是拿來替人貼標籤，而是用來看懂一個人反覆選擇的模式。</strong>
-      </div>
-    </section>
-  );
+const positions = [[1,1],[1,2],[1,3],[1,4],[2,4],[3,4],[4,4],[4,3],[4,2],[4,1],[3,1],[2,1]];
+
+function Heading({ eyebrow, title, children }: { eyebrow: string; title: string; children: React.ReactNode }) {
+  return <header className={styles.heading}><span>{eyebrow}</span><h2>{title}</h2><p>{children}</p></header>;
 }
 
-function SectionHeading({ kicker, title, children }: { kicker: string; title: string; children?: React.ReactNode }) {
-  return (
-    <div className={styles.sectionHeading}>
-      <p className={styles.kicker}>{kicker}</p>
-      <h2>{title}</h2>
-      {children ? <p>{children}</p> : null}
-    </div>
-  );
-}
-
-const ziweiPositions = [
-  [1, 1], [1, 2], [1, 3], [1, 4], [2, 4], [3, 4],
-  [4, 4], [4, 3], [4, 2], [4, 1], [3, 1], [2, 1]
-];
-
-const vedicPositions = [
-  [50, 23], [26, 13], [13, 27], [25, 50], [13, 73], [26, 87],
-  [50, 77], [74, 87], [87, 73], [75, 50], [87, 27], [74, 13]
-];
-
-function ShareHeader({ title, subtitle }: { title: string; subtitle: string }) {
-  return (
-    <header className={styles.shareHeader}>
-      <div><span className={styles.shareMonogram}>G</span><strong>Gavin Dual Astrology</strong></div>
-      <div className={styles.shareTitle}><h3>{title}</h3><p>{subtitle}</p></div>
-      <span className={styles.referenceBadge}>命盤展示版 · For reference only</span>
-    </header>
-  );
+function VedicDiagram() {
+  return <div className={styles.vedicVisual} aria-label="吠陀盤視覺示意">
+    <div className={styles.vedicSquare}><i /><i /><i /><i /><b>ॐ</b><span className={styles.v1}>सूर्य</span><span className={styles.v2}>चन्द्र</span><span className={styles.v3}>राहु</span><span className={styles.v4}>केतु</span></div>
+    <p>吠陀盤視覺示意｜完整計算功能開發中</p>
+  </div>;
 }
 
 function ZiWeiChart({ palaces }: { palaces: ZiWeiPalace[] }) {
-  return (
-    <div className={styles.chartScroll} aria-label="紫微斗數十二宮命盤展示">
-      <div className={`${styles.shareSheet} ${styles.ziweiSheet}`}>
-        <ShareHeader title="Zi Wei Dou Shu Chart" subtitle="紫微斗數 · 十二宮格命盤" />
-        <div className={styles.ziweiGrid}>
-          {palaces.map((palace, index) => {
-            const isLife = palace.name === "命宮";
-            const isBody = palace.tags.includes("身宮同宮");
-            return (
-              <article
-                className={`${styles.palaceCell} ${isLife ? styles.lifePalace : ""}`}
-                key={`${palace.name}-${palace.branch}`}
-                style={{ gridRow: ziweiPositions[index][0], gridColumn: ziweiPositions[index][1] }}
-              >
-                <div className={styles.cellTop}><strong>{palace.name}</strong><span>{palace.branch}</span></div>
-                <p>{palace.mainStars.join("、") || "待補"}</p>
-                <small>{palace.subStars.join("、") || "副星待補"}</small>
-                <div className={styles.palaceMarks}>
-                  {isLife ? <em>命宮</em> : null}{isBody ? <em>身宮</em> : null}
-                  {palace.transformations.map((item) => <b key={item}>化{item}</b>)}
-                </div>
-              </article>
-            );
-          })}
-          <div className={styles.ziweiCenter}>
-            <span>紫微斗數</span>
-            <strong>{ziweiChart.profile.name}</strong>
-            <p>{ziweiChart.profile.birth}</p>
-            <dl><div><dt>命宮</dt><dd>巳 · 天相</dd></div><div><dt>身宮</dt><dd>命宮同宮</dd></div></dl>
-            <small>三合派 · 手動整理展示</small>
-          </div>
-        </div>
-        <footer className={styles.shareFooter}><span>GAVIN DUAL ASTROLOGY</span><span>/gavin-astrology</span></footer>
-      </div>
+  return <div className={styles.chartScroll}><div className={styles.chartSheet}>
+    <div className={styles.chartBrand}><b>Gavin｜Chart Navigator</b><span>ZI WEI DOU SHU · 十二宮</span></div>
+    <div className={styles.ziweiGrid}>
+      {palaces.map((palace, index) => <article key={palace.name} className={`${styles.palace} ${palace.name === "命宮" ? styles.life : ""}`} style={{gridRow: positions[index][0], gridColumn: positions[index][1]}}>
+        <div><b>{palace.name}</b><span>{palace.branch}</span></div><strong>{palace.mainStars.join("・") || "—"}</strong><small>{palace.subStars.join("・") || "副星待補"}</small>
+        <p>{palace.tags.includes("身宮同宮") ? "身宮同宮" : ""} {palace.transformations.map(item => `化${item}`).join(" · ")}</p>
+      </article>)}
+      <div className={styles.chartCenter}><span>你的生命地圖</span><b>命盤導航</b><small>Chart Navigator by Gavin</small></div>
     </div>
-  );
-}
-
-function VedicChart({ houses }: { houses: VedicHouse[] }) {
-  return (
-    <div className={styles.chartScroll} aria-label="吠陀占星 North Indian D1 命盤展示">
-      <div className={`${styles.shareSheet} ${styles.vedicSheet}`}>
-        <ShareHeader title="Vedic Astrology Chart" subtitle="North Indian Style · D1 Rāśi Chart" />
-        <div className={styles.northChart}>
-          <svg viewBox="0 0 100 100" aria-hidden="true">
-            <rect x="1" y="1" width="98" height="98" />
-            <path d="M1 1 L99 99 M99 1 L1 99 M50 1 L99 50 L50 99 L1 50 Z" />
-          </svg>
-          {houses.map((house, index) => {
-            const isNode = house.graha.some((item) => item === "Rahu" || item === "Ketu");
-            return (
-              <article
-                className={`${styles.vedicHouse} ${isNode ? styles.nodeHouse : ""}`}
-                key={house.house}
-                style={{ left: `${vedicPositions[index][0]}%`, top: `${vedicPositions[index][1]}%` }}
-              >
-                <span>H{house.house}</span><strong>{house.sign}</strong>
-                <p>{house.graha.length ? house.graha.join(" · ") : "—"}</p>
-              </article>
-            );
-          })}
-          <div className={styles.vedicCenterMark}><b>D1</b><span>RĀŚI</span></div>
-        </div>
-        <div className={styles.vedicLegend}>
-          <span><b>Lagna</b> Libra · Chitra</span><span><b>Moon</b> Aquarius · Shatabhisha</span><span><b>Nodes</b> Rahu H3 ↔ Ketu H7</span>
-        </div>
-        <footer className={styles.shareFooter}><span>GAVIN DUAL ASTROLOGY</span><span>/gavin-astrology</span></footer>
-      </div>
-    </div>
-  );
-}
-
-function ChartGeneratorPreview() {
-  return (
-    <div className={styles.generatorBox}>
-      <div><p className={styles.systemLabel}>YOUR CHART · PREVIEW</p><h3>先留下出生資料，未來即可生成你的雙系統命盤。</h3><p>目前按鈕為 UI 預留；本頁展示使用 Gavin 的手動整理示範資料，並非完整自動排盤結果。</p></div>
-      <form className={styles.generatorForm}>
-        <label>出生年月日<input type="date" name="chartBirthDate" /></label>
-        <label>出生時間<input type="time" name="chartBirthTime" /></label>
-        <label>出生地點<input type="text" name="chartBirthPlace" placeholder="城市、國家" /></label>
-        <button type="button" className={styles.primaryButton}>生成雙系統命盤</button>
-      </form>
-    </div>
-  );
-}
-
-function InsightCards({ type }: { type: "ziwei" | "vedic" }) {
-  const items = type === "ziwei" ? [
-    ["命宮主星", "天相坐命", "重視平衡、角色與互動秩序。"],
-    ["身宮位置", "身宮同命宮", "外在行動與人格核心較為一致。"],
-    ["夫妻宮重點", "廉貞 · 七殺 · 化忌", "關係張力與界線是重要觀察題。"],
-    ["福德宮重點", "貪狼 · 天空", "慾望結構與情感慣性值得深讀。"]
-  ] : [
-    ["Lagna", "Libra · Chitra", "關係感與美感是人格入口。"],
-    ["Moon", "Aquarius · Shatabhisha", "情緒需要空間與觀察距離。"],
-    ["Venus", "Scorpio · H2", "價值、親密與表達彼此牽動。"],
-    ["Rahu / Ketu", "H3 ↔ H7 Axis", "月交點／影子行星，非實體行星。"],
-    ["D1 Chart Note", "Rāśi · Whole Sign", "本命盤展示版，資料仍待天文校正。"]
-  ];
-  return <div className={styles.insightGrid}>{items.map(([label, title, copy]) => <article key={label}><span>{label}</span><strong>{title}</strong><p>{copy}</p></article>)}</div>;
-}
-
-function TraditionalChartSection() {
-  return (
-    <section className={styles.section} id="charts">
-      <SectionHeading kicker="Traditional Chart · Visualized" title="先看見命盤，再開始理解自己。">
-        兩張命盤皆以「可讀、可截圖、可分享」設計：保留傳統結構辨識度，也讓第一次接觸命理的人知道下一步該看哪裡。
-      </SectionHeading>
-      <ChartGeneratorPreview />
-      <p className={styles.modelNotice}>以下為 Gavin 示範命盤。資料來自手動整理 JSON，尚非完整自動排盤或天文計算引擎。</p>
-      <div className={styles.chartPanels}>
-        <article className={styles.chartPanel}>
-          <div className={styles.panelHeader}><div><span>紫微斗數 · 12 PALACES</span><h3>十二宮格與中央命盤資料區</h3></div><small>{ziweiChart.settings.note}</small></div>
-          <ZiWeiChart palaces={ziweiChart.palaces} />
-          <InsightCards type="ziwei" />
-        </article>
-        <article className={styles.chartPanel}>
-          <div className={styles.panelHeader}><div><span>VEDIC ASTROLOGY · D1</span><h3>North Indian 菱形本命盤</h3></div><small>{vedicChart.settings.note}</small></div>
-          <VedicChart houses={vedicChart.charts.D1} />
-          <p className={styles.nodeNote}>Rahu / Ketu 已明確標示為月交點／影子行星，非實體行星。Nakshatra 摘要置於命盤下方資訊卡。</p>
-          <InsightCards type="vedic" />
-        </article>
-      </div>
-      <div className={styles.chartCta}><div><span>看見命盤，卻不知道它正在說什麼？</span><strong>下一步，用雙系統交叉比對，把符號轉成可理解的關係模式。</strong></div><a className={styles.primaryButton} href="#method">往下看 Gavin 的方法</a></div>
-    </section>
-  );
-}
-
-function MethodSection() {
-  return (
-    <section className={styles.section} id="method">
-      <SectionHeading kicker="Dual Method" title="兩套系統，一個人。不是混在一起講，而是交叉驗證。" />
-      <div className={styles.methodGrid}>
-        {methodSteps.map(([number, title, copy]) => (
-          <article className={styles.methodCard} key={number}>
-            <span>{number}</span>
-            <h3>{title}</h3>
-            <p>{copy}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function RelationshipFrameworkSection() {
-  return (
-    <section className={styles.section} id="framework">
-      <SectionHeading kicker="Relationship Framework" title="親密關係結構與吸引模式整理框架">
-        這份框架不是用來判定一個人的性傾向，而是觀察：一個人在親密關係裡，容易被什麼樣的模式牽動、困住，或反覆選擇。
-      </SectionHeading>
-      <div className={styles.frameworkGrid}>
-        {frameworkModules.map((item) => (
-          <article className={styles.frameworkCard} key={item.code}>
-            <span>{item.code}</span>
-            <h3>{item.title}</h3>
-            <p><strong>觀察主軸：</strong>{item.axis}</p>
-            <p><strong>紫微對應：</strong>{item.ziwei}</p>
-            <p><strong>吠陀對應：</strong>{item.vedic}</p>
-          </article>
-        ))}
-      </div>
-      <p className={styles.weightNotice}>每個模組以低、中、高權重觀察，不做單一標籤判定，而是整理整體關係模式。</p>
-      <div className={styles.ethicsBox}>
-        <h3>使用底線</h3>
-        <ol>
-          <li>本框架不得用於判定個人性傾向、性別認同或人格價值。</li>
-          <li>本框架僅用於分析親密關係結構、情感表達樣態與關係模式。</li>
-          <li>單一星曜、單一宮位、單一指標不得獨立下結論。</li>
-          <li>命盤只能提供象徵性傾向，不可取代當事人的自我認同與真實經驗。</li>
-          <li>若議題涉及心理創傷、暴力、重大身心危機，應優先尋求專業協助。</li>
-        </ol>
-      </div>
-    </section>
-  );
-}
-
-function ServicesSection() {
-  return (
-    <section className={styles.section} id="services">
-      <SectionHeading kicker="Services" title="你可以申請的解析方向" />
-      <div className={styles.servicesGrid}>
-        {services.map(([title, copy], index) => (
-          <article className={styles.serviceCard} key={title}>
-            <span>{String(index + 1).padStart(2, "0")}</span>
-            <h3>{title}</h3>
-            <p>{copy}</p>
-          </article>
-        ))}
-      </div>
-    </section>
-  );
-}
-
-function EssaySection() {
-  return (
-    <section className={styles.essaySection} id="essay">
-      <SectionHeading kicker="Essay" title="我為什麼不說「你是什麼人」，而說「你的關係模式怎麼運作」" />
-      <div className={styles.essayBody}>
-        <p>如果我看著一張盤，直接替你貼上一個身份標籤，那不是高級的命理判讀，而是一種危險的簡化。</p>
-        <p>命盤可以看出傾向、結構、慣性與觸發點。它可以幫我們理解：一個人為什麼容易被某種關係吸引，為什麼在親密關係裡反覆進入相似劇本，為什麼明明想穩定，卻又被不穩定的人牽動。</p>
-        <p>但命盤不能取代一個人的自我認同。</p>
-        <p>所以我做的不是「你是什麼人」的判決，而是「你的關係模式怎麼運作」的整理。這兩者差很多。前者容易貼標籤，後者才有機會帶來理解、選擇與行動。</p>
-        <p>我相信好的命理，不是讓人更害怕命運，而是讓人終於看懂自己為什麼一直在同一個地方跌倒。</p>
-      </div>
-    </section>
-  );
-}
-
-function IntakeFormSection() {
-  return (
-    <section className={styles.section} id="intake">
-      <SectionHeading kicker="Intake Form" title="申請我的命盤解析">
-        表單先設計成可改接 Tally、Google Form、Netlify Forms 或 Formspree 的結構；目前不使用 mailto 作為正式送出方式。
-      </SectionHeading>
-      <form className={styles.intakeForm} data-form-provider="placeholder" aria-label="命盤解析申請表單">
-        <label>稱呼 / 暱稱<input name="name" type="text" placeholder="請填寫你希望 Gavin 怎麼稱呼你" /></label>
-        <label>聯絡方式 Email 或 IG<input name="contact" type="text" placeholder="Email 或 Instagram 帳號" /></label>
-        <label>出生年月日<input name="birthDate" type="date" /></label>
-        <label>出生時間<input name="birthTime" type="time" /></label>
-        <label>出生地點<input name="birthplace" type="text" placeholder="城市、國家，例如：新北市，台灣" /></label>
-        <label className={styles.fullField}>目前想整理的主題<textarea name="topic" placeholder="人格、關係、曖昧、分手後整理，或某段具體關係" /></label>
-        <label>目前關係狀態<select name="relationshipStatus" defaultValue=""><option value="" disabled>請選擇</option><option>單身</option><option>曖昧中</option><option>穩定關係中</option><option>分手後整理</option><option>關係混亂中</option><option>不想透露</option></select></label>
-        <label>想以哪個系統為主<select name="systemPreference" defaultValue=""><option value="" disabled>請選擇</option><option>紫微斗數</option><option>吠陀占星</option><option>雙系統交叉判讀</option><option>不確定，請 Gavin 判斷</option></select></label>
-        <label className={styles.consent}><input name="privacyConsent" type="checkbox" />我了解本表單資料僅供 Gavin 進行命盤與關係模式分析使用，不會公開或外流。</label>
-        <button type="button" className={styles.primaryButton}>申請我的命盤解析</button>
-      </form>
-    </section>
-  );
-}
-
-function Footer() {
-  return (
-    <footer className={styles.footer}>
-      <strong>Gavin｜紫微斗數 × 吠陀占星關係解析</strong>
-      <p>不是算你會愛上誰，而是看懂你為什麼一直被某種人吸走。</p>
-    </footer>
-  );
+    <div className={styles.chartFoot}><span>第一版前端命盤</span><span>僅供自我理解與後續諮詢參考</span></div>
+  </div></div>;
 }
 
 export default function GavinAstrologyPage() {
-  return (
-    <main className={styles.pageShell}>
-      <nav className={styles.nav} aria-label="頁面導覽">
-        <a className={styles.brand} href="#top"><span>G</span>Gavin Astrology</a>
-        <div>
-          <a href="#charts">命盤展示</a>
-          <a href="#method">雙系統方法</a>
-          <a href="#framework">關係框架</a>
-          <a href="#intake">申請表單</a>
-        </div>
-      </nav>
-      <div id="top" className={styles.shell}>
-        <HeroSection />
-        <TraditionalChartSection />
-        <MethodSection />
-        <RelationshipFrameworkSection />
-        <ServicesSection />
-        <EssaySection />
-        <IntakeFormSection />
-        <Footer />
-      </div>
-    </main>
-  );
+  const [generated, setGenerated] = useState(false);
+  function generate(event: FormEvent<HTMLFormElement>) { event.preventDefault(); setGenerated(true); setTimeout(() => document.querySelector("#ziwei-result")?.scrollIntoView({ behavior: "smooth" }), 80); }
+
+  return <main className={styles.page}>
+    <nav className={styles.nav}><a href="#top"><b>G</b><span>Chart Navigator</span></a><div><a href="#birth-input">看命盤</a><a href="#vedic-hook">認識吠陀</a><a href="#intake">深度解析</a></div></nav>
+
+    <section className={styles.hero} id="top"><div className={styles.heroCopy}>
+      <span className={styles.eyebrow}>VEDIC ASTROLOGY｜वैदिक ज्योतिष<br />吠陀占星｜外行星座之外的另一套生命地圖</span>
+      <h1>先看見你的命盤，<br /><em>再開始理解自己。</em></h1>
+      <p>吠陀占星不是只看太陽星座，而是從上升、月亮、九曜與星宿，看一個人的生命地圖。輸入生日後，你會先看到可驗證的紫微斗數命盤；吠陀占星真盤功能，將在下一階段加入。</p>
+      <div className={styles.actions}><a className={styles.primary} href="#birth-input">輸入生日看命盤 <span>↘</span></a><a className={styles.secondary} href="#vedic-hook">先看吠陀跟西洋差在哪</a></div>
+      <div className={styles.heroNote}><span>九曜 NAVAGRAHA</span><span>紫微十二宮</span><span>雙系統交叉判讀</span></div>
+    </div><VedicDiagram /></section>
+
+    <section className={`${styles.section} ${styles.birthSection}`} id="birth-input"><div>
+      <Heading eyebrow="01 · START HERE" title="輸入出生資料，先看你的命盤。">第一版會先產生紫微斗數命盤。這一步只在你的瀏覽器中計算，不會儲存資料。</Heading>
+      <p className={styles.truthNote}>目前以第一版前端命盤展示資料呈現；完整自動排盤規則仍會持續校正。</p>
+    </div><form className={styles.birthForm} onSubmit={generate}>
+      <label>出生年月日<input required type="date" /></label><label>出生時間<input required type="time" /></label><label>出生地點<input required placeholder="例如：台北市" /></label>
+      <label>性別<select required defaultValue=""><option value="" disabled>請選擇</option><option>男</option><option>女</option><option>其他 / 不透露</option></select></label>
+      <button type="submit">產生我的命盤 <span>→</span></button><small>命盤產生過程不會儲存你的資料。</small>
+    </form></section>
+
+    <section className={`${styles.section} ${styles.resultSection}`} id="ziwei-result"><Heading eyebrow="02 · YOUR FIRST CHART" title={generated ? "這是你的紫微斗數命盤。" : "你的紫微斗數命盤，會出現在這裡。"}>你原本可能只是想看吠陀占星，但紫微斗數可以先讓你看到一張更熟悉、也更容易驗證的生命地圖。</Heading>
+      {generated ? <ZiWeiChart palaces={ziweiChart.palaces} /> : <div className={styles.lockedChart}><span>命</span><p>完成上方出生資料，就能開啟十二宮命盤。</p><a href="#birth-input">回到輸入資料 ↑</a></div>}
+      <p className={styles.disclaimer}>第一版紫微斗數命盤由前端計算產生，僅供自我理解與後續諮詢參考。</p>
+    </section>
+
+    <section className={styles.section} id="vedic-hook"><Heading eyebrow="03 · VEDIC HOOK" title="為什麼吠陀占星不是只看太陽星座？">很多人第一次接觸吠陀占星，會驚訝於它跟西洋星座完全不是同一種觀看方式。它更重視上升、月亮、九曜、星宿與時間週期。</Heading>
+      <div className={styles.threeGrid}>{[["निरयन राशि","它看的是恆星黃道","吠陀占星多使用恆星黃道，因此同一個人用西洋占星與吠陀占星排出來，星座位置可能不同。"],["चन्द्र｜लग्न｜ग्रह","它不只看太陽","吠陀占星會同時看月亮、上升與九曜。你不是只有一個太陽星座，而是一整套生命結構。"],["दशा","它重視時間週期","吠陀占星會看 Dasha 時期，理解一個人在不同生命階段被哪些力量推動。"]].map((x,i)=><article key={x[1]}><span>0{i+1}</span><b lang="sa">{x[0]}</b><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div>
+      <p className={styles.disclaimer}>吠陀真盤計算功能開發中。此區目前提供九曜、天城文與系統差異教學，不作為個人化吠陀命盤結果。</p>
+    </section>
+
+    <section className={`${styles.section} ${styles.navagrahaSection}`}><Heading eyebrow="04 · NINE FORCES" title="九曜 Navagraha｜नवग्रह">吠陀占星裡的九種生命力量。Graha 不是單純的「行星」，更像會抓住注意力、牽動人生經驗的力量。</Heading>
+      <p className={styles.nodeNote}>Rahu / Ketu 為月交點，也常被稱為影子行星，不是實體行星。</p><div className={styles.cardRail}>{navagraha.map(g=><article className={styles.grahaCard} key={g[1]}><span className={styles.glyph}>{g[0]}</span><div><small>{g[2]}</small><h3>{g[1]}</h3></div><b lang="sa">{g[3]}</b><em>空耳 · {g[4]}</em><strong>{g[5]}</strong><p>{g[6]}</p></article>)}</div>
+    </section>
+
+    <section className={`${styles.section} ${styles.compare}`}><Heading eyebrow="05 · TWO COORDINATES" title="為什麼你熟悉的星座，可能不是吠陀占星裡的你？">兩套系統使用不同座標，也從不同入口理解一個人。</Heading><div className={styles.compareGrid}><article><span>WESTERN</span><h3>西洋占星</h3><ul><li>常見入口是太陽星座</li><li>多使用熱帶黃道</li><li>大眾常用「我是什麼星座」理解自己</li><li>現代心理占星語言較普及</li></ul></article><article><span>VEDIC</span><h3>吠陀占星</h3><ul><li>更重視上升、月亮與九曜</li><li>多使用恆星黃道</li><li>會看 Nakshatra 星宿與 Dasha 時期</li><li>更像一套時間、業力與生命階段的判讀系統</li></ul></article></div><blockquote>所以你在西洋占星裡是天蠍，不代表你在吠陀占星裡一定還是同一個位置。這不是誰對誰錯，而是兩套系統的座標不同。</blockquote></section>
+
+    <section className={styles.section}><Heading eyebrow="06 · DUAL SYSTEM METHOD" title="一張盤看結構，兩套系統看交集。">紫微斗數讓你看見宮位、人生場域與事件節奏；吠陀占星讓你看見九曜、星宿與時間週期。兩套系統不是混在一起講，而是用來互相驗證。</Heading><div className={styles.methodGrid}>{methodSteps.map(x=><article key={x[0]}><span>{x[0]}</span><h3>{x[1]}</h3><p>{x[2]}</p></article>)}</div></section>
+
+    <section className={styles.section}><Heading eyebrow="07 · RELATIONSHIP FRAMEWORK" title="親密關係結構與吸引模式整理框架">這份框架不是用來判定一個人的性傾向，而是觀察：一個人在親密關係裡，容易被什麼樣的模式牽動、困住，或反覆選擇。</Heading><div className={styles.frameworkGrid}>{frameworks.map(x=><article key={x[0]}><b>{x[0]}</b><div><h3>{x[1]}</h3><p>{x[2]}</p></div></article>)}</div></section>
+
+    <section className={`${styles.section} ${styles.service}`}><Heading eyebrow="08 · GO DEEPER" title="看見命盤之後，下一步是看懂它。">免費命盤讓你先看見自己的生命地圖；深度解析則是把星曜、宮位、九曜與關係模式整理成你真的聽得懂的語言。</Heading><div className={styles.serviceGrid}>{services.map((x,i)=><article key={x[0]}><span>0{i+1}</span><h3>{x[0]}</h3><p>{x[1]}</p></article>)}</div><a className={styles.primary} href="#intake">申請 Gavin 深度解析 <span>→</span></a></section>
+
+    <section className={`${styles.section} ${styles.intake}`} id="intake"><Heading eyebrow="09 · INTAKE" title="申請 Gavin 深度解析">如果你已經看到命盤，但還不知道怎麼解讀，可以留下資料，我會用紫微斗數與吠陀占星的雙系統視角，幫你整理下一層脈絡。</Heading><form className={styles.intakeForm} onSubmit={e=>e.preventDefault()}><label>稱呼 / 暱稱<input required /></label><label>聯絡方式 Email 或 IG<input required /></label><label>出生年月日<input type="date" required /></label><label>出生時間<input type="time" required /></label><label>出生地點<input required /></label><label>想解析的主題<input required placeholder="例如：關係、工作、人生方向" /></label><label>目前關係狀態<select><option>單身</option><option>曖昧中</option><option>穩定關係中</option><option>分手後整理</option><option>關係混亂中</option><option>不想透露</option></select></label><label>想以哪個系統為主<select><option>紫微斗數</option><option>吠陀占星</option><option>雙系統交叉判讀</option><option>不確定，請 Gavin 判斷</option></select></label><label className={styles.consent}><input type="checkbox" required /><span>我同意將以上資料用於本次分析聯繫。</span></label><button type="submit">送出深度解析申請 <span>→</span></button><p>你填寫的資料只會用於 Gavin 進行命盤與關係模式分析，不會公開或外流。</p></form></section>
+
+    <footer><b>Gavin｜Chart Navigator</b><span>先看見命盤，再開始理解自己。</span><a href="#top">回到頂端 ↑</a></footer>
+  </main>;
 }
