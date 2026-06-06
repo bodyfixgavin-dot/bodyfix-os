@@ -485,3 +485,74 @@
   .igGrid { grid-template-columns: 1fr; }
   .footerGrid, .footerBottom { grid-template-columns: 1fr; flex-direction: column; }
 }
+
+.brandSection { background: var(--cream); }
+
+.brandIntro {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 0.85fr);
+  gap: clamp(32px, 7vw, 96px);
+  align-items: end;
+  margin-bottom: 54px;
+}
+
+.brandIntro > p:last-child { margin: 0; color: var(--navySoft); line-height: 2; }
+.brandStatement { margin: 0; font-family: var(--serif); font-size: clamp(1.8rem, 3.6vw, 3.15rem); line-height: 1.45; }
+.brandStatement em { color: var(--bronze); font-style: italic; }
+
+.brandGrid,
+.passGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.brandCard {
+  display: flex;
+  flex-direction: column;
+  min-height: 100%;
+  border: 1px solid var(--hairline);
+  background: var(--ivory);
+  padding: clamp(28px, 3.4vw, 42px);
+}
+
+.brandCard:nth-child(2) { transform: translateY(-12px); }
+.brandCard:nth-child(3) { transform: translateY(-24px); background: var(--navy); color: var(--ivory); }
+.brandCard h3, .passCard h3 { margin: 0 0 18px; font-family: var(--serif); font-size: clamp(1.4rem, 2.2vw, 1.85rem); font-weight: 400; line-height: 1.4; }
+.brandCard p { margin: 0; color: var(--stone); line-height: 1.9; }
+.brandCard ul, .passCard ul { list-style: none; margin: 28px 0; padding: 0; }
+.brandCard li, .passCard li { padding: 10px 0 10px 18px; border-top: 1px solid var(--hairline); color: var(--navySoft); font-size: 0.9rem; line-height: 1.65; position: relative; }
+.brandCard li::before, .passCard li::before { content: '—'; position: absolute; left: 0; color: var(--bronze); }
+.brandCard > a { display: flex; justify-content: space-between; gap: 20px; margin-top: auto; padding-top: 18px; border-top: 1px solid var(--hairline); color: var(--bronze); font-size: 0.9rem; }
+.brandCard:nth-child(3) p, .brandCard:nth-child(3) li { color: rgba(255, 250, 241, 0.68); }
+.brandCard:nth-child(3) li, .brandCard:nth-child(3) > a { border-color: var(--whiteLine); }
+
+.passSection { background: var(--ivory); }
+.passCard { display: flex; flex-direction: column; border: 1px solid var(--hairline); background: var(--cream); padding: clamp(28px, 3.5vw, 42px); scroll-margin-top: 110px; }
+.featuredPass { border-top: 3px solid var(--bronze); box-shadow: 0 24px 70px rgba(23, 34, 56, 0.09); }
+.priceBlock { display: grid; gap: 12px; padding: 22px 0; border-top: 1px solid var(--hairline); border-bottom: 1px solid var(--hairline); }
+.priceBlock div { display: grid; grid-template-columns: 1fr auto auto; gap: 8px; align-items: baseline; }
+.priceBlock span { color: var(--stone); font-size: 0.82rem; }
+.priceBlock strong { font-family: var(--serif); font-size: 1.35rem; font-weight: 400; }
+.priceBlock small { color: var(--stone); }
+.passNote { min-height: 3.6em; margin: auto 0 26px; padding: 18px; border-left: 2px solid var(--bronze); background: rgba(169, 121, 67, 0.07); color: var(--navySoft); font-size: 0.9rem; line-height: 1.8; }
+.passCard > a { width: 100%; }
+
+.faqSection { background: var(--sand); }
+.faqItem { border-top: 1px solid rgba(23, 34, 56, 0.25); border-bottom: 1px solid rgba(23, 34, 56, 0.25); }
+.faqItem summary { display: flex; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; font-family: var(--serif); font-size: clamp(1.3rem, 2.5vw, 2rem); }
+.faqItem summary::-webkit-details-marker { display: none; }
+.faqItem summary span { color: var(--bronze); }
+.faqAnswer { max-width: 850px; padding: 0 0 28px; color: var(--navySoft); line-height: 1.95; }
+.faqAnswer p { margin: 0 0 12px; }
+
+@media (max-width: 920px) {
+  .brandIntro, .brandGrid, .passGrid { grid-template-columns: 1fr; }
+  .brandCard:nth-child(2), .brandCard:nth-child(3) { transform: none; }
+}
+
+@media (max-width: 560px) {
+  .brandCard, .passCard { padding: 26px 22px; }
+  .priceBlock div { grid-template-columns: 1fr auto; }
+  .priceBlock small { grid-column: 2; }
+}
