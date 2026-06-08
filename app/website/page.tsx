@@ -2,6 +2,8 @@ import Link from 'next/link';
 
 import styles from './BodyFixWebsite.module.css';
 
+const chartNavigatorUrl = 'https://chart-navigator.vercel.app';
+
 const corePhrases = [
   {
     label: 'Low Pain',
@@ -68,6 +70,7 @@ const brandLevels = [
     details: ['適合久坐與高壓的人', '訓練恢復慢', '身體反覆緊繃，按完很快又緊回來'],
     cta: '查看 BodyFix 身體方案',
     href: '#bodyfix-pass',
+    external: false,
   },
   {
     level: '02 · Chart Rhythm',
@@ -75,7 +78,8 @@ const brandLevels = [
     text: 'Chart Navigator 負責命盤。不是傳統算命，而是用命盤結構、時間節奏與狀態整理，幫你看懂現在走到哪裡。吠陀像門口的燈，紫微像厝內的樑柱；一個帶你產生好奇，一個幫你建立結構。',
     details: ['吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數', '塔羅狀態整理', 'AI 命盤提示'],
     cta: '查看 Chart Navigator 命盤方案',
-    href: '#chart-pass',
+    href: chartNavigatorUrl,
+    external: true,
   },
   {
     level: '03 · All State',
@@ -84,6 +88,7 @@ const brandLevels = [
     details: ['不是單純按摩，也不是單純算命', '身體 × 命盤 × 當下狀態的整合管理'],
     cta: '了解 Gavin 全狀態月票',
     href: '#gavin-pass',
+    external: false,
   },
 ];
 
@@ -260,7 +265,7 @@ export default function BodyFixWebsitePage() {
                 <h3>{brand.title}</h3>
                 <p>{brand.text}</p>
                 <ul>{brand.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
-                <a href={brand.href}>{brand.cta}<span>→</span></a>
+                <a href={brand.href} target={brand.external ? '_blank' : undefined} rel={brand.external ? 'noopener noreferrer' : undefined}>{brand.cta}<span>→</span></a>
               </article>
             ))}
           </div>
@@ -328,7 +333,14 @@ export default function BodyFixWebsitePage() {
                 <ul>{pass.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
                 <p className={styles.passFit}><strong>適合</strong>{pass.fit}</p>
                 <p className={styles.passNote}>{pass.note}</p>
-                <a className={pass.featured ? styles.primaryBtn : styles.ghostBtn} href="#booking">詢問此月票 →</a>
+                {pass.id === 'chart-pass' ? (
+                  <a className={styles.ghostBtn} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">了解命盤導航月票 →</a>
+                ) : (
+                  <a className={pass.featured ? styles.primaryBtn : styles.ghostBtn} href="#booking">詢問此月票 →</a>
+                )}
+                {pass.id === 'gavin-pass' ? (
+                  <a className={styles.externalTextLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">查看月票包含的 Chart Navigator 命盤導航 <span>↗</span></a>
+                ) : null}
               </article>
             ))}
           </div>
@@ -350,6 +362,9 @@ export default function BodyFixWebsitePage() {
               <li><strong>紫微 × 塔羅整合諮詢</strong><span>結構與狀態雙向整理，適合重大決策或階段轉換。</span></li>
               <li><strong>SADM 關係決策整理</strong><span>用結構視角整理自己、對方與關係動態三條線。</span></li>
             </ul>
+          </div>
+          <div className={styles.sectionAction}>
+            <a className={styles.primaryBtn} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">前往命盤導航 →</a>
           </div>
         </div>
       </section>
@@ -394,6 +409,7 @@ export default function BodyFixWebsitePage() {
             <a className={styles.contactLink} href="https://line.me/R/ti/p/@359gzxzi" target="_blank" rel="noreferrer"><div><strong>LINE 官方帳號</strong><span>@359gzxzi</span></div><span>→</span></a>
             <a className={styles.contactLink} href="https://instagram.com/bodyfix.fascia" target="_blank" rel="noreferrer"><div><strong>Instagram 私訊</strong><span>@bodyfix.fascia</span></div><span>→</span></a>
             <a className={styles.contactLink} href="#city"><div><strong>城市場次登記</strong><span>台中、高雄與需求城市</span></div><span>→</span></a>
+            <a className={styles.contactLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer"><div><strong>前往命盤導航</strong><span>紫微、塔羅、吠陀請由 Chart Navigator 了解</span></div><span>↗</span></a>
           </aside>
         </div>
       </section>
@@ -411,6 +427,7 @@ export default function BodyFixWebsitePage() {
               <p>不會，因為它們是兩套不同系統。</p>
               <p><strong>BodyFix</strong> 處理的是身體狀態：筋膜、張力、動作使用方式與恢復管理。</p>
               <p><strong>Chart Navigator</strong> 處理的是命盤狀態：吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙、紫微斗數、塔羅與時間節奏。</p>
+              <p><a className={styles.inlineExternalLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">查看 Chart Navigator 完整命盤導航內容 ↗</a></p>
               <p>兩者不會互相取代。BodyFix 不會變成算命服務，Chart Navigator 也不是身體整理服務。最高階的 Gavin All State Pass，才會把兩套系統整合在一起。</p>
             </div>
           </details>
