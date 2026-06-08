@@ -538,6 +538,26 @@
 .passNote { min-height: 3.6em; margin: auto 0 26px; padding: 18px; border-left: 2px solid var(--bronze); background: rgba(169, 121, 67, 0.07); color: var(--navySoft); font-size: 0.9rem; line-height: 1.8; }
 .passCard > a { width: 100%; }
 
+.externalTextLink {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--hairline);
+  color: var(--bronze) !important;
+  font-size: 0.86rem;
+  line-height: 1.6;
+}
+
+.sectionAction { margin-top: 34px; }
+
+.inlineExternalLink {
+  color: var(--bronze) !important;
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+}
+
 .faqSection { background: var(--sand); }
 .faqItem { border-top: 1px solid rgba(23, 34, 56, 0.25); border-bottom: 1px solid rgba(23, 34, 56, 0.25); }
 .faqItem summary { display: flex; justify-content: space-between; gap: 24px; padding: 28px 0; cursor: pointer; list-style: none; font-family: var(--serif); font-size: clamp(1.3rem, 2.5vw, 2rem); }
