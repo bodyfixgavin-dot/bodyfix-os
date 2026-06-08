@@ -64,27 +64,39 @@ const brandLevels = [
   {
     level: '01 · Body State',
     title: 'BodyFix｜身體狀態管理',
-    text: '以運動按摩為基礎，透過筋膜線判讀與張力分工整理，在低痛感、可呼吸、身體能接受的深度裡，讓肌肉與外層筋膜一起回到更穩定、有韌性、有彈性的狀態。',
-    details: ['久坐與高壓', '訓練恢復慢', '身體反覆緊繃'],
+    text: 'BodyFix 負責身體。以運動按摩為基礎，透過筋膜線判讀與張力分工整理，在低痛感、可呼吸、身體能接受的深度裡，讓肌肉與外層筋膜一起回到更穩定、有韌性、有彈性的狀態。',
+    details: ['適合久坐與高壓的人', '訓練恢復慢', '身體反覆緊繃，按完很快又緊回來'],
     cta: '查看 BodyFix 身體方案',
     href: '#bodyfix-pass',
   },
   {
     level: '02 · Chart Rhythm',
     title: 'Chart Navigator｜命盤導航',
-    text: '不是傳統算命，而是用命盤結構、時間節奏與狀態整理，幫你看懂現在走到哪裡。',
-    details: ['吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數三合派', '塔羅狀態整理', 'AI 命盤提示'],
+    text: 'Chart Navigator 負責命盤。不是傳統算命，而是用命盤結構、時間節奏與狀態整理，幫你看懂現在走到哪裡。吠陀像門口的燈，紫微像厝內的樑柱；一個帶你產生好奇，一個幫你建立結構。',
+    details: ['吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數', '塔羅狀態整理', 'AI 命盤提示'],
     cta: '查看 Chart Navigator 命盤方案',
     href: '#chart-pass',
   },
   {
     level: '03 · All State',
     title: 'Gavin｜全狀態整合',
-    text: 'BodyFix 看身體怎麼撐，Chart Navigator 看人生節奏怎麼走；再把身體狀態、職涯選擇、關係模式與時間節奏，整理成一條比較清楚的路線。',
-    details: ['身體 × 命盤 × 當下狀態', '雙系統主理人整合'],
+    text: 'Gavin 是兩套系統中間的整合者。BodyFix 看身體怎麼撐，Chart Navigator 看人生節奏怎麼走；當身體狀態、職涯選擇、關係模式與時間節奏交在一起，就把它們整理成一條比較清楚的路線。',
+    details: ['不是單純按摩，也不是單純算命', '身體 × 命盤 × 當下狀態的整合管理'],
     cta: '了解 Gavin 全狀態月票',
     href: '#gavin-pass',
   },
+];
+
+const chartLights = [
+  ['01', '吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '像門口的燈，看你帶著什麼慣性走進來。'],
+  ['02', '紫微斗數', '像厝內的樑柱，看你人生的結構骨架。'],
+  ['03', '塔羅狀態整理', '像手裡的手電筒，看你此刻這一步要怎麼踩。'],
+];
+
+const navigatorSteps = [
+  ['01', '看結構', '先看你天生的骨架：擅長什麼、容易卡在哪、習慣用哪種方式面對選擇。'],
+  ['02', '看節奏', '再看你現在走到哪段時間：適合衝、適合收，還是先穩住。'],
+  ['03', '看當下', '回到你手上這個具體問題：這一步，怎麼踩比較不會後悔。'],
 ];
 
 const passes = [
@@ -95,7 +107,8 @@ const passes = [
     trial: 'NT$16,800',
     regular: 'NT$19,800',
     features: ['每月最多 8 次筋膜整理', '每週最多 2 次', '每次 60 分鐘', '包含每次整理後簡短紀錄'],
-    note: '不包含完整紫微、完整吠陀、深度命盤解析。',
+    fit: '需要穩定整理身體狀態、訓練恢復、張力追蹤的人。',
+    note: '不包含：完整紫微、完整吠陀、深度命盤解析。',
   },
   {
     id: 'chart-pass',
@@ -103,8 +116,9 @@ const passes = [
     title: 'Chart Navigator 命盤導航月票',
     trial: 'NT$4,800',
     regular: 'NT$6,800',
-    features: ['每週可提出 1 個主題', '每月 1 次完整狀態整理', '吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數三合派', '塔羅狀態整理與 AI 命盤提示', '流月與節奏提醒'],
-    note: '毋是共你講命定，是共你看路按怎行較穩。',
+    features: ['每週可提出 1 個主題', '每月包含 1 次完整狀態整理', '吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數', '塔羅狀態整理與 AI 命盤提示', '流月與節奏提醒'],
+    fit: '想整理關係、職涯、情緒、人生方向與時間節奏的人。',
+    note: '不代替你做選擇，而是讓你看懂自己正在走到哪裡。毋是共你講命定，是共你看路按怎行較穩。',
   },
   {
     id: 'gavin-pass',
@@ -113,7 +127,8 @@ const passes = [
     trial: 'NT$26,800',
     regular: 'NT$32,800',
     features: ['BodyFix 身體整理：每月最多 8 次、每週最多 2 次、每次 60 分鐘', 'Chart Navigator 命盤導航：每月 1 次 40 分鐘狀態導航', '塔羅狀態整理：每週可問 1 個簡短狀態問題', '每月狀態重點紀錄'],
-    note: '適合需要同時管理身體狀態與人生節奏的人。',
+    fit: '高壓工作者、創作者、教練、醫護、自由工作者，以及需要同時管理身體狀態與人生節奏的人。',
+    note: '同時包含 BodyFix 身體整理、Chart Navigator 命盤導航與塔羅狀態整理。',
     featured: true,
   },
 ];
@@ -124,13 +139,6 @@ const cities = [
   ['Tour', '高雄 Kaohsiung', '南部巡迴據點，每季彈性安排，可登記候補名單與優先預約。'],
 ];
 
-const igTopics = [
-  ['01', '筋膜知識', '張力分工、保護性收縮、代償壓力'],
-  ['02', '骨盆核心', '骨盆與髖、深層核心、左右整合'],
-  ['03', '紫微結構解析', '14 主星、宮位結構、運作模式'],
-  ['04', '塔羅牌陣', '狀態整理、牌陣解讀、決策視角'],
-  ['05', '關係決策', 'SADM 框架、關係動態、選擇空間'],
-];
 
 export default function BodyFixWebsitePage() {
   return (
@@ -141,7 +149,8 @@ export default function BodyFixWebsitePage() {
           <div className={styles.navLinks}>
             <a href="#method">方法</a>
             <a href="#services">服務</a>
-            <a href="#brands">品牌階梯</a>
+            <a href="#brands">品牌關係</a>
+            <a href="#chart-lights">三盞燈</a>
             <a href="#passes">月票</a>
             <a href="#ziwei">紫微塔羅</a>
             <a href="#booking" className={styles.navCta}>預約</a>
@@ -258,12 +267,53 @@ export default function BodyFixWebsitePage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.passSection}`} id="passes">
+      <section className={`${styles.section} ${styles.lightsSection}`} id="chart-lights">
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>04</span>
-            <h2 className={styles.title}>每月穩定整理，而不是一次解決所有事</h2>
-            <span className={styles.subtitle}>— Monthly Passes</span>
+            <h2 className={styles.title}>三盞燈，看不同層次的你</h2>
+            <span className={styles.subtitle}>— Chart Navigator</span>
+          </div>
+          <div className={styles.lightGrid}>
+            {chartLights.map(([num, title, text]) => (
+              <article className={styles.lightCard} key={title}>
+                <span className={styles.lightNumber}>{num}</span>
+                <div className={styles.lightIcon} aria-hidden="true"><span /></div>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+          <p className={styles.closingLine}>三套系統不是混在一起算，而是各自照亮不同層次的狀態。</p>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.navigatorSection}`} id="chart-navigator">
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.index}>05</span>
+            <h2 className={styles.title}>命盤導航是什麼？</h2>
+            <span className={styles.subtitle}>— 看結構 → 看節奏 → 看當下</span>
+          </div>
+          <div className={styles.navigatorGrid}>
+            {navigatorSteps.map(([num, title, text]) => (
+              <article className={styles.navigatorCard} key={title}>
+                <span className={styles.cardNum}>{num}</span>
+                <h3>{title}</h3>
+                <p>{text}</p>
+              </article>
+            ))}
+          </div>
+          <p className={styles.navigatorClosing}>不是替你決定，<br />是讓你看清楚自己站在哪、要往哪走。</p>
+        </div>
+      </section>
+
+      <section className={`${styles.section} ${styles.passSection}`} id="passes">
+        <div className={styles.container}>
+          <div className={styles.sectionHead}>
+            <span className={styles.index}>06</span>
+            <h2 className={styles.title}>Monthly Pass｜狀態管理月票</h2>
+            <span className={styles.subtitle}>— Membership</span>
           </div>
           <p className={styles.copyWide}>三個月票各有清楚邊界。從身體、命盤，到雙系統整合，選擇你現在真正需要的狀態管理方式。</p>
           <div className={styles.passGrid}>
@@ -276,6 +326,7 @@ export default function BodyFixWebsitePage() {
                   <div><span>正式價</span><strong>{pass.regular}</strong><small>/ 月</small></div>
                 </div>
                 <ul>{pass.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
+                <p className={styles.passFit}><strong>適合</strong>{pass.fit}</p>
                 <p className={styles.passNote}>{pass.note}</p>
                 <a className={pass.featured ? styles.primaryBtn : styles.ghostBtn} href="#booking">詢問此月票 →</a>
               </article>
@@ -284,19 +335,10 @@ export default function BodyFixWebsitePage() {
         </div>
       </section>
 
-      <section className={`${styles.section} ${styles.quoteBand}`}>
-        <div className={`${styles.container} ${styles.quoteLayout}`}>
-          <blockquote className={styles.bigQuote}>BodyFix 不是硬壓痛點。<br />而是在身體可接受的深度裡，整理肌肉與外層筋膜的張力。</blockquote>
-          <p className={styles.quoteNote}>
-            筋膜像包住肌肉的潛水衣。肌肉鬆了，但外層張力沒變，身體還是容易回到緊繃。BodyFix 要處理的，就是肌肉與外層筋膜之間的張力分工。
-          </p>
-        </div>
-      </section>
-
       <section className={`${styles.section} ${styles.dark}`} id="ziwei">
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.index}>05</span>
+            <span className={styles.index}>07</span>
             <h2 className={styles.title}>紫微 × 塔羅</h2>
             <span className={styles.subtitle}>— Structure & Status</span>
           </div>
@@ -315,7 +357,7 @@ export default function BodyFixWebsitePage() {
       <section className={styles.section} id="city">
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.index}>06</span>
+            <span className={styles.index}>08</span>
             <h2 className={styles.title}>城市場次</h2>
             <span className={styles.subtitle}>— City Tour</span>
           </div>
@@ -323,26 +365,6 @@ export default function BodyFixWebsitePage() {
             {cities.map(([label, title, text]) => (
               <article className={styles.cityCard} key={title}>
                 <span className={styles.cardNum}>{label}</span>
-                <h3>{title}</h3>
-                <p>{text}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={styles.section} id="instagram">
-        <div className={styles.container}>
-          <div className={styles.sectionHead}>
-            <span className={styles.index}>07</span>
-            <h2 className={styles.title}>從 IG 了解更多</h2>
-            <span className={styles.subtitle}>— On Instagram</span>
-          </div>
-          <p className={styles.copyWide}>官網只放服務分流與預約導流。科普、案例分享、紫微結構與塔羅牌陣，都更新在 IG。</p>
-          <div className={styles.igGrid}>
-            {igTopics.map(([num, title, text]) => (
-              <article className={styles.igCard} key={title}>
-                <span className={styles.cardNum}>{num}</span>
                 <h3>{title}</h3>
                 <p>{text}</p>
               </article>
@@ -379,7 +401,7 @@ export default function BodyFixWebsitePage() {
       <section className={`${styles.section} ${styles.faqSection}`} id="faq">
         <div className={styles.container}>
           <div className={styles.sectionHead}>
-            <span className={styles.index}>08</span>
+            <span className={styles.index}>10</span>
             <h2 className={styles.title}>服務邊界，先說清楚</h2>
             <span className={styles.subtitle}>— FAQ</span>
           </div>

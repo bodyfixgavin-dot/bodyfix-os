@@ -556,3 +556,59 @@
   .priceBlock div { grid-template-columns: 1fr auto; }
   .priceBlock small { grid-column: 2; }
 }
+
+.lightsSection {
+  position: relative;
+  overflow: hidden;
+  background: var(--navy);
+  color: var(--ivory);
+}
+
+.lightsSection::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(circle at 50% 10%, rgba(198, 155, 104, 0.14), transparent 38%);
+  pointer-events: none;
+}
+
+.lightGrid,
+.navigatorGrid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.lightCard {
+  position: relative;
+  min-width: 0;
+  padding: clamp(28px, 4vw, 48px);
+  border: 1px solid var(--whiteLine);
+  background: rgba(255, 250, 241, 0.035);
+}
+
+.lightNumber { color: var(--bronzeSoft); font-size: 0.72rem; letter-spacing: 0.18em; }
+.lightIcon { width: 42px; height: 64px; margin: 42px 0 30px; border: 1px solid rgba(198, 155, 104, 0.42); border-radius: 50% 50% 45% 45%; display: grid; place-items: center; }
+.lightIcon span { width: 8px; height: 8px; border-radius: 50%; background: var(--bronzeSoft); box-shadow: 0 0 0 12px rgba(198, 155, 104, 0.08), 0 0 35px 16px rgba(198, 155, 104, 0.16); }
+.lightCard h3, .navigatorCard h3 { margin: 0 0 16px; font-family: var(--serif); font-size: clamp(1.25rem, 2vw, 1.7rem); font-weight: 400; line-height: 1.5; overflow-wrap: anywhere; }
+.lightCard p { margin: 0; color: rgba(255, 250, 241, 0.64); line-height: 1.9; }
+.closingLine { margin: 42px 0 0; color: var(--bronzeSoft); font-family: var(--serif); font-size: clamp(1.15rem, 2vw, 1.55rem); text-align: center; }
+
+.navigatorSection { background: var(--sand); }
+.navigatorCard { min-width: 0; padding: clamp(26px, 3vw, 38px); border-top: 1px solid rgba(23, 34, 56, 0.34); background: rgba(255, 250, 241, 0.32); }
+.navigatorCard p { margin: 0; color: var(--navySoft); line-height: 1.9; }
+.navigatorClosing { margin: 48px 0 0; font-family: var(--serif); font-size: clamp(1.45rem, 3vw, 2.35rem); line-height: 1.55; text-align: right; }
+.passFit { margin: 0 0 14px; color: var(--navySoft); font-size: 0.9rem; line-height: 1.75; }
+.passFit strong { display: block; margin-bottom: 4px; color: var(--bronze); font-size: 0.72rem; letter-spacing: 0.16em; text-transform: uppercase; }
+
+@media (max-width: 920px) {
+  .lightGrid,
+  .navigatorGrid { grid-template-columns: 1fr; }
+  .lightIcon { margin: 28px 0 22px; }
+}
+
+@media (max-width: 560px) {
+  .lightCard,
+  .navigatorCard { padding: 26px 22px; }
+  .navigatorClosing { text-align: left; }
+}
