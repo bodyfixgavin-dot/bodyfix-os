@@ -2,8 +2,6 @@ import Link from 'next/link';
 
 import styles from './BodyFixWebsite.module.css';
 
-const chartNavigatorUrl = 'https://chart-navigator.vercel.app';
-
 const corePhrases = [
   {
     label: 'Low Pain',
@@ -37,28 +35,18 @@ const methodSteps = [
 const serviceEntrances = [
   {
     num: '01',
-    title: '筋膜張力整理',
-    text: '低痛感、可呼吸、身體能接受的深度。',
+    title: '筋膜鏈整理',
+    text: '從筋膜鏈與張力路徑開始判讀，在低痛感、可呼吸的深度裡整理身體。',
   },
   {
     num: '02',
-    title: '教練課 / 動作整合',
-    text: '判讀、整理、整合，讓訓練回到更穩定的系統。',
+    title: '張力判讀與動作整合',
+    text: '看懂身體怎麼代償與分工，再把整理後的改變接回動作與訓練。',
   },
   {
     num: '03',
     title: '骨盆核心整理',
     text: '從骨盆、髖、呼吸與深層核心重新找回穩定。',
-  },
-  {
-    num: '04',
-    title: '紫微結構解析',
-    text: '用結構的眼光，看懂命盤節奏與人生配置。',
-  },
-  {
-    num: '05',
-    title: '塔羅狀態整理',
-    text: '不是替你決定未來，而是幫你看清現在。',
   },
 ];
 
@@ -66,42 +54,31 @@ const brandLevels = [
   {
     level: '01 · Body State',
     title: 'BodyFix｜身體狀態管理',
-    text: 'BodyFix 負責身體。以運動按摩為基礎，透過筋膜線判讀與張力分工整理，在低痛感、可呼吸、身體能接受的深度裡，讓肌肉與外層筋膜一起回到更穩定、有韌性、有彈性的狀態。',
-    details: ['適合久坐與高壓的人', '訓練恢復慢', '身體反覆緊繃，按完很快又緊回來'],
-    cta: '查看 BodyFix 身體方案',
-    href: '#bodyfix-pass',
-    external: false,
+    text: 'BodyFix 是目前正式開放的服務主線。以運動按摩為基礎，透過筋膜鏈判讀與張力分工整理，在低痛感、可呼吸、身體能接受的深度裡，讓身體回到更穩定、有韌性、有彈性的狀態。',
+    details: ['筋膜鏈整理', '張力判讀', '身體狀態管理與回訪追蹤'],
+    cta: '預約 BodyFix 身體整理',
+    href: '#booking',
   },
   {
-    level: '02 · Chart Rhythm',
-    title: 'Chart Navigator｜命盤導航',
-    text: 'Chart Navigator 負責命盤。不是傳統算命，而是用命盤結構、時間節奏與狀態整理，幫你看懂現在走到哪裡。吠陀像門口的燈，紫微像厝內的樑柱；一個帶你產生好奇，一個幫你建立結構。',
-    details: ['吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數', '塔羅狀態整理', 'AI 命盤提示'],
-    cta: '查看 Chart Navigator 命盤方案',
-    href: chartNavigatorUrl,
-    external: true,
-  },
-  {
-    level: '03 · All State',
-    title: 'Gavin｜全狀態整合',
-    text: 'Gavin 是兩套系統中間的整合者。BodyFix 看身體怎麼撐，Chart Navigator 看人生節奏怎麼走；當身體狀態、職涯選擇、關係模式與時間節奏交在一起，就把它們整理成一條比較清楚的路線。',
-    details: ['不是單純按摩，也不是單純算命', '身體 × 命盤 × 當下狀態的整合管理'],
-    cta: '了解 Gavin 全狀態月票',
-    href: '#gavin-pass',
-    external: false,
+    level: '02 · Future Extension',
+    title: 'Chart Navigator｜命盤導航 Coming Soon',
+    text: '這是一個正在開發中的命盤導航計畫。未來會整理紫微斗數、塔羅狀態整理與吠陀占星基礎學習內容，協助你看懂命盤結構、時間節奏與當下選擇。',
+    details: ['目前保留為品牌延伸預告', '正式開放前，以內容分享與測試版工具為主'],
+    cta: '查看未來規劃',
+    href: '#chart-navigator',
   },
 ];
 
 const chartLights = [
-  ['01', '吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '像門口的燈，看你帶著什麼慣性走進來。'],
-  ['02', '紫微斗數', '像厝內的樑柱，看你人生的結構骨架。'],
-  ['03', '塔羅狀態整理', '像手裡的手電筒，看你此刻這一步要怎麼踩。'],
+  ['01', '吠陀占星', '未來規劃：像門口的燈，看你帶著什麼慣性走進來。'],
+  ['02', '紫微斗數', '未來規劃：像厝內的樑柱，看你人生的結構骨架。'],
+  ['03', '塔羅狀態整理', '未來規劃：像手裡的手電筒，看你此刻這一步要怎麼踩。'],
 ];
 
 const navigatorSteps = [
-  ['01', '看結構', '先看你天生的骨架：擅長什麼、容易卡在哪、習慣用哪種方式面對選擇。'],
-  ['02', '看節奏', '再看你現在走到哪段時間：適合衝、適合收，還是先穩住。'],
-  ['03', '看當下', '回到你手上這個具體問題：這一步，怎麼踩比較不會後悔。'],
+  ['01', '內容分享', '先整理基礎觀念與學習筆記，讓品牌方向逐步成形。'],
+  ['02', '測試版工具', '在正式服務開放前，先用測試版工具驗證使用方式與需求。'],
+  ['03', '正式開放', '完成學習與服務設計後，再公布清楚的服務內容與邊界。'],
 ];
 
 const passes = [
@@ -114,27 +91,6 @@ const passes = [
     features: ['每月最多 8 次筋膜整理', '每週最多 2 次', '每次 60 分鐘', '包含每次整理後簡短紀錄'],
     fit: '需要穩定整理身體狀態、訓練恢復、張力追蹤的人。',
     note: '不包含：完整紫微、完整吠陀、深度命盤解析。',
-  },
-  {
-    id: 'chart-pass',
-    label: 'Chart Navigator Monthly Pass',
-    title: 'Chart Navigator 命盤導航月票',
-    trial: 'NT$4,800',
-    regular: 'NT$6,800',
-    features: ['每週可提出 1 個主題', '每月包含 1 次完整狀態整理', '吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙', '紫微斗數', '塔羅狀態整理與 AI 命盤提示', '流月與節奏提醒'],
-    fit: '想整理關係、職涯、情緒、人生方向與時間節奏的人。',
-    note: '不代替你做選擇，而是讓你看懂自己正在走到哪裡。毋是共你講命定，是共你看路按怎行較穩。',
-  },
-  {
-    id: 'gavin-pass',
-    label: 'Gavin All State Pass',
-    title: 'Gavin All State Pass｜全狀態月票',
-    trial: 'NT$26,800',
-    regular: 'NT$32,800',
-    features: ['BodyFix 身體整理：每月最多 8 次、每週最多 2 次、每次 60 分鐘', 'Chart Navigator 命盤導航：每月 1 次 40 分鐘狀態導航', '塔羅狀態整理：每週可問 1 個簡短狀態問題', '每月狀態重點紀錄'],
-    fit: '高壓工作者、創作者、教練、醫護、自由工作者，以及需要同時管理身體狀態與人生節奏的人。',
-    note: '同時包含 BodyFix 身體整理、Chart Navigator 命盤導航與塔羅狀態整理。',
-    featured: true,
   },
 ];
 
@@ -154,10 +110,8 @@ export default function BodyFixWebsitePage() {
           <div className={styles.navLinks}>
             <a href="#method">方法</a>
             <a href="#services">服務</a>
-            <a href="#brands">品牌關係</a>
-            <a href="#chart-lights">三盞燈</a>
-            <a href="#passes">月票</a>
-            <a href="#ziwei">紫微塔羅</a>
+            <a href="#passes">身體月票</a>
+            <a href="#chart-navigator">Coming Soon</a>
             <a href="#booking" className={styles.navCta}>預約</a>
           </div>
         </div>
@@ -233,7 +187,7 @@ export default function BodyFixWebsitePage() {
             <span className={styles.subtitle}>— Services</span>
           </div>
           <p className={styles.copyWide}>
-            五個入口對應五種狀態：身體張力、訓練動作、骨盆核心、紫微結構與塔羅狀態。先選最貼近現在的那一張，再進到預約前問卷整理需求。
+            BodyFix 目前專注在身體服務。從筋膜鏈整理、張力判讀與動作整合，到骨盆核心整理，先選最貼近現在狀態的入口，再透過預約前問卷整理需求。
           </p>
           <div className={styles.serviceGrid}>
             {serviceEntrances.map((service) => (
@@ -251,12 +205,12 @@ export default function BodyFixWebsitePage() {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>03</span>
-            <h2 className={styles.title}>兩套系統，一個狀態管理入口</h2>
-            <span className={styles.subtitle}>— Brand Ladder</span>
+            <h2 className={styles.title}>BodyFix 是現在的主線</h2>
+            <span className={styles.subtitle}>— Now & Next</span>
           </div>
           <div className={styles.brandIntro}>
-            <p className={styles.brandStatement}>BodyFix 整理身體。<br />Chart Navigator 整理命盤。<br /><em>Gavin 整理你整個人的狀態。</em></p>
-            <p>身體有張力路徑，人生也有時間節奏。我做的不是把所有東西混在一起，而是用不同系統，幫你看懂自己現在卡在哪裡。</p>
+            <p className={styles.brandStatement}>現在先把身體整理好。<br /><em>BodyFix，正式開放預約。</em></p>
+            <p>BodyFix 專注筋膜鏈整理、張力判讀與身體狀態管理。Chart Navigator 暫時只保留為未來品牌分支，不是目前的正式收費服務。</p>
           </div>
           <div className={styles.brandGrid}>
             {brandLevels.map((brand) => (
@@ -265,7 +219,7 @@ export default function BodyFixWebsitePage() {
                 <h3>{brand.title}</h3>
                 <p>{brand.text}</p>
                 <ul>{brand.details.map((detail) => <li key={detail}>{detail}</li>)}</ul>
-                <a href={brand.href} target={brand.external ? '_blank' : undefined} rel={brand.external ? 'noopener noreferrer' : undefined}>{brand.cta}<span>→</span></a>
+                <a href={brand.href}>{brand.cta}<span>→</span></a>
               </article>
             ))}
           </div>
@@ -276,7 +230,7 @@ export default function BodyFixWebsitePage() {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>04</span>
-            <h2 className={styles.title}>三盞燈，看不同層次的你</h2>
+            <h2 className={styles.title}>三盞燈｜未來規劃</h2>
             <span className={styles.subtitle}>— Chart Navigator</span>
           </div>
           <div className={styles.lightGrid}>
@@ -289,7 +243,7 @@ export default function BodyFixWebsitePage() {
               </article>
             ))}
           </div>
-          <p className={styles.closingLine}>三套系統不是混在一起算，而是各自照亮不同層次的狀態。</p>
+          <p className={styles.closingLine}>這些內容仍在學習與開發中，正式開放前不作為收費服務。</p>
         </div>
       </section>
 
@@ -297,9 +251,12 @@ export default function BodyFixWebsitePage() {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>05</span>
-            <h2 className={styles.title}>命盤導航是什麼？</h2>
-            <span className={styles.subtitle}>— 看結構 → 看節奏 → 看當下</span>
+            <h2 className={styles.title}>Chart Navigator｜命盤導航 Coming Soon</h2>
+            <span className={styles.subtitle}>— Future Brand Extension</span>
           </div>
+          <p className={styles.copyWide}>
+            這是一個正在開發中的命盤導航計畫。未來會整理紫微斗數、塔羅狀態整理與吠陀占星基礎學習內容，協助你看懂命盤結構、時間節奏與當下選擇。目前先保留為品牌延伸預告，正式服務開放前，會先以內容分享與測試版工具為主。
+          </p>
           <div className={styles.navigatorGrid}>
             {navigatorSteps.map(([num, title, text]) => (
               <article className={styles.navigatorCard} key={title}>
@@ -309,7 +266,7 @@ export default function BodyFixWebsitePage() {
               </article>
             ))}
           </div>
-          <p className={styles.navigatorClosing}>不是替你決定，<br />是讓你看清楚自己站在哪、要往哪走。</p>
+          <p className={styles.navigatorClosing}>目前尚未正式開放，<br />也沒有公開收費方案。</p>
         </div>
       </section>
 
@@ -317,13 +274,13 @@ export default function BodyFixWebsitePage() {
         <div className={styles.container}>
           <div className={styles.sectionHead}>
             <span className={styles.index}>06</span>
-            <h2 className={styles.title}>Monthly Pass｜狀態管理月票</h2>
-            <span className={styles.subtitle}>— Membership</span>
+            <h2 className={styles.title}>BodyFix 身體狀態月票</h2>
+            <span className={styles.subtitle}>— Body State Membership</span>
           </div>
-          <p className={styles.copyWide}>三個月票各有清楚邊界。從身體、命盤，到雙系統整合，選擇你現在真正需要的狀態管理方式。</p>
+          <p className={styles.copyWide}>目前月票區只保留 BodyFix 身體狀態管理。命盤導航與跨系統整合尚未開放收費。</p>
           <div className={styles.passGrid}>
             {passes.map((pass) => (
-              <article className={`${styles.passCard} ${pass.featured ? styles.featuredPass : ''}`} id={pass.id} key={pass.id}>
+              <article className={styles.passCard} id={pass.id} key={pass.id}>
                 <span className={styles.smallLabel}>{pass.label}</span>
                 <h3>{pass.title}</h3>
                 <div className={styles.priceBlock}>
@@ -333,38 +290,9 @@ export default function BodyFixWebsitePage() {
                 <ul>{pass.features.map((feature) => <li key={feature}>{feature}</li>)}</ul>
                 <p className={styles.passFit}><strong>適合</strong>{pass.fit}</p>
                 <p className={styles.passNote}>{pass.note}</p>
-                {pass.id === 'chart-pass' ? (
-                  <a className={styles.ghostBtn} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">了解命盤導航月票 →</a>
-                ) : (
-                  <a className={pass.featured ? styles.primaryBtn : styles.ghostBtn} href="#booking">詢問此月票 →</a>
-                )}
-                {pass.id === 'gavin-pass' ? (
-                  <a className={styles.externalTextLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">查看月票包含的 Chart Navigator 命盤導航 <span>↗</span></a>
-                ) : null}
+                <a className={styles.primaryBtn} href="#booking">詢問 BodyFix 身體月票 →</a>
               </article>
             ))}
-          </div>
-        </div>
-      </section>
-
-      <section className={`${styles.section} ${styles.dark}`} id="ziwei">
-        <div className={styles.container}>
-          <div className={styles.sectionHead}>
-            <span className={styles.index}>07</span>
-            <h2 className={styles.title}>紫微 × 塔羅</h2>
-            <span className={styles.subtitle}>— Structure & Status</span>
-          </div>
-          <div className={styles.ziweiGrid}>
-            <p className={styles.ziweiStatement}>不是替你決定未來，<br />而是幫你<em>看清現在</em>。</p>
-            <ul className={styles.ziweiList}>
-              <li><strong>紫微結構解析</strong><span>看長期結構、慣性模式與選擇傾向。</span></li>
-              <li><strong>塔羅狀態整理</strong><span>整理當下卡住的問題與可能的視角。</span></li>
-              <li><strong>紫微 × 塔羅整合諮詢</strong><span>結構與狀態雙向整理，適合重大決策或階段轉換。</span></li>
-              <li><strong>SADM 關係決策整理</strong><span>用結構視角整理自己、對方與關係動態三條線。</span></li>
-            </ul>
-          </div>
-          <div className={styles.sectionAction}>
-            <a className={styles.primaryBtn} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">前往命盤導航 →</a>
           </div>
         </div>
       </section>
@@ -409,7 +337,6 @@ export default function BodyFixWebsitePage() {
             <a className={styles.contactLink} href="https://line.me/R/ti/p/@359gzxzi" target="_blank" rel="noreferrer"><div><strong>LINE 官方帳號</strong><span>@359gzxzi</span></div><span>→</span></a>
             <a className={styles.contactLink} href="https://instagram.com/bodyfix.fascia" target="_blank" rel="noreferrer"><div><strong>Instagram 私訊</strong><span>@bodyfix.fascia</span></div><span>→</span></a>
             <a className={styles.contactLink} href="#city"><div><strong>城市場次登記</strong><span>台中、高雄與需求城市</span></div><span>→</span></a>
-            <a className={styles.contactLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer"><div><strong>前往命盤導航</strong><span>紫微、塔羅、吠陀請由 Chart Navigator 了解</span></div><span>↗</span></a>
           </aside>
         </div>
       </section>
@@ -422,13 +349,11 @@ export default function BodyFixWebsitePage() {
             <span className={styles.subtitle}>— FAQ</span>
           </div>
           <details className={styles.faqItem} open>
-            <summary>BodyFix 和 Chart Navigator 會不會太混雜？<span>＋</span></summary>
+            <summary>Chart Navigator 現在可以預約或購買嗎？<span>＋</span></summary>
             <div className={styles.faqAnswer}>
-              <p>不會，因為它們是兩套不同系統。</p>
-              <p><strong>BodyFix</strong> 處理的是身體狀態：筋膜、張力、動作使用方式與恢復管理。</p>
-              <p><strong>Chart Navigator</strong> 處理的是命盤狀態：吠陀占星 Jyotiṣa｜ज्योतिष｜久提沙、紫微斗數、塔羅與時間節奏。</p>
-              <p><a className={styles.inlineExternalLink} href={chartNavigatorUrl} target="_blank" rel="noopener noreferrer">查看 Chart Navigator 完整命盤導航內容 ↗</a></p>
-              <p>兩者不會互相取代。BodyFix 不會變成算命服務，Chart Navigator 也不是身體整理服務。最高階的 Gavin All State Pass，才會把兩套系統整合在一起。</p>
+              <p>目前不行。Chart Navigator 仍在學習、內容整理與測試版工具開發階段，現在只作為品牌延伸預告。</p>
+              <p><strong>目前正式開放的是 BodyFix 身體服務</strong>：筋膜鏈整理、張力判讀、動作使用方式與身體狀態管理。</p>
+              <p>Chart Navigator 正式開放前，網站不會提供付費方案、付款或預約入口。</p>
             </div>
           </details>
         </div>
