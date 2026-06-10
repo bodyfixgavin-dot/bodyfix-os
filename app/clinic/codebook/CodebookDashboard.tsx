@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ClinicNotice, ClinicShell, useClinicFetch } from "@/components/clinic/ClinicShell";
+import styles from "./CodebookDashboard.module.css";
 
 type Category = {
   category_key: string;
@@ -27,7 +28,7 @@ type Item = {
 type CodebookData = { categories: Category[]; items: Item[] };
 
 function StatusFlag({ active, children }: { active: boolean; children: React.ReactNode }) {
-  return <span className={active ? "codebook-flag is-on" : "codebook-flag"}>{children}</span>;
+  return <span className={`${styles.flag} ${active ? styles.flagOn : ""}`}>{children}</span>;
 }
 
 export default function CodebookDashboard() {
@@ -38,7 +39,7 @@ export default function CodebookDashboard() {
   return <ClinicShell title="Codebook 代碼字典" subtitle="唯讀查看 BodyFix 服務、方案、任務、張力與其他標準代碼；新增與編輯功能留待後續版本。">
     <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
     {data && <>
-      <section className="codebook-summary bf-section-gap" aria-label="Codebook 統計摘要">
+      <section className={`${styles.summary} bf-section-gap`} aria-label="Codebook 統計摘要">
         <div><span>Categories</span><strong>{data.categories.length}</strong><small>字典分類</small></div>
         <div><span>Items</span><strong>{data.items.length}</strong><small>全部代碼</small></div>
         <div><span>Active</span><strong>{data.items.filter((item) => item.is_active).length}</strong><small>啟用中</small></div>
@@ -46,24 +47,24 @@ export default function CodebookDashboard() {
       </section>
 
       <section className="bf-card bf-section-gap">
-        <div className="codebook-section-head"><div><span>Category filter</span><h2 className="bf-section-title">分類篩選</h2></div><strong>{items.length} items</strong></div>
-        <div className="codebook-filters">
-          <button type="button" className={selectedCategory === "ALL" ? "is-active" : ""} onClick={() => setSelectedCategory("ALL")}>ALL</button>
-          {data.categories.map((category) => <button type="button" key={category.category_key} className={selectedCategory === category.category_key ? "is-active" : ""} onClick={() => setSelectedCategory(category.category_key)}>{category.category_key}<small>{category.category_name_zh}</small></button>)}
+        <div className={styles.sectionHead}><div><span>Category filter</span><h2 className="bf-section-title">分類篩選</h2></div><strong>{items.length} items</strong></div>
+        <div className={styles.filters}>
+          <button type="button" className={selectedCategory === "ALL" ? styles.active : ""} onClick={() => setSelectedCategory("ALL")}>ALL</button>
+          {data.categories.map((category) => <button type="button" key={category.category_key} className={selectedCategory === category.category_key ? styles.active : ""} onClick={() => setSelectedCategory(category.category_key)}>{category.category_key}<small>{category.category_name_zh}</small></button>)}
         </div>
       </section>
 
       <section className="bf-card bf-section-gap">
-        <div className="codebook-section-head"><div><span>Reference items</span><h2 className="bf-section-title">代碼列表</h2></div><strong>{selectedCategory}</strong></div>
-        <div className="codebook-list">
-          {items.map((item) => <article className="codebook-item" key={item.id}>
-            <div className="codebook-item-title"><div><code>{item.code}</code><h3>{item.name_zh}</h3><p>{item.name_en || "—"}</p></div><span>{item.category_key}</span></div>
+        <div className={styles.sectionHead}><div><span>Reference items</span><h2 className="bf-section-title">代碼列表</h2></div><strong>{selectedCategory}</strong></div>
+        <div className={styles.list}>
+          {items.map((item) => <article className={styles.item} key={item.id}>
+            <div className={styles.itemTitle}><div><code>{item.code}</code><h3>{item.name_zh}</h3><p>{item.name_en || "—"}</p></div><span>{item.category_key}</span></div>
             <dl>
               <div><dt>Quick filter</dt><dd>{item.quick_filter_code || "—"}</dd></div>
               <div><dt>Group</dt><dd>{item.group_key || "—"}</dd></div>
-              <div className="codebook-description"><dt>Description</dt><dd>{item.description || "—"}</dd></div>
+              <div className={styles.description}><dt>Description</dt><dd>{item.description || "—"}</dd></div>
             </dl>
-            <div className="codebook-flags"><StatusFlag active={item.is_active}>active</StatusFlag><StatusFlag active={item.is_coming_soon}>coming soon</StatusFlag><StatusFlag active={item.is_deprecated}>deprecated</StatusFlag></div>
+            <div className={styles.flags}><StatusFlag active={item.is_active}>active</StatusFlag><StatusFlag active={item.is_coming_soon}>coming soon</StatusFlag><StatusFlag active={item.is_deprecated}>deprecated</StatusFlag></div>
           </article>)}
         </div>
       </section>

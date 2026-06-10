@@ -368,4 +368,3 @@ insert into public.codebook_items (category_key, code, name_zh, name_en, short_l
   ('CHART_NAVIGATOR', 'CN-JY-CHART', '吠陀命盤基礎', 'Vedic Chart', null, null, null, null, 'jyotish', 160, true, '{}'::jsonb),
   ('CHART_NAVIGATOR', 'CN-JY-TIMING', '吠陀時間節奏觀察', 'Vedic Timing', null, null, null, null, 'jyotish', 170, true, '{}'::jsonb)
 on conflict (code) do nothing;
-
