@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { CLIENT_FIELDS, cleanPayload, makeClientCode, readJson, requireClinicAdmin } from "@/lib/clinic-api";
+import { CLIENT_FIELDS, cleanPayload, readJson, requireClinicAdmin } from "@/lib/clinic-api";
 
 export async function GET(req: Request) {
   const auth = await requireClinicAdmin("/api/clinic/clients");
@@ -21,10 +21,9 @@ export async function POST(req: Request) {
   if (!auth.ok) return auth.response;
   const body = await readJson(req);
   const payload = cleanPayload(body, CLIENT_FIELDS) as Record<string, unknown>;
-  payload.client_code ||= makeClientCode();
   payload.display_name ||= payload.client_name || payload.nickname || "未命名客戶";
   payload.client_name ||= payload.display_name;
-  payload.line_id ||= `clinic-${payload.client_code}`;
+  payload.line_id ||= `clinic-${crypto.randomUUID()}`;
   payload.updated_at = new Date().toISOString();
   const { data, error } = await auth.supabase.from("clients").insert(payload).select("*").single();
   if (error) return NextResponse.json({ error: error.message }, { status: 400 });
