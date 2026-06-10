@@ -72,7 +72,7 @@ insert into public.codebook_categories (category_key, category_name_zh, category
   ('PAYMENT', '付款代碼', 'Payment codes', 'BodyFix v0.2.1 Payment codes.', 130),
   ('CLIENT_STATUS', '客戶生命週期狀態代碼', 'Client lifecycle status codes', 'BodyFix v0.2.1 Client lifecycle status codes.', 140),
   ('ATTENDANCE_STATUS', '出席 / 服務狀態代碼', 'Attendance and service status codes', 'BodyFix v0.2.1 Attendance and service status codes.', 150),
-  ('CLIENT_TYPE', '骨盆核心分型代碼', 'Pelvic-core client type codes', 'BodyFix v0.2.1 Pelvic-core client type codes.', 160),
+  ('CORE_TYPE', '骨盆核心分型代碼', 'Pelvic-core type codes', 'BodyFix v0.2.1 Pelvic-core client type codes.', 160),
   ('CHART_NAVIGATOR', '命盤 / 狀態整理代碼', 'Chart Navigator codes', 'BodyFix v0.2.1 Chart Navigator codes.', 170)
 on conflict (category_key) do nothing;
 
@@ -263,11 +263,11 @@ insert into public.codebook_items (category_key, code, name_zh, name_en, descrip
   ('ATTENDANCE_STATUS', 'AT-RESCHEDULED', '已改期', null, null, null, null, 60, false, '{}'::jsonb),
   ('ATTENDANCE_STATUS', 'AT-LATE-CANCEL', '臨時取消', null, null, null, null, 70, false, '{}'::jsonb),
   ('ATTENDANCE_STATUS', 'AT-PENDING', '待確認', null, null, null, null, 80, false, '{}'::jsonb),
-  ('CLIENT_TYPE', 'CT-A', '續航型', 'Endurance dominant', null, null, null, 10, false, '{}'::jsonb),
-  ('CLIENT_TYPE', 'CT-B', '扭力型', 'Torsion dominant', null, null, null, 20, false, '{}'::jsonb),
-  ('CLIENT_TYPE', 'CT-C', '對角型', 'Diagonal compensation', null, null, null, 30, false, '{}'::jsonb),
-  ('CLIENT_TYPE', 'CT-D', '防禦型', 'Protective contraction dominant', null, null, null, 40, false, '{}'::jsonb),
-  ('CLIENT_TYPE', 'CT-R', '紅旗轉介', 'Red flag referral', null, null, null, 50, false, '{}'::jsonb),
+  ('CORE_TYPE', 'CT-A', '續航型', 'Endurance dominant', null, null, null, 10, false, '{}'::jsonb),
+  ('CORE_TYPE', 'CT-B', '扭力型', 'Torsion dominant', null, null, null, 20, false, '{}'::jsonb),
+  ('CORE_TYPE', 'CT-C', '對角型', 'Diagonal compensation', null, null, null, 30, false, '{}'::jsonb),
+  ('CORE_TYPE', 'CT-D', '防禦型', 'Protective contraction dominant', null, null, null, 40, false, '{}'::jsonb),
+  ('CORE_TYPE', 'CT-R', '紅旗轉介', 'Red flag referral', null, null, null, 50, false, '{}'::jsonb),
   ('CHART_NAVIGATOR', 'CN-TR-TXT-001', '塔羅單題文字整理', 'Tarot Text 001', null, null, 'tarot', 10, true, '{}'::jsonb),
   ('CHART_NAVIGATOR', 'CN-TR-TXT-003', '塔羅三牌文字整理', 'Tarot Text 3 Cards', null, null, 'tarot', 20, true, '{}'::jsonb),
   ('CHART_NAVIGATOR', 'CN-TR-VOICE-001', '塔羅語音整理', 'Tarot Voice', null, null, 'tarot', 30, true, '{}'::jsonb),

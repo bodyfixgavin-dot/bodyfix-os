@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { ClinicNotice, ClinicShell, useClinicFetch } from "@/components/clinic/ClinicShell";
+import styles from "./codebook.module.css";
 
 type Category = {
   id: string;
@@ -28,7 +29,7 @@ type Item = {
 type Data = { categories: Category[]; items: Item[] };
 
 function Flag({ active, children }: { active: boolean; children: React.ReactNode }) {
-  return <span className={`codebook-flag${active ? " is-on" : ""}`}>{children}: {active ? "yes" : "no"}</span>;
+  return <span className={`${styles.flag}${active ? ` ${styles.on}` : ""}`}>{children}: {active ? "yes" : "no"}</span>;
 }
 
 export default function CodebookDashboard() {
@@ -45,26 +46,26 @@ export default function CodebookDashboard() {
   return <ClinicShell title="Codebook 代碼字典" subtitle="唯讀檢視 BodyFix v0.2.1 標準選單、內部代碼與 coming-soon 項目。">
     <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
     {data ? <>
-      <section className="codebook-summary bf-section-gap" aria-label="Codebook 統計摘要">
+      <section className={`${styles.summary} bf-section-gap`} aria-label="Codebook 統計摘要">
         <div><span>Categories</span><strong>{summary.categories}</strong><small>字典分類</small></div>
         <div><span>Items</span><strong>{summary.items}</strong><small>全部代碼</small></div>
         <div><span>Active</span><strong>{summary.active}</strong><small>啟用項目</small></div>
         <div><span>Coming soon</span><strong>{summary.comingSoon}</strong><small>尚未啟用功能</small></div>
       </section>
       <section className="bf-card bf-section-gap">
-        <div className="codebook-section-head"><div><span>Category filter</span><h2 className="bf-section-title">分類篩選</h2></div><strong>{items.length} items</strong></div>
-        <div className="codebook-filters">
-          <button className={selectedCategory === "ALL" ? "is-active" : ""} type="button" onClick={() => setSelectedCategory("ALL")}>ALL</button>
-          {data.categories.map((category) => <button className={selectedCategory === category.category_key ? "is-active" : ""} type="button" key={category.id} onClick={() => setSelectedCategory(category.category_key)}>{category.category_key}<small>{category.category_name_zh}</small></button>)}
+        <div className={styles.sectionHead}><div><span>Category filter</span><h2 className="bf-section-title">分類篩選</h2></div><strong>{items.length} items</strong></div>
+        <div className={styles.filters}>
+          <button className={selectedCategory === "ALL" ? styles.active : undefined} type="button" onClick={() => setSelectedCategory("ALL")}>ALL</button>
+          {data.categories.map((category) => <button className={selectedCategory === category.category_key ? styles.active : undefined} type="button" key={category.id} onClick={() => setSelectedCategory(category.category_key)}>{category.category_key}<small>{category.category_name_zh}</small></button>)}
         </div>
       </section>
-      <section className="codebook-list bf-section-gap" aria-label="Codebook items">
-        {items.map((item) => <article className="codebook-item" key={item.id}>
+      <section className={`${styles.list} bf-section-gap`} aria-label="Codebook items">
+        {items.map((item) => <article className={styles.item} key={item.id}>
           <header><div><code>{item.code}</code><h3>{item.name_zh}</h3><p>{item.name_en ?? "—"}</p></div><span>{item.category_key}</span></header>
           <dl>
             <div><dt>quick_filter_code</dt><dd>{item.quick_filter_code ?? "—"}</dd></div>
             <div><dt>group_key</dt><dd>{item.group_key ?? "—"}</dd></div>
-            <div className="codebook-description"><dt>description</dt><dd>{item.description ?? "—"}</dd></div>
+            <div className={styles.description}><dt>description</dt><dd>{item.description ?? "—"}</dd></div>
           </dl>
           <footer><Flag active={item.is_active}>active</Flag><Flag active={item.is_coming_soon}>coming soon</Flag><Flag active={item.is_deprecated}>deprecated</Flag></footer>
         </article>)}
