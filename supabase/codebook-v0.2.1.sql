@@ -1,0 +1,308 @@
+-- BodyFix Codebook Reference Tables v0.2.1
+-- Adds reference-only tables and seed data. This migration intentionally does not alter service_records or followup_tasks.
+
+create extension if not exists pgcrypto;
+
+-- Preserve a previously deployed v0.2 category table whose shape conflicts with v0.2.1.
+do $$
+begin
+  if to_regclass('public.codebook_categories') is not null
+     and not exists (
+       select 1 from information_schema.columns
+       where table_schema = 'public' and table_name = 'codebook_categories' and column_name = 'category_key'
+     )
+     and to_regclass('public.codebook_categories_v02_legacy') is null then
+    alter table public.codebook_categories rename to codebook_categories_v02_legacy;
+  end if;
+end $$;
+
+create table if not exists public.codebook_categories (
+  id uuid primary key default gen_random_uuid(),
+  category_key text not null unique,
+  category_name_zh text not null,
+  category_name_en text,
+  description text,
+  sort_order integer default 0,
+  is_active boolean default true,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create table if not exists public.codebook_items (
+  id uuid primary key default gen_random_uuid(),
+  category_key text not null references public.codebook_categories(category_key) on delete cascade,
+  code text not null unique,
+  name_zh text not null,
+  name_en text,
+  short_label text,
+  description text,
+  parent_code text,
+  quick_filter_code text,
+  group_key text,
+  sort_order integer default 0,
+  is_active boolean default true,
+  is_public boolean default false,
+  is_coming_soon boolean default false,
+  is_deprecated boolean default false,
+  metadata jsonb default '{}'::jsonb,
+  created_at timestamptz default now(),
+  updated_at timestamptz default now()
+);
+
+create index if not exists idx_codebook_items_category_key on public.codebook_items(category_key);
+create index if not exists idx_codebook_items_code on public.codebook_items(code);
+create index if not exists idx_codebook_items_group_key on public.codebook_items(group_key);
+create index if not exists idx_codebook_items_parent_code on public.codebook_items(parent_code);
+create index if not exists idx_codebook_items_quick_filter_code on public.codebook_items(quick_filter_code);
+create index if not exists idx_codebook_items_is_active on public.codebook_items(is_active);
+
+insert into public.codebook_categories (category_key, category_name_zh, category_name_en, description, sort_order) values
+  ('SERVICE', '服務代碼', 'Service codes', 'BodyFix v0.2.1 Service codes.', 10),
+  ('PACKAGE', '方案代碼', 'Package codes', 'BodyFix v0.2.1 Package codes.', 20),
+  ('PASS', '會員 / 月票代碼', 'Pass codes', 'BodyFix v0.2.1 Pass codes.', 30),
+  ('FOLLOWUP_TASK', '回訪任務代碼', 'Follow-up task codes', 'BodyFix v0.2.1 Follow-up task codes.', 40),
+  ('PRIORITY', '優先度代碼', 'Priority codes', 'BodyFix v0.2.1 Priority codes.', 50),
+  ('TASK_STATUS', '任務狀態代碼', 'Task status codes', 'BodyFix v0.2.1 Task status codes.', 60),
+  ('QUICK_FILTER', '快速篩選分類', 'Quick filters', 'BodyFix v0.2.1 Quick filters.', 70),
+  ('TENSION', '張力類型代碼', 'Tension type codes', 'BodyFix v0.2.1 Tension type codes.', 80),
+  ('BODY_REGION', '身體區域代碼', 'Body region codes', 'BodyFix v0.2.1 Body region codes.', 90),
+  ('FASCIA_LINE', '筋膜線代碼', 'Fascia line codes', 'BodyFix v0.2.1 Fascia line codes.', 100),
+  ('LOCATION', '城市 / 地點代碼', 'Location codes', 'BodyFix v0.2.1 Location codes.', 110),
+  ('SOURCE', '來源渠道代碼', 'Source codes', 'BodyFix v0.2.1 Source codes.', 120),
+  ('PAYMENT', '付款代碼', 'Payment codes', 'BodyFix v0.2.1 Payment codes.', 130),
+  ('CLIENT_STATUS', '客戶生命週期狀態代碼', 'Client lifecycle status codes', 'BodyFix v0.2.1 Client lifecycle status codes.', 140),
+  ('ATTENDANCE_STATUS', '出席 / 服務狀態代碼', 'Attendance and service status codes', 'BodyFix v0.2.1 Attendance and service status codes.', 150),
+  ('CLIENT_TYPE', '骨盆核心分型代碼', 'Pelvic-core client type codes', 'BodyFix v0.2.1 Pelvic-core client type codes.', 160),
+  ('CHART_NAVIGATOR', '命盤 / 狀態整理代碼', 'Chart Navigator codes', 'BodyFix v0.2.1 Chart Navigator codes.', 170)
+on conflict (category_key) do nothing;
+
+insert into public.codebook_items (category_key, code, name_zh, name_en, description, quick_filter_code, group_key, sort_order, is_coming_soon, metadata) values
+  ('SERVICE', 'BF-FC-60', '筋膜鏈整理 60 分', 'Fascia Chain 60', null, null, 'fascia_chain', 10, false, '{}'::jsonb),
+  ('SERVICE', 'BF-FC-90', '筋膜鏈整理 90 分', 'Fascia Chain 90', null, null, 'fascia_chain', 20, false, '{}'::jsonb),
+  ('SERVICE', 'BF-FC-120', '筋膜鏈整理 120 分', 'Fascia Chain 120', null, null, 'fascia_chain', 30, false, '{}'::jsonb),
+  ('SERVICE', 'BF-FC-EXT-30', '筋膜鏈延長整理 30 分', 'Fascia Chain Extension 30', null, null, 'fascia_chain', 40, false, '{}'::jsonb),
+  ('SERVICE', 'BF-FC-CASE', '筋膜鏈案例紀錄', 'Fascia Chain Case', null, null, 'fascia_chain', 50, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PC-30', '骨盆核心延長整理 30 分', 'Pelvic Core 30', null, null, 'pelvic_core', 60, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PC-60', '骨盆核心整理 60 分', 'Pelvic Core 60', null, null, 'pelvic_core', 70, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PC-90', '骨盆核心深度整理 90 分', 'Pelvic Core 90', null, null, 'pelvic_core', 80, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PC-EXT', '骨盆核心加強整理', 'Pelvic Core Extension', null, null, 'pelvic_core', 90, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PC-CASE', '骨盆核心案例紀錄', 'Pelvic Core Case', null, null, 'pelvic_core', 100, false, '{}'::jsonb),
+  ('SERVICE', 'BF-MI-60', '動作整合 60 分', 'Movement Integration 60', null, null, 'movement', 110, false, '{}'::jsonb),
+  ('SERVICE', 'BF-MI-90', '動作整合 90 分', 'Movement Integration 90', null, null, 'movement', 120, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PT-1', '單堂教練課 NT$1,800', 'Personal Training 1 Session', null, null, 'pt', 130, false, '{}'::jsonb),
+  ('SERVICE', 'BF-PT-60', '私人教練課 60 分', 'Personal Training 60', null, null, 'pt', 140, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-FC-03', '3 次筋膜鏈整理', 'Fascia Chain 3 Sessions', null, null, 'fascia_chain', 10, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-FC-06', '6 次筋膜鏈整理', 'Fascia Chain 6 Sessions', null, null, 'fascia_chain', 20, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-FC-12', '12 次筋膜鏈整理', 'Fascia Chain 12 Sessions', null, null, 'fascia_chain', 30, false, '{"legacy_codes":["BF-PKG-12FC"]}'::jsonb),
+  ('PACKAGE', 'PKG-FC-24', '24 次筋膜鏈整理', 'Fascia Chain 24 Sessions', null, null, 'fascia_chain', 40, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PC-03', '3 次骨盆核心整理', 'Pelvic Core 3 Sessions', null, null, 'pelvic_core', 50, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PC-06', '6 次骨盆核心整理', 'Pelvic Core 6 Sessions', null, null, 'pelvic_core', 60, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PC-12', '12 次骨盆核心整理', 'Pelvic Core 12 Sessions', null, null, 'pelvic_core', 70, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PC-VIP', '骨盆核心 VIP 週期', 'Pelvic Core VIP', null, null, 'pelvic_core', 80, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-06', '6 堂教練課', 'PT 6 Sessions', null, null, 'pt', 90, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-12', '12 堂教練課', 'PT 12 Sessions', null, null, 'pt', 100, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-24', '24 堂教練課', 'PT 24 Sessions', null, null, 'pt', 110, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-36', '36 堂教練課', 'PT 36 Sessions', null, null, 'pt', 120, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-48', '48 堂教練課', 'PT 48 Sessions', null, null, 'pt', 130, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-60', '60 堂教練課', 'PT 60 Sessions', null, null, 'pt', 140, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-72', '72 堂教練課', 'PT 72 Sessions', null, null, 'pt', 150, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-PT-96', '96 堂教練課', 'PT 96 Sessions', null, null, 'pt', 160, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-MI-12', '12 次動作整合', 'Movement Integration 12', null, null, 'special', 170, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-RESET-30D', '30 天身體任務', 'Reset 30 Days', null, null, 'reset', 180, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-RESET-90D', '90 天身體狀態整理', 'Reset 90 Days', null, null, 'reset', 190, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-24PT12FC', '24 訓練 + 12 筋膜深度整合', '24 PT + 12 Fascia Chain', null, null, 'pt', 200, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-RECOVERY', '訓練恢復 / 張力整理方案', 'Recovery Package', null, null, 'special', 210, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-TEACHER', '老師板書型張力方案', 'Teacher Tension Package', null, null, 'special', 220, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-DESK', '久坐辦公張力方案', 'Desk Worker Package', null, null, 'special', 230, false, '{}'::jsonb),
+  ('PACKAGE', 'PKG-LIFT', '重訓恢復方案', 'Lifting Recovery Package', null, null, 'special', 240, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-WEEKLY', '每週固定追蹤', 'BodyFix Weekly', null, null, null, 10, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-4M', '每月 4 次', 'BodyFix 4 / Month', null, null, null, 20, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-8M', '每月 8 次', 'BodyFix 8 / Month', null, null, null, 30, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-VIP', '高頻次 VIP 預約', 'BodyFix VIP', null, null, null, 40, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-RECOVERY', '訓練恢復月票', 'Recovery Pass', null, null, null, 50, false, '{}'::jsonb),
+  ('PASS', 'PASS-BF-CORE', '骨盆核心月票', 'Core Pass', null, null, null, 60, false, '{}'::jsonb),
+  ('PASS', 'PASS-GV-ALL', '身體 + 狀態整合', 'Gavin All State Pass', null, null, null, 70, true, '{}'::jsonb),
+  ('PASS', 'PASS-CN-MONTHLY', '命盤月票', 'Chart Navigator Monthly', null, null, null, 80, true, '{}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-NEW', '新客追蹤', 'new_client_checkin', null, null, null, 10, false, '{"task_type":"new_client_checkin"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-MED', '中優先回訪', 'medium_priority_followup', null, null, null, 20, false, '{"task_type":"medium_priority_followup"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-HIGH', '高優先回訪', 'high_priority_followup', null, null, null, 30, false, '{"task_type":"high_priority_followup"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-DORMANT', '沉睡客戶', 'dormant_client', null, null, null, 40, false, '{"task_type":"dormant_client"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-RENEW', '續約候選', 'renewal_candidate', null, null, null, 50, false, '{"task_type":"renewal_candidate"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-PKG', '方案候選', 'package_candidate', null, null, null, 60, false, '{"task_type":"package_candidate"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-NOSHOW', '未到 / 取消後追蹤', 'noshow_followup', null, null, null, 70, false, '{"task_type":"noshow_followup"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-CHECKIN', '一般關心', 'general_checkin', null, null, null, 80, false, '{"task_type":"general_checkin"}'::jsonb),
+  ('FOLLOWUP_TASK', 'FT-REACTIVATE', '喚醒舊客', 'reactivate_old_client', null, null, null, 90, false, '{"task_type":"reactivate_old_client"}'::jsonb),
+  ('PRIORITY', 'P1', '高優先', null, '今天或 24 小時內處理', null, null, 10, false, '{}'::jsonb),
+  ('PRIORITY', 'P2', '中優先', null, '3 天內處理', null, null, 20, false, '{}'::jsonb),
+  ('PRIORITY', 'P3', '低優先', null, '7 天內處理', null, null, 30, false, '{}'::jsonb),
+  ('PRIORITY', 'P0', '暫不追蹤', null, '不主動聯繫', null, null, 40, false, '{}'::jsonb),
+  ('PRIORITY', 'PX', '特殊注意', null, '需要人工判斷', null, null, 50, false, '{}'::jsonb),
+  ('TASK_STATUS', 'open', '待處理', null, null, null, null, 10, false, '{}'::jsonb),
+  ('TASK_STATUS', 'done', '已追蹤', null, null, null, null, 20, false, '{}'::jsonb),
+  ('TASK_STATUS', 'snoozed', '已延後', null, null, null, null, 30, false, '{}'::jsonb),
+  ('TASK_STATUS', 'closed', '關閉', null, null, null, null, 40, false, '{}'::jsonb),
+  ('TASK_STATUS', 'ignored', '略過', null, null, null, null, 50, false, '{}'::jsonb),
+  ('TASK_STATUS', 'converted', '已成功預約 / 成交', null, null, null, null, 60, false, '{}'::jsonb),
+  ('TASK_STATUS', 'lost', '無回應 / 暫失聯', null, null, null, null, 70, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-SIT', '久坐壓縮類', null, '久坐、髖屈、胸口、肩頸、呼吸受限', null, null, 10, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-STAND', '久站負荷類', null, '久站、足弓、膝髖、下肢支撐', null, null, 20, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-HEAD', '低頭細作類', null, '低頭、手腕、頸側、胸口保護', null, null, 30, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-ASYM', '單側 / 不對稱類', null, '單側抬手、抱小孩、左右代償', null, null, 40, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-LOAD', '負重 / 爆發類', null, '負重、消防、重訓、爆發力', null, null, 50, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-ROT', '旋轉 / 過頭類', null, '旋轉、過頭抬手、胸椎髖部控制', null, null, 60, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-LIFE', '生活習慣類', null, '手機、電競、睡姿、日常慣性', null, null, 70, false, '{}'::jsonb),
+  ('QUICK_FILTER', 'QF-TRAIN', '訓練恢復類', null, '重訓、跑步、拳擊、運動恢復', null, null, 80, false, '{}'::jsonb),
+  ('TENSION', 'OT-DESK', '久坐辦公型', null, '髖屈肌短縮 + 深前線壓縮', 'QF-SIT', 'occupational', 10, false, '{}'::jsonb),
+  ('TENSION', 'OT-ENGINEER', '工程師滑鼠鍵盤型', null, '肩胛前引 + 胸小肌保護', 'QF-SIT', 'occupational', 20, false, '{}'::jsonb),
+  ('TENSION', 'OT-DRIVER', '長時間駕駛型', null, '腰髖壓縮 + 頸側代償', 'QF-SIT', 'occupational', 30, false, '{}'::jsonb),
+  ('TENSION', 'LT-GAMER', '電競久坐型', null, '腕屈肌 + 髖屈肌同步緊繃', 'QF-SIT', 'lifestyle', 40, false, '{"alternative_quick_filters":["QF-LIFE"]}'::jsonb),
+  ('TENSION', 'OT-MEDICAL', '醫護久站型', null, 'SBL 後表線 + 足弓穩定負荷', 'QF-STAND', 'occupational', 50, false, '{}'::jsonb),
+  ('TENSION', 'OT-RETAIL', '櫃哥櫃姐久站型', null, '下肢鏈保護性收縮', 'QF-STAND', 'occupational', 60, false, '{}'::jsonb),
+  ('TENSION', 'OT-CHEF', '廚師久站彎腰型', null, '腰部 + SBL 代償鏈', 'QF-STAND', 'occupational', 70, false, '{}'::jsonb),
+  ('TENSION', 'OT-HAIR', '髮型師抬手型', null, '肩頸過用 + 肩胛胸壁失衡', 'QF-STAND', 'occupational', 80, false, '{}'::jsonb),
+  ('TENSION', 'OT-DENTAL', '牙醫低頭旋轉型', null, '頸側胸口保護 + 呼吸空間受壓', 'QF-HEAD', 'occupational', 90, false, '{}'::jsonb),
+  ('TENSION', 'OT-BARISTA', '咖啡師手腕肩頸型', null, '腕屈肌 + 臂線負荷', 'QF-HEAD', 'occupational', 100, false, '{}'::jsonb),
+  ('TENSION', 'OT-DESIGNER', '設計師低頭滑鼠型', null, '頸胸交界 + 前臂過用', 'QF-HEAD', 'occupational', 110, false, '{}'::jsonb),
+  ('TENSION', 'LT-PHONE', '手機低頭型', null, '頸椎前引 + 胸口保護', 'QF-LIFE', 'lifestyle', 120, false, '{"alternative_quick_filters":["QF-HEAD"]}'::jsonb),
+  ('TENSION', 'OT-TEACHER', '老師板書型', null, '肩胛穩定下降 + 單側代償', 'QF-ASYM', 'occupational', 130, false, '{}'::jsonb),
+  ('TENSION', 'LT-PARENT', '抱小孩單側型', null, '骨盆 + 肩胛不對稱負荷', 'QF-ASYM', 'lifestyle', 140, false, '{}'::jsonb),
+  ('TENSION', 'SP-ASYMMETRIC', '左右不對稱型', null, '代償鏈 + 穩定度下降', 'QF-ASYM', 'special', 150, false, '{}'::jsonb),
+  ('TENSION', 'OT-BEAUTY', '美業單側操作型', null, '肩頸 + 手腕單側負荷', 'QF-ASYM', 'occupational', 160, false, '{}'::jsonb),
+  ('TENSION', 'OT-FIRE', '消防員負重型', null, '深前線 + 腰髖穩定需求高', 'QF-LOAD', 'occupational', 170, false, '{}'::jsonb),
+  ('TENSION', 'OT-LOGISTICS', '物流搬運型', null, '下背 + 髖膝承重代償', 'QF-LOAD', 'occupational', 180, false, '{}'::jsonb),
+  ('TENSION', 'TR-WEIGHT', '重訓恢復型', null, '肌筋膜保護 + 恢復整合需求', 'QF-TRAIN', 'training', 190, false, '{"alternative_quick_filters":["QF-LOAD"]}'::jsonb),
+  ('TENSION', 'TR-BOXING', '拳擊旋轉型', null, '胸椎髖部旋轉控制不足', 'QF-TRAIN', 'training', 200, false, '{"alternative_quick_filters":["QF-LOAD","QF-ROT"]}'::jsonb),
+  ('TENSION', 'OT-PHOTOGRAPHER', '攝影師肩頸負重型', null, '肩頸上背線代償', 'QF-ROT', 'occupational', 210, false, '{}'::jsonb),
+  ('TENSION', 'SP-OVERHEAD', '過頭抬手型', null, '肩胛胸壁過度使用', 'QF-ROT', 'special', 220, false, '{}'::jsonb),
+  ('TENSION', 'TR-THROW', '投擲 / 揮拍型', null, '旋轉鏈 + 肩髖協調', 'QF-ROT', 'training', 230, false, '{}'::jsonb),
+  ('TENSION', 'TR-GOLF', '高爾夫旋轉型', null, '胸椎 + 髖旋轉分工', 'QF-ROT', 'training', 240, false, '{}'::jsonb),
+  ('TENSION', 'LT-SLEEP-SIDE', '側睡壓迫型', null, '肩頸 + 骨盆旋轉慣性', 'QF-LIFE', 'lifestyle', 250, false, '{}'::jsonb),
+  ('TENSION', 'LT-BAG-ONE-SIDE', '單肩包型', null, '肩胛 + 骨盆側向代償', 'QF-LIFE', 'lifestyle', 260, false, '{}'::jsonb),
+  ('TENSION', 'TR-RUNNER', '跑者下肢鏈型', null, '髖膝踝外側線代償', 'QF-TRAIN', 'training', 270, false, '{}'::jsonb),
+  ('TENSION', 'TR-YOGA', '瑜伽柔軟過度型', null, '穩定不足 + 關節末端代償', 'QF-TRAIN', 'training', 280, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-NECK', '頸部', null, null, null, null, 10, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-SHOULDER', '肩膀', null, null, null, null, 20, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-CHEST', '胸口 / 胸廓', null, null, null, null, 30, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-BACK', '背部', null, null, null, null, 40, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-LOWBACK', '下背', null, null, null, null, 50, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-PELVIS', '骨盆', null, null, null, null, 60, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-HIP', '髖', null, null, null, null, 70, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-GLUTE', '臀', null, null, null, null, 80, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-KNEE', '膝', null, null, null, null, 90, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-ANKLE', '踝', null, null, null, null, 100, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-FOOT', '足底', null, null, null, null, 110, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-JAW', '下顎', null, null, null, null, 120, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-BREATH', '呼吸 / 橫隔膜', null, null, null, null, 130, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-CORE', '核心', null, null, null, null, 140, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-ARM', '手臂', null, null, null, null, 150, false, '{}'::jsonb),
+  ('BODY_REGION', 'RG-WRIST', '手腕', null, null, null, null, 160, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-SBL', '表淺背線', 'Superficial Back Line', null, null, null, 10, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-SFL', '表淺前線', 'Superficial Front Line', null, null, null, 20, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-LL', '側線', 'Lateral Line', null, null, null, 30, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-SL', '螺旋線', 'Spiral Line', null, null, null, 40, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-AL', '手臂線', 'Arm Lines', null, null, null, 50, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-FL', '功能線', 'Functional Lines', null, null, null, 60, false, '{}'::jsonb),
+  ('FASCIA_LINE', 'LN-DFL', '深前線', 'Deep Front Line', null, null, null, 70, false, '{}'::jsonb),
+  ('LOCATION', 'TPE', '台北', null, null, null, null, 10, false, '{"area":"north"}'::jsonb),
+  ('LOCATION', 'TPH', '新北', null, null, null, null, 20, false, '{"area":"north"}'::jsonb),
+  ('LOCATION', 'TYO', '桃園', null, null, null, null, 30, false, '{"area":"north"}'::jsonb),
+  ('LOCATION', 'HSC', '新竹', null, null, null, null, 40, false, '{"area":"north"}'::jsonb),
+  ('LOCATION', 'YIL', '宜蘭', null, null, null, null, 50, false, '{"area":"east"}'::jsonb),
+  ('LOCATION', 'HUA', '花蓮', null, null, null, null, 60, false, '{"area":"east"}'::jsonb),
+  ('LOCATION', 'TTT', '台東', null, null, null, null, 70, false, '{"area":"east"}'::jsonb),
+  ('LOCATION', 'EAST', '花東', null, null, null, null, 80, false, '{"area":"east"}'::jsonb),
+  ('LOCATION', 'TCH', '台中', null, null, null, null, 90, false, '{"area":"central"}'::jsonb),
+  ('LOCATION', 'CHW', '彰化', null, null, null, null, 100, false, '{"area":"central"}'::jsonb),
+  ('LOCATION', 'YUN', '雲林', null, null, null, null, 110, false, '{"area":"central"}'::jsonb),
+  ('LOCATION', 'CYI', '嘉義', null, null, null, null, 120, false, '{"area":"central"}'::jsonb),
+  ('LOCATION', 'TNN', '台南', null, null, null, null, 130, false, '{"area":"south"}'::jsonb),
+  ('LOCATION', 'KHH', '高雄', null, null, null, null, 140, false, '{"area":"south"}'::jsonb),
+  ('LOCATION', 'PIF', '屏東', null, null, null, null, 150, false, '{"area":"south"}'::jsonb),
+  ('LOCATION', 'ONLINE', '線上', null, null, null, null, 160, false, '{"area":"online"}'::jsonb),
+  ('LOCATION', 'TBD', '待確認', null, null, null, null, 170, false, '{"area":"unknown"}'::jsonb),
+  ('LOCATION', 'XMD', '西門', null, null, null, null, 180, false, '{"area":"taipei_zone"}'::jsonb),
+  ('LOCATION', 'SYS', '國父紀念館', null, null, null, null, 190, false, '{"area":"taipei_zone"}'::jsonb),
+  ('LOCATION', 'LZL', '六張犁', null, null, null, null, 200, false, '{"area":"taipei_zone"}'::jsonb),
+  ('LOCATION', 'HOME', '到府', null, null, null, null, 210, false, '{"area":"taipei_zone"}'::jsonb),
+  ('LOCATION', 'STUDIO', '工作室', null, null, null, null, 220, false, '{"area":"taipei_zone"}'::jsonb),
+  ('SOURCE', 'SRC-IG', 'Instagram', null, null, null, null, 10, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-FB', 'Facebook', null, null, null, null, 20, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-LINE', 'LINE', null, null, null, null, 30, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-WEB', '官網', null, null, null, null, 40, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-REF', '朋友介紹', null, null, null, null, 50, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-FANS', 'FansOne', null, null, null, null, 60, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-THR', 'Threads 脆', null, null, null, null, 70, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-GMAP', 'Google Maps', null, null, null, null, 80, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-OLD', '舊客 / 歷史資料', null, null, null, null, 90, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-EVENT', '活動 / 駐點', null, null, null, null, 100, false, '{}'::jsonb),
+  ('SOURCE', 'SRC-UNKNOWN', '未知來源', null, null, null, null, 110, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-CASH', '現金', null, null, null, null, 10, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-BANK', '銀行轉帳', null, null, null, null, 20, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-LINEPAY', 'LINE Pay', null, null, null, null, 30, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-CARD', '信用卡', null, null, null, null, 40, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-APPLEPAY', 'Apple Pay', null, null, null, null, 50, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-PENDING', '尚未付款', null, null, null, null, 60, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-PAID', '已付款', null, null, null, null, 70, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-DEPOSIT', '已付訂金', null, null, null, null, 80, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-REFUND', '已退款', null, null, null, null, 90, false, '{}'::jsonb),
+  ('PAYMENT', 'PAY-PARTIAL', '部分付款', null, null, null, null, 100, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-PROSPECT', '潛在客 / 諮詢中', null, '未成交', null, null, 10, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-NEW', '新客', null, '已完成首次服務', null, null, 20, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-ACTIVE', '活躍客', null, '近期有服務紀錄', null, null, 30, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-REGULAR', '固定客', null, '穩定回訪', null, null, 40, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-PACKAGE', '方案中客戶', null, '持有有效套裝 / 月票', null, null, 50, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-VIP', '高價值客', null, '高頻或旗艦方案', null, null, 60, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-DORMANT', '沉睡客', null, '久未回訪', null, null, 70, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-LOST', '流失', null, '長期失聯', null, null, 80, false, '{}'::jsonb),
+  ('CLIENT_STATUS', 'CL-FLAG', '特殊註記', null, '需人工注意', null, null, 90, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-SCHEDULED', '已預約', null, null, null, null, 10, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-CONFIRMED', '已確認', null, null, null, null, 20, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-COMPLETED', '已完成', null, null, null, null, 30, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-NOSHOW', '未到', null, null, null, null, 40, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-CANCELLED', '已取消', null, null, null, null, 50, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-RESCHEDULED', '已改期', null, null, null, null, 60, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-LATE-CANCEL', '臨時取消', null, null, null, null, 70, false, '{}'::jsonb),
+  ('ATTENDANCE_STATUS', 'AT-PENDING', '待確認', null, null, null, null, 80, false, '{}'::jsonb),
+  ('CLIENT_TYPE', 'CT-A', '續航型', 'Endurance dominant', null, null, null, 10, false, '{}'::jsonb),
+  ('CLIENT_TYPE', 'CT-B', '扭力型', 'Torsion dominant', null, null, null, 20, false, '{}'::jsonb),
+  ('CLIENT_TYPE', 'CT-C', '對角型', 'Diagonal compensation', null, null, null, 30, false, '{}'::jsonb),
+  ('CLIENT_TYPE', 'CT-D', '防禦型', 'Protective contraction dominant', null, null, null, 40, false, '{}'::jsonb),
+  ('CLIENT_TYPE', 'CT-R', '紅旗轉介', 'Red flag referral', null, null, null, 50, false, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-TR-TXT-001', '塔羅單題文字整理', 'Tarot Text 001', null, null, 'tarot', 10, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-TR-TXT-003', '塔羅三牌文字整理', 'Tarot Text 3 Cards', null, null, 'tarot', 20, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-TR-VOICE-001', '塔羅語音整理', 'Tarot Voice', null, null, 'tarot', 30, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-TR-LIVE-001', '塔羅即時諮詢', 'Tarot Live', null, null, 'tarot', 40, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-TR-STATUS', '塔羅狀態整理', 'Tarot Status', null, null, 'tarot', 50, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-TXT-001', '紫微小題文字整理', 'Zi Wei Text 001', null, null, 'ziwei', 60, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-STRUCTURE', '命盤結構整理', 'Zi Wei Structure', null, null, 'ziwei', 70, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-TIMING', '流年 / 流月節奏', 'Zi Wei Timing', null, null, 'ziwei', 80, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-CAREER', '職涯方向整理', 'Zi Wei Career', null, null, 'ziwei', 90, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-RELATION', '關係模式整理', 'Zi Wei Relationship', null, null, 'ziwei', 100, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-ZW-YEAR', '年度方向整理', 'Zi Wei Annual', null, null, 'ziwei', 110, true, '{}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-BASE', '吠陀占星基礎', null, null, null, 'jyotish', 120, true, '{"sanskrit":"ज्योतिष","translit":"久提沙","english_label":"Jyotiṣa Basic"}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-NAVA', '九曜', null, null, null, 'jyotish', 130, true, '{"sanskrit":"नवग्रह","english_label":"Navagraha"}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-RAHU', '羅睺', null, null, null, 'jyotish', 140, true, '{"sanskrit":"राहु","english_label":"Rahu"}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-KETU', '計都', null, null, null, 'jyotish', 150, true, '{"sanskrit":"केतु","english_label":"Ketu"}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-CHART', '吠陀命盤基礎', null, null, null, 'jyotish', 160, true, '{"english_label":"Vedic Chart"}'::jsonb),
+  ('CHART_NAVIGATOR', 'CN-JY-TIMING', '吠陀時間節奏觀察', null, null, null, 'jyotish', 170, true, '{"english_label":"Vedic Timing"}'::jsonb)
+on conflict (code) do nothing;
+
+-- RLS: active reference rows are public-readable; authenticated admins may inspect inactive rows.
+alter table public.codebook_categories enable row level security;
+alter table public.codebook_items enable row level security;
+
+revoke all on table public.codebook_categories from anon, authenticated;
+revoke all on table public.codebook_items from anon, authenticated;
+grant select on table public.codebook_categories to anon, authenticated;
+grant select on table public.codebook_items to anon, authenticated;
+grant all on table public.codebook_categories to service_role;
+grant all on table public.codebook_items to service_role;
+
+drop policy if exists "anon reads active codebook categories" on public.codebook_categories;
+create policy "anon reads active codebook categories" on public.codebook_categories for select to anon using (is_active = true);
+drop policy if exists "authenticated reads all codebook categories" on public.codebook_categories;
+create policy "authenticated reads all codebook categories" on public.codebook_categories for select to authenticated using (true);
+drop policy if exists "anon reads active codebook items" on public.codebook_items;
+create policy "anon reads active codebook items" on public.codebook_items for select to anon using (is_active = true);
+drop policy if exists "authenticated reads all codebook items" on public.codebook_items;
+create policy "authenticated reads all codebook items" on public.codebook_items for select to authenticated using (true);
