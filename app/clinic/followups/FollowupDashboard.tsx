@@ -6,6 +6,8 @@ import { ClinicNotice, ClinicShell, useClinicFetch } from "@/components/clinic/C
 import type { FollowupClient, FollowupDashboardData } from "@/lib/followup-dashboard";
 
 type Action = "complete" | "postpone";
+type CodebookItem = { code: string; category_key: string; name_zh: string; metadata?: { task_type?: string } };
+type CodebookData = { items: CodebookItem[] };
 type SectionProps = {
   title: string;
   eyebrow: string;
@@ -16,18 +18,20 @@ type SectionProps = {
   copiedId: string;
   busyId: string;
   actionable?: boolean;
+  priorityLabels: Map<string, string>;
+  taskCodes: Map<string, string>;
 };
 
 function dateLabel(value: string | null) {
   return value ? value.replaceAll("-", "/") : "未設定日期";
 }
 
-function FollowupCard({ item, onAction, onCopy, copiedId, busyId, actionable = true }: Omit<SectionProps, "title" | "eyebrow" | "empty" | "items"> & { item: FollowupClient }) {
+function FollowupCard({ item, onAction, onCopy, copiedId, busyId, actionable = true, priorityLabels, taskCodes }: Omit<SectionProps, "title" | "eyebrow" | "empty" | "items"> & { item: FollowupClient }) {
   const busy = busyId === item.item_id;
   return <article className="followup-card">
     <div className="followup-card-head">
       <div>
-        <div className="followup-badges"><span className={`followup-priority priority-${item.priority.toLowerCase()}`}>{item.priority}</span><span className="followup-category">{item.category_label}</span></div>
+        <div className="followup-badges"><span className={`followup-priority priority-${item.priority.toLowerCase()}`}>{item.priority}{priorityLabels.get(item.priority) ? ` · ${priorityLabels.get(item.priority)}` : ""}</span><span className="followup-category">{item.category_label}</span>{taskCodes.get(item.category) ? <span className="followup-category">{taskCodes.get(item.category)}</span> : null}</div>
         <h3>{item.client_name}</h3>
         <small>{item.client_code ?? "尚未設定客戶編號"} · 累計 {item.service_count} 次紀錄</small>
       </div>
@@ -56,6 +60,7 @@ function FollowupSection({ title, eyebrow, empty, items, ...props }: SectionProp
 
 export default function FollowupDashboard() {
   const { data, loading, error, diagnostics, reload } = useClinicFetch<FollowupDashboardData>("/api/clinic/followups");
+  const { data: codebook } = useClinicFetch<CodebookData>("/api/clinic/codebook?category_key=PRIORITY,FOLLOWUP_TASK&active_only=true");
   const [copiedId, setCopiedId] = useState("");
   const [busyId, setBusyId] = useState("");
   const [actionError, setActionError] = useState("");
@@ -86,7 +91,9 @@ export default function FollowupDashboard() {
     setBusyId("");
   }
 
-  const shared = { onAction: updateTask, onCopy: copyMessage, copiedId, busyId };
+  const priorityLabels = new Map(codebook?.items.filter((item) => item.category_key === "PRIORITY").map((item) => [item.code, item.name_zh]) ?? []);
+  const taskCodes = new Map(codebook?.items.filter((item) => item.category_key === "FOLLOWUP_TASK" && item.metadata?.task_type).map((item) => [item.metadata!.task_type!, item.code]) ?? []);
+  const shared = { onAction: updateTask, onCopy: copyMessage, copiedId, busyId, priorityLabels, taskCodes };
   return <ClinicShell title="追蹤提醒儀表板" subtitle="直接整理現有追蹤任務與方案候選，讓今天的聯繫順序一眼清楚。">
     <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
     {actionError ? <div className="bf-notice bf-section-gap" role="alert">{actionError}</div> : null}

@@ -1,36 +1,49 @@
 import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
 
-const DEFAULT_CATEGORIES = ["service", "package", "quick_filter", "tension", "region", "fascia_line", "location"];
+const CATEGORY_FIELDS = "id,category_key,category_name_zh,category_name_en,description,sort_order,is_active,created_at,updated_at";
+const ITEM_FIELDS = "id,category_key,code,name_zh,name_en,short_label,description,parent_code,quick_filter_code,group_key,sort_order,is_active,is_public,is_coming_soon,is_deprecated,metadata,created_at,updated_at";
+
+function values(searchParams: URLSearchParams, key: string) {
+  return searchParams.getAll(key).flatMap((value) => value.split(",")).map((value) => value.trim()).filter(Boolean);
+}
 
 export async function GET(req: Request) {
   const auth = await requireClinicAdmin("/api/clinic/codebook");
   if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(req.url);
-  const categories = (searchParams.get("categories") ?? DEFAULT_CATEGORIES.join(","))
-    .split(",")
-    .map((category) => category.trim())
-    .filter(Boolean);
-  const includeInactive = searchParams.get("include_inactive") === "true";
+  const categoryKeys = values(searchParams, "category_key").map((value) => value.toUpperCase());
+  const groupKeys = values(searchParams, "group_key");
+  const quickFilterCodes = values(searchParams, "quick_filter_code");
+  const activeOnly = searchParams.get("active_only") === "true";
 
-  let query = auth.supabase
-    .from("codebook_entries")
-    .select("category_code,code,display_name_zh,display_name_en,description,parent_category_code,parent_code,metadata,sort_order,status")
-    .in("category_code", categories)
-    .order("category_code")
+  let categoriesQuery = auth.supabase
+    .from("codebook_categories")
+    .select(CATEGORY_FIELDS)
+    .order("sort_order")
+    .order("category_key");
+  let itemsQuery = auth.supabase
+    .from("codebook_items")
+    .select(ITEM_FIELDS)
+    .order("category_key")
     .order("sort_order")
     .order("code");
 
-  if (!includeInactive) query = query.eq("status", "active");
+  if (categoryKeys.length) {
+    categoriesQuery = categoriesQuery.in("category_key", categoryKeys);
+    itemsQuery = itemsQuery.in("category_key", categoryKeys);
+  }
+  if (groupKeys.length) itemsQuery = itemsQuery.in("group_key", groupKeys);
+  if (quickFilterCodes.length) itemsQuery = itemsQuery.in("quick_filter_code", quickFilterCodes);
+  if (activeOnly) {
+    categoriesQuery = categoriesQuery.eq("is_active", true);
+    itemsQuery = itemsQuery.eq("is_active", true);
+  }
 
-  const { data, error } = await query;
+  const [categories, items] = await Promise.all([categoriesQuery, itemsQuery]);
+  const error = categories.error ?? items.error;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  const entries = data ?? [];
-  const byCategory = Object.fromEntries(
-    categories.map((category) => [category, entries.filter((entry) => entry.category_code === category)])
-  );
-
-  return NextResponse.json({ categories, entries, by_category: byCategory });
+  return NextResponse.json({ categories: categories.data ?? [], items: items.data ?? [] });
 }
