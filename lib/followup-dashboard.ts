@@ -1,141 +1,155 @@
-export type FollowupPriority = "high" | "medium" | "new" | "sleeping" | "watch";
+export type FollowupPriority = "P1" | "P2" | "P3";
+export type FollowupSource = "followup_task" | "package_candidate";
 
 export type FollowupClient = {
+  item_id: string;
+  source: FollowupSource;
   client_id: string;
   client_code: string | null;
   client_name: string;
-  last_visit_date: string;
-  days_since_visit: number;
-  last_service_type: string;
-  main_tags: string[];
-  last_notes: string;
-  next_recommended_action: string;
-  followup_priority: FollowupPriority;
+  priority: FollowupPriority;
+  category: string;
+  category_label: string;
+  due_date: string | null;
+  last_visit_date: string | null;
+  days_since_visit: number | null;
   service_count: number;
-  is_renewal_candidate: boolean;
-  is_twelve_session_candidate: boolean;
-  is_sleeping: boolean;
-  message: string;
-  followup_id: string | null;
+  reason: string;
+  suggested_message: string;
+  package_label: string | null;
 };
 
-type ClientRow = Record<string, unknown> & { id: string };
-type RecordRow = Record<string, unknown> & { id: string; client_id: string; service_date: string };
-type FollowupRow = Record<string, unknown> & { id: string; client_id: string };
+export type FollowupDashboardData = {
+  generated_at: string;
+  today: FollowupClient[];
+  p1: FollowupClient[];
+  p2: FollowupClient[];
+  dormant_clients: FollowupClient[];
+  package_candidates: FollowupClient[];
+  counts: { clients: number; service_records: number; open_tasks: number; package_candidates: number };
+};
 
-const FOCUS_TAGS = ["肩頸", "胸廓", "骨盆", "下肢", "訓練恢復"];
+type Row = Record<string, unknown>;
+
 const DAY_MS = 86_400_000;
 
-function text(value: unknown) {
-  return typeof value === "string" ? value.trim() : "";
+function text(row: Row, keys: string[]) {
+  for (const key of keys) {
+    const value = row[key];
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return "";
 }
 
-function dateOnly(value: Date) {
-  return value.toISOString().slice(0, 10);
+function nullableText(row: Row, keys: string[]) {
+  return text(row, keys) || null;
 }
 
-function daysBetween(from: string, to: Date) {
-  const fromMs = new Date(`${from}T00:00:00Z`).getTime();
-  const toMs = new Date(`${dateOnly(to)}T00:00:00Z`).getTime();
-  return Math.max(0, Math.floor((toMs - fromMs) / DAY_MS));
+function dateText(row: Row, keys: string[]) {
+  const value = text(row, keys);
+  return value ? value.slice(0, 10) : null;
 }
 
-function uniqueTags(content: string) {
-  return FOCUS_TAGS.filter((tag) => content.includes(tag));
+function numberValue(row: Row, keys: string[]) {
+  for (const key of keys) {
+    const value = Number(row[key]);
+    if (Number.isFinite(value)) return value;
+  }
+  return 0;
 }
 
-function priorityFor(days: number, count: number): FollowupPriority {
-  if (days > 30) return "sleeping";
-  if (count === 1 && days >= 1 && days <= 3) return "new";
-  if (days > 14 && count >= 2) return "high";
-  if (days >= 7 && days <= 14) return "medium";
-  return "watch";
+function priorityValue(row: Row): FollowupPriority {
+  const priority = text(row, ["priority", "priority_level"]).toUpperCase();
+  if (priority === "P1" || priority === "HIGH") return "P1";
+  if (priority === "P2" || priority === "MEDIUM") return "P2";
+  return "P3";
 }
 
-function nextAction(priority: FollowupPriority, renewal: boolean, twelveSession: boolean) {
-  if (priority === "sleeping") return "重新關心近況，邀請把身體狀態接回來";
-  if (priority === "new") return "確認首次整理後的身體感受";
-  if (twelveSession) return "討論 Fascia Chain Reset 12 次完整計畫";
-  if (renewal) return "討論下一個有節奏的整理週期";
-  if (priority === "high") return "今天主動關心並安排下一次整理";
-  if (priority === "medium") return "本週關心身體狀態與下一次安排";
-  return "持續觀察回訪節奏";
+function categoryValue(row: Row) {
+  return text(row, ["task_type", "category", "segment", "reason_code", "followup_type", "candidate_type", "type"]);
 }
 
-function messageFor(priority: FollowupPriority, renewal: boolean, focus: string) {
-  const area = focus || "上次的身體狀態";
-  if (priority === "new") return "上次整理完後，這幾天身體感覺還穩嗎？有沒有哪個地方又開始緊回來？";
-  if (priority === "sleeping") return `最近身體還好嗎？之前有整理過${area}，如果最近又開始緊或訓練恢復變慢，可以再約一次把狀態接回來。`;
-  if (renewal) return "你最近已經有幾次身體整理紀錄，我覺得可以開始把它做成比較有節奏的追蹤，不只是單次放鬆。下次可以一起看要不要整理成一個週期。";
-  return `最近身體狀態還穩嗎？上次主要整理的是${area}，如果這幾天又有卡住，我們可以接著看下一段張力路徑。`;
+function categoryLabel(category: string, source: FollowupSource) {
+  if (category === "dormant_client") return "沉睡客戶";
+  if (source === "package_candidate") return "方案候選";
+  return category ? category.replaceAll("_", " ") : "一般關心";
 }
 
-export function buildFollowupDashboard(clients: ClientRow[], records: RecordRow[], followups: FollowupRow[], now = new Date()) {
-  const recordsByClient = new Map<string, RecordRow[]>();
+function isOpen(row: Row) {
+  const status = text(row, ["status", "task_status"]).toLowerCase();
+  return !status || ["open", "pending", "todo", "not_started"].includes(status);
+}
+
+function daysSince(date: string | null, today: string) {
+  if (!date) return null;
+  const difference = new Date(`${today}T00:00:00Z`).getTime() - new Date(`${date}T00:00:00Z`).getTime();
+  return Math.max(0, Math.floor(difference / DAY_MS));
+}
+
+function sortItems(items: FollowupClient[]) {
+  const priorityRank = { P1: 0, P2: 1, P3: 2 };
+  return items.sort((a, b) => priorityRank[a.priority] - priorityRank[b.priority]
+    || (a.due_date ?? "9999-12-31").localeCompare(b.due_date ?? "9999-12-31")
+    || (b.days_since_visit ?? -1) - (a.days_since_visit ?? -1));
+}
+
+export function buildFollowupDashboard(
+  clients: Row[],
+  records: Row[],
+  followupTasks: Row[],
+  packageCandidates: Row[],
+  now = new Date()
+): FollowupDashboardData {
+  const today = now.toISOString().slice(0, 10);
+  const clientsById = new Map(clients.map((client) => [String(client.id), client]));
+  const recordsByClient = new Map<string, Row[]>();
+
   for (const record of records) {
-    const list = recordsByClient.get(record.client_id) ?? [];
+    const clientId = String(record.client_id ?? "");
+    const list = recordsByClient.get(clientId) ?? [];
     list.push(record);
-    recordsByClient.set(record.client_id, list);
+    recordsByClient.set(clientId, list);
+  }
+  for (const list of recordsByClient.values()) {
+    list.sort((a, b) => text(b, ["service_date", "created_at"]).localeCompare(text(a, ["service_date", "created_at"])));
   }
 
-  const today = dateOnly(now);
-  const tasksByClient = new Map<string, FollowupRow>();
-  for (const followup of followups) {
-    if (!tasksByClient.has(followup.client_id)) tasksByClient.set(followup.client_id, followup);
-  }
-  const people: FollowupClient[] = [];
-
-  for (const client of clients) {
-    const latestTask = tasksByClient.get(client.id);
-    const taskIsDoneToday = latestTask?.is_done === true && text(latestTask.sent_at).slice(0, 10) === today;
-    const taskIsDelayed = latestTask?.is_done !== true && text(latestTask?.scheduled_date) > today;
-    if (taskIsDoneToday || taskIsDelayed) continue;
-
-    const clientRecords = (recordsByClient.get(client.id) ?? []).sort((a, b) => b.service_date.localeCompare(a.service_date));
-    const latest = clientRecords[0];
-    const lastVisit = latest?.service_date || text(client.last_session_date);
-    if (!lastVisit) continue;
-
-    const days = daysBetween(lastVisit, now);
-    const count = clientRecords.length || Number(client.total_sessions) || 0;
-    const combined = clientRecords.map((record) => [record.main_complaint, record.main_tension_area, record.processed_area, record.body_region, record.next_focus, record.internal_notes].map(text).join(" ")).join(" ");
-    const mainTags = uniqueTags(combined);
-    const latestFocus = text(latest?.processed_area) || text(latest?.main_tension_area) || text(latest?.main_complaint) || text(client.main_issue);
-    const latestNotes = text(latest?.after_change) || text(latest?.internal_notes) || text(latest?.main_complaint) || text(client.internal_notes) || "尚未留下整理重點";
-    const priority = priorityFor(days, count);
-    const renewal = count >= 3 && days <= 30;
-    const twelveSession = count >= 3 && mainTags.length >= 2;
-    const task = latestTask?.is_done === true ? undefined : latestTask;
-
-    people.push({
-      client_id: client.id,
-      client_code: text(client.client_code) || null,
-      client_name: text(client.display_name) || text(client.client_name) || text(client.nickname) || "未命名客戶",
+  function normalize(row: Row, source: FollowupSource): FollowupClient {
+    const clientId = String(row.client_id ?? "");
+    const client = clientsById.get(clientId) ?? {};
+    const clientRecords = recordsByClient.get(clientId) ?? [];
+    const lastVisit = dateText(clientRecords[0] ?? {}, ["service_date", "created_at"])
+      ?? dateText(client, ["last_session_date", "last_visit_date"]);
+    const category = categoryValue(row);
+    return {
+      item_id: String(row.id ?? `${source}-${clientId}`),
+      source,
+      client_id: clientId,
+      client_code: nullableText(client, ["client_code"]),
+      client_name: text(client, ["display_name", "client_name", "nickname"]) || "未命名客戶",
+      priority: priorityValue(row),
+      category,
+      category_label: categoryLabel(category, source),
+      due_date: dateText(row, ["due_date", "scheduled_date", "followup_date", "next_followup_date"]),
       last_visit_date: lastVisit,
-      days_since_visit: days,
-      last_service_type: text(latest?.service_name_snapshot) || text(latest?.service_code) || "身體整理",
-      main_tags: mainTags.length ? mainTags : [text(latest?.body_region) || "待補標籤"],
-      last_notes: latestNotes,
-      next_recommended_action: text(task?.next_action) || nextAction(priority, renewal, twelveSession),
-      followup_priority: priority,
-      service_count: count,
-      is_renewal_candidate: renewal,
-      is_twelve_session_candidate: twelveSession,
-      is_sleeping: days > 30,
-      message: text(task?.message_summary) || messageFor(priority, renewal, latestFocus),
-      followup_id: task?.id ?? null
-    });
+      days_since_visit: daysSince(lastVisit, today),
+      service_count: clientRecords.length || numberValue(client, ["total_sessions", "service_count"]),
+      reason: text(row, ["reason", "trigger_reason", "task_reason", "notes", "description"]) || "依目前追蹤節奏安排",
+      suggested_message: text(row, ["suggested_message", "message", "message_template", "suggested_pitch", "proposal_message"]) || "嗨，最近還好嗎？想關心一下你近期的狀態與安排。",
+      package_label: source === "package_candidate" ? nullableText(row, ["package_name", "suggested_package", "offer_title", "candidate_type", "package_type"]) : null
+    };
   }
 
-  const score = { sleeping: 5, high: 4, new: 3, medium: 2, watch: 1 } as const;
-  people.sort((a, b) => score[b.followup_priority] - score[a.followup_priority] || b.days_since_visit - a.days_since_visit);
+  const openTasks = followupTasks.filter(isOpen).map((row) => normalize(row, "followup_task"));
+  const candidates = packageCandidates.map((row) => normalize(row, "package_candidate"));
 
   return {
     generated_at: now.toISOString(),
-    today: people.filter((person) => person.followup_priority !== "watch").slice(0, 8),
-    high_priority: people.filter((person) => person.followup_priority === "high"),
-    renewal_candidates: people.filter((person) => person.is_renewal_candidate),
-    twelve_session_candidates: people.filter((person) => person.is_twelve_session_candidate),
-    sleeping_clients: people.filter((person) => person.is_sleeping)
+    today: sortItems(openTasks.filter((item) => !item.due_date || item.due_date <= today)),
+    p1: sortItems(openTasks.filter((item) => item.priority === "P1")),
+    p2: sortItems(openTasks.filter((item) => item.priority === "P2")),
+    dormant_clients: sortItems(openTasks.filter((item) => item.category === "dormant_client")),
+    package_candidates: sortItems(candidates),
+    counts: { clients: clients.length, service_records: records.length, open_tasks: openTasks.length, package_candidates: candidates.length }
   };
 }
