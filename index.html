@@ -675,6 +675,75 @@ nav {
   color: var(--stone-lt);
   line-height: 1.8;
 }
+.waitlist-form {
+  border: 1px solid rgba(196,149,106,0.3);
+  border-radius: var(--radius);
+  padding: 28px 32px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+.waitlist-form-heading {
+  font-size: 18px;
+  color: var(--ivory);
+  font-weight: 400;
+}
+.waitlist-form-copy {
+  color: var(--stone-lt);
+  font-size: 13px;
+  line-height: 1.7;
+}
+.waitlist-field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.waitlist-field label {
+  font-family: var(--f-mono);
+  font-size: 10px;
+  letter-spacing: 2px;
+  color: var(--gold);
+}
+.waitlist-field input,
+.waitlist-field select {
+  width: 100%;
+  border: 1px solid rgba(255,255,255,0.14);
+  border-radius: var(--radius);
+  background: rgba(255,255,255,0.04);
+  color: var(--ivory);
+  padding: 13px 14px;
+  font: inherit;
+  font-size: 14px;
+}
+.waitlist-field select option { color: var(--ink); }
+.waitlist-field input:focus,
+.waitlist-field select:focus {
+  outline: 1px solid var(--gold);
+  border-color: var(--gold);
+}
+.waitlist-submit {
+  border: 1px solid var(--gold);
+  border-radius: var(--radius);
+  background: var(--gold);
+  color: var(--ink);
+  cursor: pointer;
+  font-family: var(--f-mono);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 2px;
+  padding: 14px 18px;
+  transition: opacity .2s;
+}
+.waitlist-submit:hover { opacity: .86; }
+.waitlist-submit:disabled { cursor: wait; opacity: .55; }
+.waitlist-status {
+  min-height: 22px;
+  color: var(--stone-lt);
+  font-size: 13px;
+  line-height: 1.6;
+}
+.waitlist-status.success { color: #6FCF97; }
+.waitlist-status.error { color: #EB8C8C; }
 
 /* ── FOOTER ── */
 footer {
@@ -1204,6 +1273,30 @@ footer {
         </div>
         <div class="arrow">→</div>
       </a>
+      <form id="waitlist-form" class="waitlist-form">
+        <h3 class="waitlist-form-heading">加入等待名單</h3>
+        <p class="waitlist-form-copy">留下聯絡方式與有興趣的服務，開放新時段時我會再聯絡你。</p>
+        <div class="waitlist-field">
+          <label for="waitlist-name">NAME · 姓名</label>
+          <input id="waitlist-name" name="name" type="text" maxlength="100" autocomplete="name" required>
+        </div>
+        <div class="waitlist-field">
+          <label for="waitlist-email">EMAIL · 電子信箱</label>
+          <input id="waitlist-email" name="email" type="email" maxlength="254" autocomplete="email" required>
+        </div>
+        <div class="waitlist-field">
+          <label for="waitlist-interest">INTEREST · 感興趣的服務</label>
+          <select id="waitlist-interest" name="interest" required>
+            <option value="" selected disabled>請選擇</option>
+            <option value="body-reset">身體整理 Body Reset</option>
+            <option value="movement">動作整合 Movement</option>
+            <option value="ziwei-tarot">Zi Wei & Tarot</option>
+            <option value="city-tour">城市場次 City Tour</option>
+          </select>
+        </div>
+        <button class="waitlist-submit" type="submit">送出等待名單</button>
+        <p id="waitlist-status" class="waitlist-status" role="status" aria-live="polite"></p>
+      </form>
     </div>
   </div>
 </section>
@@ -1243,6 +1336,44 @@ footer {
     </div>
   </div>
 </footer>
+
+<script>
+  const waitlistForm = document.getElementById('waitlist-form');
+  const waitlistStatus = document.getElementById('waitlist-status');
+
+  waitlistForm.addEventListener('submit', async (event) => {
+    event.preventDefault();
+
+    const submitButton = waitlistForm.querySelector('button[type="submit"]');
+    const formData = new FormData(waitlistForm);
+    submitButton.disabled = true;
+    waitlistStatus.className = 'waitlist-status';
+    waitlistStatus.textContent = '送出中…';
+
+    try {
+      const response = await fetch('/api/waitlist', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: formData.get('name'),
+          email: formData.get('email'),
+          interest: formData.get('interest')
+        })
+      });
+
+      if (!response.ok) throw new Error('Request failed');
+
+      waitlistForm.reset();
+      waitlistStatus.className = 'waitlist-status success';
+      waitlistStatus.textContent = '已收到，我會再聯絡你。';
+    } catch (_) {
+      waitlistStatus.className = 'waitlist-status error';
+      waitlistStatus.textContent = '送出失敗，請稍後再試。';
+    } finally {
+      submitButton.disabled = false;
+    }
+  });
+</script>
 
 </body>
 </html>
