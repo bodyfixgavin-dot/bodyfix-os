@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
 
 const CATEGORY_FIELDS = "id,category_key,category_name_zh,category_name_en,description,sort_order,is_active,created_at,updated_at";
+export const dynamic = "force-dynamic";
+
 const ITEM_FIELDS = "id,category_key,code,name_zh,name_en,short_label,description,parent_code,quick_filter_code,group_key,sort_order,is_active,is_public,is_coming_soon,is_deprecated,metadata,created_at,updated_at";
 
 function values(searchParams: URLSearchParams, key: string) {
@@ -45,5 +47,8 @@ export async function GET(req: Request) {
   const error = categories.error ?? items.error;
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
 
-  return NextResponse.json({ categories: categories.data ?? [], items: items.data ?? [] });
+  return NextResponse.json(
+    { categories: categories.data ?? [], items: items.data ?? [] },
+    { headers: { "Cache-Control": "private, no-store" } }
+  );
 }
