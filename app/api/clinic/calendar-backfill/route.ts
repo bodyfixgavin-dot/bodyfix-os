@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { makeClientCode, readJson, requireClinicAdmin } from "@/lib/clinic-api";
+import { readJson, requireClinicAdmin } from "@/lib/clinic-api";
 
 const BACKFILL_NOTE_MARKER = "來源：A 完整客戶總表 / Calendar Backfill";
 const PASTE_NOTE_MARKER = "來源：貼上式行事曆 / 客戶總表回填";
@@ -180,7 +180,7 @@ function selectForAvailableColumns(availableColumns: Set<string>, preferred: str
 
 function buildClientInsertPayload(row: CsvRow, availableColumns: Set<string>) {
   const displayName = getValue(row, columnAliases.displayName);
-  const clientCode = getValue(row, columnAliases.clientCode) || makeClientCode();
+  const clientCode = getValue(row, columnAliases.clientCode);
   const priority = normalizedPriority(row);
   const contactMethod = getValue(row, columnAliases.contactMethod) || DEFAULT_CONTACT_METHOD;
   const contactValue = getValue(row, columnAliases.contactValue);
@@ -198,7 +198,7 @@ function buildClientInsertPayload(row: CsvRow, availableColumns: Set<string>) {
   if (availableColumns.has("display_name")) payload.display_name = displayName;
   if (availableColumns.has("client_name")) payload.client_name = displayName;
   if (!availableColumns.has("display_name") && availableColumns.has("name")) payload.name = displayName;
-  if (availableColumns.has("client_code")) payload.client_code = clientCode;
+  if (availableColumns.has("client_code") && clientCode) payload.client_code = clientCode;
   if (availableColumns.has("nickname")) payload.nickname = displayName;
   if (availableColumns.has("source")) payload.source = "other";
   if (availableColumns.has("priority")) payload.priority = priority;
@@ -213,7 +213,7 @@ function buildClientInsertPayload(row: CsvRow, availableColumns: Set<string>) {
   if (availableColumns.has("line_id") && contactValue && (method.includes("line") || method === "line")) payload.line_id = contactValue;
   if (availableColumns.has("instagram") && contactValue && (method.includes("ig") || method.includes("instagram"))) payload.instagram = contactValue;
   if (availableColumns.has("phone") && contactValue && (method.includes("電話") || method.includes("phone") || method.includes("手機"))) payload.phone = contactValue;
-  if (availableColumns.has("line_id") && !payload.line_id) payload.line_id = `clinic-${clientCode}`;
+  if (availableColumns.has("line_id") && !payload.line_id) payload.line_id = clientCode ? `clinic-${clientCode}` : `clinic-import-${crypto.randomUUID()}`;
   return keepAllowedColumns(payload, Array.from(availableColumns));
 }
 

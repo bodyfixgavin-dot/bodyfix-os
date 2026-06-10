@@ -36,7 +36,7 @@ export const RECORD_FIELDS = [
   "client_id", "service_date", "record_mode", "service_code", "service_name_snapshot", "duration_minutes", "price_twd",
   "main_complaint", "fatigue_state_assessment", "main_tension_area", "processed_area", "strategy", "client_reaction",
   "after_change", "next_focus", "internal_notes", "dominant_fascia_line", "body_region", "satisfaction_score",
-  "followup_needed", "next_followup_date", "case_candidate", "plan_candidate"
+  "followup_needed", "next_followup_date", "case_candidate", "plan_candidate", "quick_filter_code", "tension_code"
 ];
 
 export const HOMEWORK_FIELDS = ["client_id", "service_record_id", "breathing_cue", "movement_cue", "suggested_frequency", "notice", "status"];
@@ -49,9 +49,6 @@ export const PLAN_FIELDS = [
 ];
 export const CASE_FIELDS = ["case_code", "client_id", "service_record_id", "case_type", "pain_keyword", "assessment_keyword", "before_summary", "after_summary", "client_quote", "evidence_type", "publish_permission", "content_status", "internal_value_score", "ai_summary"];
 
-export function makeClientCode() {
-  return `BF-${Math.random().toString(16).slice(2, 8).toUpperCase()}`;
-}
 
 export function withoutIdentity(client: Record<string, unknown>) {
   return {
