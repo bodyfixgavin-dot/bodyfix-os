@@ -2769,3 +2769,111 @@ main {
 .codebook-flag.is-on { background: rgba(53,116,88,.12); color: #357458; }
 @media (max-width: 820px) { .codebook-summary, .codebook-list { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 560px) { .codebook-summary, .codebook-list { grid-template-columns: 1fr; } .codebook-item header { display: grid; } .codebook-filters button { flex: 1 1 calc(50% - 7px); min-width: 0; overflow-wrap: anywhere; } }
+
+/* BodyFix OS dashboard navigation hierarchy */
+.clinic-menu-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px;
+}
+
+.clinic-menu-card {
+  min-width: 0;
+  border: 1px solid var(--bf-line);
+  border-radius: 22px;
+  background: rgba(251, 250, 246, .9);
+  box-shadow: 0 16px 36px rgba(23, 35, 51, .07);
+  padding: 20px;
+}
+
+.clinic-menu-card h2,
+.clinic-menu-card summary span {
+  margin: 0;
+  color: var(--bf-navy);
+  font-family: "Noto Serif TC", "PingFang TC", serif;
+  font-size: 22px;
+  font-weight: 800;
+}
+
+.clinic-menu-card > p {
+  min-height: 3.2em;
+  margin: 8px 0 16px;
+  color: var(--bf-muted);
+  line-height: 1.6;
+}
+
+.clinic-menu-links {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.clinic-menu-links a {
+  display: flex;
+  min-width: 0;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  border: 1px solid rgba(155, 117, 80, .24);
+  border-radius: 14px;
+  background: white;
+  color: var(--bf-navy);
+  padding: 11px 12px;
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+  transition: border-color .18s ease, box-shadow .18s ease, transform .18s ease;
+}
+
+.clinic-menu-links a::after {
+  flex: 0 0 auto;
+  margin-left: 6px;
+  color: var(--bf-bronze);
+  content: "→";
+}
+
+.clinic-menu-links a:hover,
+.clinic-menu-links a:focus-visible {
+  border-color: var(--bf-bronze);
+  box-shadow: 0 10px 24px rgba(155, 117, 80, .12);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.clinic-menu-maintenance {
+  grid-column: 1 / -1;
+  background: rgba(255, 255, 255, .5);
+}
+
+.clinic-menu-maintenance summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.clinic-menu-maintenance summary::-webkit-details-marker { display: none; }
+.clinic-menu-maintenance summary::after {
+  color: var(--bf-bronze);
+  content: "+";
+  font-size: 24px;
+  font-weight: 500;
+}
+.clinic-menu-maintenance[open] summary::after { content: "−"; }
+.clinic-menu-maintenance summary small { margin-left: auto; color: var(--bf-muted); font-weight: 500; }
+.clinic-menu-maintenance[open] summary { margin-bottom: 8px; }
+.clinic-menu-maintenance > p { min-height: 0; }
+
+@media (max-width: 700px) {
+  .clinic-menu-grid { grid-template-columns: 1fr; gap: 14px; }
+  .clinic-menu-card { padding: 16px; }
+  .clinic-menu-card > p { min-height: 0; margin-bottom: 13px; font-size: 14px; }
+  .clinic-menu-links { gap: 8px; }
+  .clinic-menu-links a { min-height: 58px; padding: 10px; font-size: 13px; }
+  .clinic-menu-maintenance { grid-column: auto; }
+  .clinic-menu-maintenance summary small { display: none; }
+}

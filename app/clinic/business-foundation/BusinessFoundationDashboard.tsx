@@ -230,7 +230,7 @@ export function BusinessFoundationDashboard() {
         </div>
       </section>
 
-      <section className="bf-card bf-section-gap">
+      <section className="bf-card bf-section-gap" id="product-ladder">
         <h2 className="bf-section-title">2. 產品階梯總覽</h2>
         <div className="bf-table-wrap">
           <table className="bf-admin-table bf-foundation-table">
@@ -336,7 +336,7 @@ export function BusinessFoundationDashboard() {
         )}
       </section>
 
-      <section className="bf-card bf-section-gap">
+      <section className="bf-card bf-section-gap" id="monthly-revenue">
         <h2 className="bf-section-title">5. 月營收試算</h2>
         <div className="bf-admin-actions bf-margin-bottom">
           <button className="bf-small-btn" type="button" onClick={() => applyQuickTest("30", "fascia_chain_reset_60")}>30 堂 fascia_chain_reset_60</button>
