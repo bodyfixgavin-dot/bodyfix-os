@@ -3,7 +3,65 @@
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
-type ShellProps = { title: string; subtitle: string; children: React.ReactNode };
+type ShellProps = { title: string; subtitle: string; children: React.ReactNode; showDashboardMenu?: boolean };
+
+type DashboardLink = { label: string; href: string; note?: string };
+type DashboardGroup = { title: string; description: string; links: DashboardLink[]; collapsible?: boolean };
+
+const dashboardGroups: DashboardGroup[] = [
+  {
+    title: "今日工作",
+    description: "每天最常用的操作，從這裡開始。",
+    links: [
+      { label: "總覽", href: "/clinic" },
+      { label: "新增服務紀錄", href: "/clinic/records/new" },
+      { label: "追蹤提醒", href: "/clinic/followups" },
+      { label: "預約後台", href: "/admin" },
+      { label: "行事曆回填", href: "/clinic/calendar-backfill" },
+    ],
+  },
+  {
+    title: "個案管理",
+    description: "客戶資料、問卷與案例資產。",
+    links: [
+      { label: "客戶列表", href: "/clinic/clients" },
+      { label: "新增客戶", href: "/clinic/clients/new" },
+      { label: "問卷回覆", href: "/clinic/intake-submissions" },
+      { label: "案例素材", href: "/clinic/cases" },
+    ],
+  },
+  {
+    title: "方案與轉換",
+    description: "續約、成交與營收相關入口。",
+    links: [
+      { label: "下一步方案候選", href: "/clinic/plan-candidates" },
+      { label: "方案提案 / 成交追蹤", href: "/clinic/conversion" },
+      { label: "月營收試算", href: "/clinic/business-foundation#monthly-revenue" },
+      { label: "商業規則地基", href: "/clinic/business-foundation" },
+    ],
+  },
+  {
+    title: "策略與內容",
+    description: "品牌策略、內容與成長分析。",
+    links: [
+      { label: "策略 SWOT", href: "/clinic/strategy-swot" },
+      { label: "地區需求中樞", href: "/clinic/location-dashboard" },
+      { label: "Chart Navigator SOP", href: "/clinic/sop/chart-navigator" },
+      { label: "AI 營運副駕", href: "/clinic/ai-copilot" },
+    ],
+  },
+  {
+    title: "系統維護",
+    description: "資料規則、狀態與內部維護工具。",
+    collapsible: true,
+    links: [
+      { label: "Codebook 字典", href: "/clinic/codebook" },
+      { label: "後台資料庫狀態", href: "/admin" },
+      { label: "Admin / Migration 工具", href: "/clinic/calendar-backfill" },
+      { label: "產品階梯總覽", href: "/clinic/business-foundation#product-ladder" },
+    ],
+  },
+];
 
 type LoadState<T> = { data: T | null; error: string; loading: boolean; diagnostics: AdminDiagnostics | null };
 type AdminSessionState = { bypassMode?: boolean };
@@ -34,7 +92,39 @@ function formatClinicError(json: { error?: string; diagnostics?: AdminDiagnostic
   return json.error ?? fallback;
 }
 
-export function ClinicShell({ title, subtitle, children }: ShellProps) {
+function DashboardGroupCard({ group }: { group: DashboardGroup }) {
+  const content = (
+    <>
+      <p>{group.description}</p>
+      <div className="clinic-menu-links">
+        {group.links.map((link) => (
+          <Link href={link.href} key={`${group.title}-${link.label}`}>
+            <span>{link.label}</span>
+            {link.note ? <small>{link.note}</small> : null}
+          </Link>
+        ))}
+      </div>
+    </>
+  );
+
+  if (group.collapsible) {
+    return (
+      <details className="clinic-menu-card clinic-menu-maintenance">
+        <summary><span>{group.title}</span><small>預設收合，點擊展開</small></summary>
+        {content}
+      </details>
+    );
+  }
+
+  return (
+    <section className="clinic-menu-card">
+      <h2>{group.title}</h2>
+      {content}
+    </section>
+  );
+}
+
+export function ClinicShell({ title, subtitle, children, showDashboardMenu = false }: ShellProps) {
   const [bypassMode, setBypassMode] = useState(false);
 
   useEffect(() => {
@@ -57,26 +147,20 @@ export function ClinicShell({ title, subtitle, children }: ShellProps) {
         <Link className="bf-brand" href="/clinic" aria-label="回到 BodyFix OS Hub"><span className="bf-logo-box">BF</span> BodyFix Clinic</Link>
         <h1>{title}</h1>
         <p className="bf-subtitle">{subtitle}</p>
-        <nav className="clinic-nav">
-          <Link href="/clinic">總覽</Link>
-          <Link href="/clinic/clients">客戶列表</Link>
-          <Link href="/clinic/clients/new">新增客戶</Link>
-          <Link href="/clinic/intake-submissions">問卷回覆</Link>
-          <Link href="/clinic/records/new">新增服務紀錄</Link>
-          <Link href="/clinic/calendar-backfill">行事曆回填</Link>
-          <Link href="/clinic/followups">追蹤提醒</Link>
-          <Link href="/clinic/codebook">Codebook 字典</Link>
-          <Link href="/clinic/plan-candidates">下一步方案候選</Link>
-          <Link href="/clinic/conversion">方案提案 / 成交追蹤</Link>
-          <Link href="/clinic/location-dashboard">地區需求中樞</Link>
-          <Link href="/clinic/business-foundation">商業規則地基</Link>
-          <Link href="/clinic/strategy-swot">策略 SWOT</Link>
-          <Link href="/clinic/sop/chart-navigator">Chart Navigator SOP</Link>
-          <Link href="/clinic/ai-copilot">AI 營運副駕</Link>
-          <Link href="/clinic/cases">案例素材</Link>
-          <Link href="/admin">預約後台</Link>
-        </nav>
+        {!showDashboardMenu && (
+          <nav className="clinic-nav clinic-nav-compact" aria-label="後台快速導覽">
+            <Link href="/clinic">回到後台總覽</Link>
+            <Link href="/clinic/records/new">新增服務紀錄</Link>
+            <Link href="/clinic/followups">追蹤提醒</Link>
+            <Link href="/admin">預約後台</Link>
+          </nav>
+        )}
       </section>
+      {showDashboardMenu && (
+        <nav className="clinic-menu-grid bf-section-gap" aria-label="BodyFix OS 後台功能分類">
+          {dashboardGroups.map((group) => <DashboardGroupCard group={group} key={group.title} />)}
+        </nav>
+      )}
       {bypassMode && (
         <div className="bf-notice bf-section-gap">目前為 Preview 測試模式，已啟用免密碼後台進入。<br />請勿匯入正式客戶資料。</div>
       )}
