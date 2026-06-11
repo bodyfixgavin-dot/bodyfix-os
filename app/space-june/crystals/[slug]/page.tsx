@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { notFound } from "next/navigation";
+import styles from "../../SpaceJune.module.css";
+import { CRYSTAL_TYPES } from "@/lib/space-june/space-data";
+export function generateStaticParams(){return CRYSTAL_TYPES.map(item=>({slug:item.id}))}
+export default async function Page({params}:{params:Promise<{slug:string}>}){const {slug}=await params;const crystal=CRYSTAL_TYPES.find(x=>x.id===slug);if(!crystal)notFound();return <main className={styles.page}><div className={styles.shell}><section className={styles.resultHero}><p className={styles.eyebrow}>Crystal direction · {crystal.color}</p><h1>{crystal.name}｜{crystal.crystal}</h1><p className={styles.lead}>{crystal.description} 水晶在這裡是空間意圖的視覺提示，不取代專業醫療、心理或財務建議。</p></section><section className={styles.resultLayout}><article className={styles.panel}><h3>先做的三個空間行動</h3><ol>{crystal.actions.map(x=><li key={x}>{x}</li>)}</ol></article><aside className={styles.panel}><h3>下一步</h3><p>先讓這個方向使用七天，再決定是否加入現成配置、植物水晶組或一對一規劃。</p><div className={styles.actions}><Link className={styles.button} href="/space-june/category/ready">看現成款</Link><Link className={styles.ghost} href="/space-june">回到指南</Link></div></aside></section></div></main>}
