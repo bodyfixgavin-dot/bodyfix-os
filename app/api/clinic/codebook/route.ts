@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireClinicAdmin } from "@/lib/clinic-api";
+import { clinicDataError, requireClinicAdmin } from "@/lib/clinic-api";
 
 const CATEGORY_FIELDS = "id,category_key,category_name_zh,category_name_en,description,sort_order,is_active,created_at,updated_at";
 export const dynamic = "force-dynamic";
@@ -10,8 +10,11 @@ function values(searchParams: URLSearchParams, key: string) {
   return searchParams.getAll(key).flatMap((value) => value.split(",")).map((value) => value.trim()).filter(Boolean);
 }
 
+const requestPath = "/api/clinic/codebook";
+const failedRequest = "Supabase codebook categories/items select";
+
 export async function GET(req: Request) {
-  const auth = await requireClinicAdmin("/api/clinic/codebook");
+  const auth = await requireClinicAdmin(requestPath);
   if (!auth.ok) return auth.response;
 
   const { searchParams } = new URL(req.url);
@@ -43,12 +46,16 @@ export async function GET(req: Request) {
     itemsQuery = itemsQuery.eq("is_active", true);
   }
 
-  const [categories, items] = await Promise.all([categoriesQuery, itemsQuery]);
-  const error = categories.error ?? items.error;
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  try {
+    const [categories, items] = await Promise.all([categoriesQuery, itemsQuery]);
+    const error = categories.error ?? items.error;
+    if (error) return clinicDataError(requestPath, error, failedRequest);
 
-  return NextResponse.json(
-    { categories: categories.data ?? [], items: items.data ?? [] },
-    { headers: { "Cache-Control": "private, no-store" } }
-  );
+    return NextResponse.json(
+      { categories: categories.data ?? [], items: items.data ?? [] },
+      { headers: { "Cache-Control": "private, no-store" } }
+    );
+  } catch (error) {
+    return clinicDataError(requestPath, error, failedRequest);
+  }
 }
