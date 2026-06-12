@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireBookingAdmin } from "@/lib/booking-admin";
+import { buildAdminDataErrorPayload } from "@/lib/admin-diagnostics";
 
 export async function requireClinicAdmin(requestPath = "clinic data request") {
   return requireBookingAdmin(requestPath);
@@ -23,6 +24,25 @@ export function cleanPayload(input: Record<string, unknown>, allowed: string[]) 
 
 export function apiError(message: string, status = 400) {
   return NextResponse.json({ error: message }, { status });
+}
+
+export function clinicDataError(requestPath: string, error: unknown, failedRequest: string) {
+  const message = error instanceof Error ? error.message : String(error || "Unknown Supabase error");
+  const payload = buildAdminDataErrorPayload(requestPath, message);
+
+  return NextResponse.json({
+    ...payload,
+    error: message,
+    failedRequest,
+    diagnostics: {
+      ...payload.diagnostics,
+      failedRequest,
+      errorReason: message,
+      nextStep: message.toLowerCase().includes("fetch failed")
+        ? "Supabase 無法連線。請確認 Vercel Environment Variables 的專案 URL / service role key、Supabase 專案狀態與重新部署結果。"
+        : payload.diagnostics.nextStep
+    }
+  }, { status: 500 });
 }
 
 export const CLIENT_FIELDS = [
