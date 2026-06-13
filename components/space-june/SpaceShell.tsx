@@ -1,0 +1,3 @@
+import Link from "next/link";import type {ReactNode} from "react";import styles from "@/app/space-june/SpaceJune.module.css";
+export const Disclaimer=()=> <p className={styles.disclaimer}>本工具以九宮飛星、空間格局與植物水晶配置邏輯作為生活參考，不保證財運、健康、關係或事件結果。租屋、買房與裝修仍需同時評估採光、通風、噪音、漏水、安全、交通、合約與實際生活需求。</p>;
+export default function SpaceShell({children}: {children:ReactNode}){return <main className={styles.page}><header className={styles.nav}><div className={`${styles.shell} ${styles.navInner}`}><Link href="/space-june" className={styles.brand}>空間6月<small>Space Guide · v0.1</small></Link><nav className={styles.navLinks}><Link href="/space-june/account">我的空間</Link><Link href="/space-june/store">解鎖報告</Link></nav></div></header><div className={styles.shell}>{children}</div></main>}

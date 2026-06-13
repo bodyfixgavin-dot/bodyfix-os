@@ -1,0 +1,3 @@
+import styles from "@/app/space-june/SpaceJune.module.css";import { FLYING_STAR_2026,type DirectionId } from "@/lib/space-june/flying-star-2026";
+const order:DirectionId[]=["SE","S","SW","E","CENTER","W","NE","N","NW"];
+export default function NineGridFlyingStar({selected}: {selected?:DirectionId}){return <div className={styles.nineGrid}>{order.map(id=>{const x=FLYING_STAR_2026.sectors[id];return <article key={id} className={`${styles.nineCell} ${id===selected?styles.nineActive:""} ${x.riskLevel==="high"?styles.nineAttention:""}`}><b>{x.direction} · {x.star}</b><span>{x.starName}</span><small>{x.traditionalName}</small><em>{x.modernLabel}</em></article>})}</div>}
