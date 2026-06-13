@@ -27,9 +27,30 @@ const tools = [
     status: "Tool",
   },
   {
-    category: "BODY STATE CHECK",
-    title: "身體狀態小測驗",
-    description: "用幾個問題快速整理你現在比較像久坐型、壓力型、訓練恢復型，還是需要先放鬆呼吸與睡眠。",
+    category: "DESTINY / ZI WEI",
+    title: "紫微命盤主題測驗",
+    description: "先不急著排完整命盤。從你現在最想問的問題，看它比較靠近關係、工作、財務、遷移，還是福德主題。",
+    label: "Planned",
+    status: "Planned",
+  },
+  {
+    category: "DESTINY / NAVAGRAHA",
+    title: "吠陀九曜狀態測驗",
+    description: "Navagraha｜नवग्रह。從近期生活狀態，看看你現在比較像哪一顆 Graha 的能量與慣性。",
+    label: "Planned",
+    status: "Planned",
+  },
+  {
+    category: "DESTINY / RAHU & KETU",
+    title: "羅睺計都慣性測驗",
+    description: "你最近是 Rahu 上頭，還是 Ketu 斷線？整理自己正在執著、上癮，或抽離、切斷的地方。",
+    label: "Coming Soon",
+    status: "Coming Soon",
+  },
+  {
+    category: "BODY / TENSION",
+    title: "身體張力型測驗",
+    description: "測你現在比較像久坐型、壓力型、訓練恢復型，還是骨盆核心代償型。",
     label: "Coming Soon",
     status: "Coming Soon",
   },
@@ -53,7 +74,7 @@ export default function TestsPage() {
         <header className="tests-hero">
           <p className="portal-kicker">Gavin Lab · Public Tools</p>
           <h1>今天想測什麼？</h1>
-          <p>有些人是來預約，有些人只是想先看看自己的狀態。這裡整理了 BodyFix / Gavin Lab 的互動測驗與小工具。</p>
+          <p>身體、關係、空間、命盤。有些答案不用急著問人，先測一下自己在哪裡。</p>
           <strong>先玩測驗，不一定要預約。</strong>
         </header>
 
@@ -63,7 +84,7 @@ export default function TestsPage() {
               <p className="portal-kicker">Pick a small experiment</p>
               <h2 id="tests-list-title">你可能只是想知道，自己現在卡在哪。</h2>
             </div>
-            <p>這裡是 Gavin Lab 的小工具入口。從空間、關係或身體狀態挑一個有感覺的開始就好。</p>
+            <p>這裡是 Gavin Lab 的測驗入口大廳。從空間、關係、身體或命盤，挑一個現在最有感覺的開始就好。</p>
           </div>
 
           <div className="tests-grid">
