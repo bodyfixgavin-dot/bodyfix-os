@@ -228,7 +228,7 @@ export default function AdminPage() {
     return (
       <main className="bf-container bf-admin-login-shell">
         <section className="bf-hero">
-          <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Admin</div>
+          <div className="bf-brand"><span className="bf-logo-box">BF</span> BODYFIX ADMIN</div>
           <h1>管理後台登入</h1>
           <div className="bf-form bf-login-form">
             <label>
@@ -252,7 +252,7 @@ export default function AdminPage() {
   return (
     <main className="bf-container">
       <section className="bf-hero">
-        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Console</div>
+        <div className="bf-brand"><span className="bf-logo-box">BF</span> BODYFIX ADMIN</div>
         <h1>預約管理後台</h1>
         <p className="bf-subtitle">管理時段、確認預約、取消、完成。這裡是第一版營運控制台。</p>
         <button className="bf-small-btn" type="button" onClick={logout}>登出</button>

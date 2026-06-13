@@ -5,7 +5,7 @@ import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-sessi
 import CodebookDashboard from "./CodebookDashboard";
 
 export const metadata: Metadata = {
-  title: "Codebook v0.2.1 | BodyFix Clinic",
+  title: "Codebook v0.2.1 | BodyFix OS",
   description: "BodyFix clinic codebook reference dashboard."
 };
 

@@ -82,7 +82,7 @@ function EmptyState({ activeTab }: { activeTab: TabKey }) {
       <div className="bf-empty-actions">
         <Link className="bf-primary bf-link-button" href="/clinic/clients/new">新增客戶</Link>
         <button className="bf-secondary bf-link-button" type="button" disabled title="規劃中">建立方案（規劃中）</button>
-        <Link className="bf-secondary bf-link-button" href="/clinic">返回 Clinic</Link>
+        <Link className="bf-secondary bf-link-button" href="/clinic">返回 BodyFix 後台</Link>
       </div>
     </section>
   );

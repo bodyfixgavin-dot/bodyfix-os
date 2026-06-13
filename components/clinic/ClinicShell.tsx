@@ -144,7 +144,7 @@ export function ClinicShell({ title, subtitle, children, showDashboardMenu = fal
   return (
     <main className="bf-container clinic-page">
       <section className="bf-hero">
-        <Link className="bf-brand" href="/clinic" aria-label="回到 BodyFix OS Hub"><span className="bf-logo-box">BF</span> BodyFix Clinic</Link>
+        <Link className="bf-brand" href="/clinic" aria-label="回到 BodyFix OS Hub"><span className="bf-logo-box">BF</span> BODYFIX OS</Link>
         <h1>{title}</h1>
         <p className="bf-subtitle">{subtitle}</p>
         {!showDashboardMenu && (
@@ -180,12 +180,12 @@ export function useClinicFetch<T>(url: string): LoadState<T> & { reload: () => P
     try {
       const res = await fetch(url, { cache: "no-store" });
       if (res.status === 401) {
-        setState({ data: null, error: "請先到 /admin 登入 BodyFix 後台，再回到 Clinic。", loading: false, diagnostics: { loginState: "unauthenticated", databaseState: "not_checked", requestPath: url } });
+        setState({ data: null, error: "請先到 /admin 登入 BodyFix 後台，再回到後台總覽。", loading: false, diagnostics: { loginState: "unauthenticated", databaseState: "not_checked", requestPath: url } });
         return;
       }
       const json = await res.json().catch(() => ({}));
       if (!res.ok) {
-        setState({ data: null, error: formatClinicError(json, "載入失敗，請確認 Clinic V1 schema 已套用。"), loading: false, diagnostics: json.diagnostics ?? null });
+        setState({ data: null, error: formatClinicError(json, "載入失敗，請確認 BodyFix OS schema 已套用。"), loading: false, diagnostics: json.diagnostics ?? null });
         return;
       }
       setState({ data: json as T, error: "", loading: false, diagnostics: { loginState: "authenticated", databaseState: "ready", requestPath: url } });
@@ -198,7 +198,7 @@ export function useClinicFetch<T>(url: string): LoadState<T> & { reload: () => P
 }
 
 export function ClinicNotice({ loading, error, diagnostics }: { loading?: boolean; error?: string; diagnostics?: AdminDiagnostics | null }) {
-  if (loading) return <div className="bf-card bf-section-gap">載入 BodyFix Clinic 資料中…</div>;
+  if (loading) return <div className="bf-card bf-section-gap">載入 BodyFix 後台資料中…</div>;
   if (!error) return null;
   return (
     <section className="bf-card bf-section-gap" role="alert">
