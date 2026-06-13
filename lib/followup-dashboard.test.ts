@@ -3,7 +3,7 @@ import { buildFollowupDashboard } from "./followup-dashboard";
 
 const now = new Date("2026-06-08T12:00:00Z");
 const clients = [{ id: "c1", display_name: "Gavin" }, { id: "c2", display_name: "沉睡客" }];
-const records = [{ id: "r1", client_id: "c1", service_date: "2026-05-20" }, { id: "r2", client_id: "c2", service_date: "2026-04-01" }];
+const records = [{ id: "r1", client_id: "c1", service_date: "2026-05-20", next_focus: "把呼吸與核心張力接起來" }, { id: "r2", client_id: "c2", service_date: "2026-04-01" }];
 const tasks = [
   { id: "f1", client_id: "c1", priority: "P1", due_date: "2026-06-08", status: "open", suggested_message: "今天問候" },
   { id: "f2", client_id: "c2", priority: "P2", due_date: "2026-06-10", status: "open", task_type: "dormant_client", suggested_message: "好久不見" },
@@ -25,5 +25,13 @@ describe("buildFollowupDashboard", () => {
     const result = buildFollowupDashboard(clients, records, tasks, candidates, now);
     expect(result.p1[0].suggested_message).toBe("今天問候");
     expect({ item_id: result.package_candidates[0].item_id, package_label: result.package_candidates[0].package_label, suggested_message: result.package_candidates[0].suggested_message }).toEqual({ item_id: "p1", package_label: "節奏方案", suggested_message: "一起看看下一步安排" });
+  });
+
+  it("adds a follow-up mode and last service focus for the draft card", () => {
+    const result = buildFollowupDashboard(clients, records, tasks, candidates, now);
+    expect(result.p1[0].mode).toBe("接續模式");
+    expect(result.p1[0].last_focus).toBe("把呼吸與核心張力接起來");
+    expect(result.dormant_clients[0].mode).toBe("喚醒模式");
+    expect(result.package_candidates[0].mode).toBe("續約模式");
   });
 });
