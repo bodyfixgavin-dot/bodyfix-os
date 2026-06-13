@@ -79,8 +79,13 @@ export default function AdminPage() {
   const [errorMessage, setErrorMessage] = useState("");
   const [diagnostics, setDiagnostics] = useState<AdminDiagnostics | null>(null);
   const [bypassMode, setBypassMode] = useState(false);
+  const [localMode, setLocalMode] = useState(false);
 
   async function loadAdminData() {
+    if (localMode) {
+      setSlots(JSON.parse(localStorage.getItem("bodyfix-preview-slots") || "[]") as AvailabilitySlot[]);
+      return;
+    }
     setErrorMessage("");
     setDiagnostics(null);
     const res = await fetch("/api/admin/slots", { cache: "no-store" });
@@ -105,28 +110,12 @@ export default function AdminPage() {
   }
 
   async function login() {
+    if (bypassMode) { setLocalMode(true); setAuthed(true); setSlots(JSON.parse(localStorage.getItem("bodyfix-preview-slots") || "[]")); return; }
     setErrorMessage("");
     const res = await fetch("/api/admin/login", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ password })
-    });
-
-    if (res.ok) {
-      setAuthed(true);
-      setPassword("");
-      await loadAdminData();
-    } else {
-      setErrorMessage("密碼錯誤，或後台環境變數尚未設定。");
-    }
-  }
-
-  async function bypassLogin() {
-    setErrorMessage("");
-    const res = await fetch("/api/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ bypass: true })
     });
 
     if (res.ok) {
@@ -153,6 +142,7 @@ export default function AdminPage() {
 
       const data = await res.json();
       setBypassMode(Boolean(data.bypassMode));
+      if (data.bypassMode) setLocalMode(true);
       if (data.authenticated) {
         setAuthed(true);
         await loadAdminData();
@@ -183,6 +173,11 @@ export default function AdminPage() {
       return;
     }
 
+    if (localMode) {
+      const nextSlot: AvailabilitySlot = { id: crypto.randomUUID(), starts_at: new Date(startsAt).toISOString(), ends_at: new Date(endsAt).toISOString(), city, slot_type: slotType, status: "available", note: note || null };
+      const next = [...slots, nextSlot]; setSlots(next); localStorage.setItem("bodyfix-preview-slots", JSON.stringify(next)); setStartsAt(""); setEndsAt(""); setNote(""); setErrorMessage(""); return;
+    }
+
     const res = await fetch("/api/admin/slots", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -210,6 +205,8 @@ export default function AdminPage() {
   async function deleteSlot(id: string) {
     if (!confirm("確定刪除此時段？")) return;
 
+    if (localMode) { const next = slots.filter((slot) => slot.id !== id); setSlots(next); localStorage.setItem("bodyfix-preview-slots", JSON.stringify(next)); return; }
+
     const res = await fetch("/api/admin/slots/delete", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -222,6 +219,11 @@ export default function AdminPage() {
     }
 
     await loadAdminData();
+  }
+
+  function updateLocalSlot(id: string) {
+    const next = slots.map((slot) => slot.id === id ? { ...slot, status: slot.status === "available" ? "closed" as const : "available" as const } : slot);
+    setSlots(next); localStorage.setItem("bodyfix-preview-slots", JSON.stringify(next));
   }
 
   if (!authed) {
@@ -237,10 +239,10 @@ export default function AdminPage() {
             </label>
             <button className="bf-primary" type="button" onClick={login}>登入</button>
             {bypassMode && (
-              <button className="bf-small-btn" type="button" onClick={bypassLogin}>免密碼測試登入</button>
+              <button className="bf-small-btn" type="button" onClick={login}>直接進入 Preview 後台</button>
             )}
             {bypassMode && (
-              <div className="bf-notice">目前為 Preview 測試模式，已啟用免密碼後台進入。<br />請勿匯入正式客戶資料。</div>
+              <div className="bf-notice">Preview Local Mode｜資料只存在此瀏覽器，不會寫入正式資料庫。</div>
             )}
             {errorMessage && <div className="bf-notice">{errorMessage}</div>}
           </div>
@@ -250,7 +252,7 @@ export default function AdminPage() {
   }
 
   return (
-    <main className="bf-container">
+    <main className="bf-container bf-admin-mobile-safe">
       <section className="bf-hero">
         <div className="bf-brand"><span className="bf-logo-box">BF</span> BODYFIX ADMIN</div>
         <h1>預約管理後台</h1>
@@ -259,7 +261,7 @@ export default function AdminPage() {
       </section>
 
       {bypassMode && (
-        <div className="bf-notice bf-admin-notice">目前為 Preview 測試模式，已啟用免密碼後台進入。<br />請勿匯入正式客戶資料。</div>
+        <div className="bf-notice bf-admin-notice">Preview Local Mode｜資料只存在此瀏覽器，不會寫入正式資料庫。</div>
       )}
       {errorMessage && <div className="bf-notice bf-admin-notice">{errorMessage}</div>}
       <AdminDataStatusCard diagnostics={diagnostics} errorMessage={errorMessage} />
@@ -355,7 +357,7 @@ export default function AdminPage() {
                   <td>{slot.slot_type}</td>
                   <td>{slot.status}</td>
                   <td>{slot.note}</td>
-                  <td><button className="bf-small-btn" type="button" onClick={() => deleteSlot(slot.id)}>刪除</button></td>
+                  <td><div className="bf-admin-actions">{localMode && <button className="bf-small-btn" type="button" onClick={() => updateLocalSlot(slot.id)}>{slot.status === "available" ? "完成／關閉" : "重新開放"}</button>}<button className="bf-small-btn" type="button" onClick={() => deleteSlot(slot.id)}>刪除</button></div></td>
                 </tr>
               ))}
             </tbody>
