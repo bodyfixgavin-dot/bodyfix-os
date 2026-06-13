@@ -31,12 +31,12 @@ const entrances: PortalCard[] = [
   {
     title: "我是來做測驗的",
     eyebrow: "測驗工具入口",
-    description: "空間、關係、身體狀態與生活選擇的小工具入口。先玩測驗，不一定要預約。",
+    description: "身體、關係、空間與命盤的小工具入口。先玩測驗，不一定要預約。",
     tag: "Public",
     tone: "lab",
     actions: [
       { label: "前往測驗工具", href: "/tests" },
-      { label: "直接玩空間6月", href: "/space-june", secondary: true },
+      { label: "測身體張力", href: "/tests/body-tension", secondary: true },
     ],
   },
   {
