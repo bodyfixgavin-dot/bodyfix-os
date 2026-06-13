@@ -1,5 +1,12 @@
 # BodyFix Foundation v0
 這是 BodyFix 地基工程 v0。
+
+## Gavin OS Core 延伸規格
+
+Chart Navigator 是 Gavin OS Core 的第一個品牌實作，但依品牌資料隔離原則，必須建立在獨立專案與獨立 Supabase 資料庫。本 repo 僅保存可供開新專案施工與驗收的規格，不直接混入 Chart Navigator 使用者資料或功能：
+
+- [Chart Navigator MVP 工程規格](docs/gavin-os-core-chart-navigator-mvp.md)
+
 ## 目前包含
 1. 產品階梯
 2. 人才階梯
