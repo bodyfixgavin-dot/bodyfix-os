@@ -27,7 +27,7 @@ function buildAdminErrorMessage(data: { error?: string; diagnostics?: AdminDiagn
     return `載入後台資料失敗：缺少 ${missingEnv.join("、")}。請確認 Vercel Environment Variables 後重新部署。`;
   }
   if (data?.failedRequest || data?.requestPath) {
-    return `載入後台資料失敗，request path：${data.failedRequest ?? data.requestPath}。`;
+    return "載入後台資料失敗，請檢查後台 API、登入狀態或 Supabase 環境變數。";
   }
   return data?.error ? `載入後台資料失敗：${data.error}` : "載入後台資料失敗，請確認 Supabase 與後台環境變數。";
 }
@@ -47,7 +47,7 @@ function AdminDataStatusCard({ diagnostics, errorMessage }: { diagnostics: Admin
           {diagnostics.envErrors.map((envError) => <li key={envError}>{envError}</li>)}
         </ul>
       ) : null}
-      <p>Request path：{diagnostics?.failedRequest ?? diagnostics?.requestPath ?? "/api/admin/slots"}</p>
+      <p>連線狀態：後台資料 API 連線失敗</p>
       <p>下一步：{diagnostics?.nextStep ?? "請確認 Vercel env 後重新部署。"}</p>
       {diagnostics?.checkedEnv?.length ? <p>已檢查 env：{diagnostics.checkedEnv.join("、")}（不顯示任何 secret value）</p> : null}
     </section>

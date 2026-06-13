@@ -47,7 +47,7 @@ export default function MethodPage() {
         <aside className="portal-boundary">
           <p className="portal-kicker">Safety Boundary</p>
           <h2>先知道不做什麼，才知道方法如何成立。</h2>
-          <p>BodyFix Method 不教醫療治療、不教矯正、不處理診斷，也不承諾療效。課程重點是教身體服務者如何建立判讀、整理、回接與追蹤流程。</p>
+          <p>BodyFix Method 不教醫療處置、不教矯正、不處理判讀，也不承諾療效。課程重點是教身體服務者如何建立判讀、整理、回接與追蹤流程。</p>
         </aside>
 
         <section className="portal-detail-closing">

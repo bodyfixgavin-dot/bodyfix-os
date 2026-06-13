@@ -87,7 +87,7 @@ function formatClinicError(json: { error?: string; diagnostics?: AdminDiagnostic
     return `載入後台資料失敗：缺少 ${(diagnostics?.missingEnv ?? json.missingEnv ?? []).join("、")}。請確認 Vercel Environment Variables 後重新部署。`;
   }
   if (json.failedRequest || json.requestPath || diagnostics?.failedRequest || diagnostics?.requestPath) {
-    return `${json.error ?? fallback}（request path：${json.failedRequest ?? json.requestPath ?? diagnostics?.failedRequest ?? diagnostics?.requestPath}）`;
+    return `${json.error ?? fallback}（後台資料 API 連線失敗）`;
   }
   return json.error ?? fallback;
 }
@@ -209,7 +209,7 @@ export function ClinicNotice({ loading, error, diagnostics }: { loading?: boolea
       <p>錯誤原因：{diagnostics?.errorReason ?? error}</p>
       {diagnostics?.missingEnv?.length ? <p>缺少 env：{diagnostics.missingEnv.join("、")}</p> : null}
       {diagnostics?.envErrors?.length ? <ul>{diagnostics.envErrors.map((envError) => <li key={envError}>{envError}</li>)}</ul> : null}
-      <p>Request path：{diagnostics?.failedRequest ?? diagnostics?.requestPath ?? "目前頁面的 /api/clinic/... request"}</p>
+      <p>連線狀態：後台資料 API 連線失敗</p>
       <p>下一步：{diagnostics?.nextStep ?? "請確認 Vercel env 後重新部署。"}</p>
     </section>
   );

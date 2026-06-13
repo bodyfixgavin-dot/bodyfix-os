@@ -28,7 +28,7 @@ export function SupabaseNotConnectedState({ showAdminLink = true }: SupabaseNotC
           ))}
         </div>
         <div className="bf-notice bf-section-gap">
-          這是系統設定提示，不代表網站故障。完成環境變數設定後，Dashboard 與 Clinic 模組即可讀取資料。
+          這是系統設定提示，不代表網站故障。完成環境變數設定後，Dashboard 與 BodyFix OS 模組即可讀取資料。
           <ul>
             {setupChecks.map((check) => <li key={check}>{check}</li>)}
           </ul>

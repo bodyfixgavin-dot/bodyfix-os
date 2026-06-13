@@ -126,7 +126,7 @@ export function AiCopilotDashboard() {
         <ul>
           <li>不自動發 LINE / IG 訊息。</li>
           <li>不自動改預約、價格、付款或客戶狀態。</li>
-          <li>不做醫療診斷、不承諾療效。</li>
+          <li>不做醫療判讀、不承諾療效。</li>
           <li>Location Demand Analysis Only：只做分析，不產生邀約草稿。</li>
         </ul>
       </section>
