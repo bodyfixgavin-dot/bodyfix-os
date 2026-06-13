@@ -4,9 +4,9 @@ import { ManualPromptEditor } from "./ManualPromptEditor";
 export default async function AnatomyImageEditorPage({
   searchParams,
 }: {
-  searchParams: Promise<{ id?: string }>;
+  searchParams: Promise<{ id?: string; image?: string }>;
 }) {
-  const { id } = await searchParams;
+  const { id, image } = await searchParams;
 
   return (
     <main className="anatomy-page">
@@ -23,7 +23,7 @@ export default async function AnatomyImageEditorPage({
           <Link className="anatomy-secondary-link" href="/anatomy-images/rules">規則庫</Link>
         </div>
       </section>
-      <ManualPromptEditor initialId={id} />
+      <ManualPromptEditor initialId={id} initialNumber={image} />
     </main>
   );
 }

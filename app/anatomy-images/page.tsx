@@ -1,3 +1,6 @@
+"use client";
+
+import { useState } from "react";
 import Link from "next/link";
 import { anatomyImages, buildManualAnatomyPrompt } from "@/lib/anatomy-images";
 import { CopyPromptButton } from "./CopyPromptButton";
@@ -18,6 +21,10 @@ function getWorkflowStatus(status: string) {
 }
 
 export default function AnatomyImagesPage() {
+  const [chapterFilter, setChapterFilter] = useState("全部");
+  const [statusFilter, setStatusFilter] = useState("全部");
+  const filteredImages = anatomyImages.filter((item) => (chapterFilter === "全部" || item.chapter === chapterFilter) && (statusFilter === "全部" || item.status === statusFilter));
+  const filterLabel = [chapterFilter, statusFilter].filter((value) => value !== "全部").join("｜") || "全部圖像";
   const statusCounts = anatomyImages.reduce<Record<string, number>>((counts, item) => {
     counts[item.status] = (counts[item.status] ?? 0) + 1;
     return counts;
@@ -58,7 +65,7 @@ export default function AnatomyImagesPage() {
           <span>章節篩選</span>
           <div className="anatomy-chip-row">
             {chapterOptions.map((chapter) => (
-              <span className="anatomy-chip" key={chapter}>{chapter}</span>
+              <button type="button" className={`anatomy-chip ${chapterFilter === chapter ? "is-active" : ""}`} onClick={() => setChapterFilter(chapter)} key={chapter}>{chapter}</button>
             ))}
           </div>
         </div>
@@ -66,11 +73,12 @@ export default function AnatomyImagesPage() {
           <span>狀態篩選</span>
           <div className="anatomy-chip-row">
             {statusOptions.map((status) => (
-              <span className="anatomy-chip" key={status}>{status}</span>
+              <button type="button" className={`anatomy-chip ${statusFilter === status ? "is-active" : ""}`} onClick={() => setStatusFilter(status)} key={status}>{status}</button>
             ))}
           </div>
         </div>
       </section>
+      <p className="anatomy-filter-summary">目前篩選：{filterLabel}</p>
 
       <section className="anatomy-table-card" aria-labelledby="anatomy-list-title">
         <div className="anatomy-section-heading">
@@ -94,7 +102,7 @@ export default function AnatomyImagesPage() {
               </tr>
             </thead>
             <tbody>
-              {anatomyImages.map((item) => (
+              {filteredImages.map((item) => (
                 <tr key={item.id}>
                   <td>
                     <div className="anatomy-thumb" aria-label={`${item.titleZh} 縮圖佔位`}>
@@ -130,7 +138,7 @@ export default function AnatomyImagesPage() {
                   </td>
                   <td>
                     <div className="anatomy-action-row">
-                      <Link href={`/anatomy-images/editor?id=${item.id}`}>編輯</Link>
+                      <Link href={`/anatomy-images/editor?image=${item.number}`}>編輯模板</Link>
                       <CopyPromptButton prompt={buildManualAnatomyPrompt(item)} />
                     </div>
                   </td>

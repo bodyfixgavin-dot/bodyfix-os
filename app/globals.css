@@ -3283,3 +3283,18 @@ main {
 .tension-result .tests-button { margin-top: 18px; border-color: #d6b98f; background: #d6b98f; color: #18372f; }
 .tension-restart { margin-top: 24px; border: 0; background: transparent; color: #d6b98f; text-decoration: underline; cursor: pointer; }
 @media(max-width:700px){.tension-shell{width:min(100% - 24px,880px);padding-top:14px}.tension-hero{padding:42px 24px;border-radius:22px}.tension-question{padding:20px}.tension-question label{grid-template-columns:28px 1fr;padding:13px}.tension-result{padding:28px 22px}.tension-result .tests-button{width:100%;overflow-wrap:anywhere}.tests-category{margin-top:38px}}
+
+.anatomy-chip { cursor: pointer; }
+.anatomy-chip.is-active { border-color: #c6aa87; background: var(--bf-navy); color: #fff; box-shadow: 0 0 0 2px rgba(198,170,135,.35); }
+.anatomy-chip.is-active::before { content: "•"; color: #c6aa87; margin-right: 5px; }
+.anatomy-filter-summary { margin: -4px 0 18px; color: var(--bf-navy); font-weight: 800; }
+@media (max-width: 620px) {
+  .anatomy-page { padding-bottom: 120px; }
+  .anatomy-table, .anatomy-table tbody, .anatomy-table tr, .anatomy-table td { display: block; min-width: 0; width: 100%; }
+  .anatomy-table thead { display: none; }
+  .anatomy-table tr { border: 1px solid var(--bf-line); border-radius: 18px; margin: 14px 0; padding: 14px; background: rgba(255,255,255,.7); }
+  .anatomy-table td { border: 0; padding: 6px 0; }
+  .anatomy-table td:nth-child(n+4):nth-child(-n+6) { display: inline-block; width: auto; margin-right: 12px; }
+  .anatomy-action-row { margin-top: 8px; }
+}
+@media (max-width: 620px) { .bf-admin-mobile-safe, .bf-admin-login-shell { padding-bottom: 120px; } }

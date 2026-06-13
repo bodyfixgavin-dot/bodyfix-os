@@ -99,8 +99,8 @@ const blankItem: AnatomyImageItem = {
   priority: "A",
 };
 
-export function ManualPromptEditor({ initialId }: { initialId?: string }) {
-  const initialItem = anatomyImages.find((item) => item.id === initialId) ?? blankItem;
+export function ManualPromptEditor({ initialId, initialNumber }: { initialId?: string; initialNumber?: string }) {
+  const initialItem = anatomyImages.find((item) => item.id === initialId || item.number === initialNumber) ?? blankItem;
   const [form, setForm] = useState<EditorForm>(() => toForm(initialItem));
   const [copied, setCopied] = useState(false);
   const [sourceImageUrl, setSourceImageUrl] = useState<string | null>(null);
