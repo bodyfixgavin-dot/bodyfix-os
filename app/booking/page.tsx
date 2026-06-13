@@ -1,31 +1,370 @@
 "use client";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { FALLBACK_BOOKING_SERVICES, getPublicBookingServices } from "@/lib/booking-services";
+import {
+  FALLBACK_BOOKING_SERVICES,
+  FASCIA_LINE_OPTIONS,
+  getPublicBookingServices,
+} from "@/lib/booking-services";
 import type { AvailabilitySlot, BookingService } from "@/types/booking";
 
-const timeRanges = ["早上 10:00–13:00", "下午 13:00–17:00", "晚上 17:00–22:00", "深夜 22:00 後", "都可以，請協助安排"];
+const timeRanges = [
+  "早上 10:00–13:00",
+  "下午 13:00–17:00",
+  "晚上 17:00–22:00",
+  "深夜 22:00 後",
+  "都可以，請協助安排",
+];
 const lastMinuteOptions = ["可以", "不一定", "不行"];
-const formatPrice = (price?: number | null) => price == null ? "價格另洽" : `NT$${new Intl.NumberFormat("en-US").format(price)}`;
-const serviceLabel = (service: BookingService) => `${service.display_name_zh || service.name}｜${formatPrice(service.price_twd ?? service.price)}`;
-const formatSlotTime = (startsAt: string) => new Intl.DateTimeFormat("zh-TW", { weekday:"short", month:"numeric", day:"numeric", hour:"2-digit", minute:"2-digit", hour12:false }).format(new Date(startsAt));
+const formatPrice = (price?: number | null) =>
+  price == null
+    ? "價格另洽"
+    : `NT$${new Intl.NumberFormat("en-US").format(price)}`;
+const serviceLabel = (service: BookingService) =>
+  `${service.display_name_zh || service.name}｜${formatPrice(service.price_twd ?? service.price)}`;
+const formatSlotTime = (startsAt: string) =>
+  new Intl.DateTimeFormat("zh-TW", {
+    weekday: "short",
+    month: "numeric",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(new Date(startsAt));
 
 export default function BookingPage() {
-  const [slots,setSlots]=useState<AvailabilitySlot[]>([]), [services,setServices]=useState<BookingService[]>(FALLBACK_BOOKING_SERVICES);
-  const [selectedSlotId,setSelectedSlotId]=useState(""), [serviceId,setServiceId]=useState(FALLBACK_BOOKING_SERVICES[0].id);
-  const [name,setName]=useState(""), [lineId,setLineId]=useState(""), [phone,setPhone]=useState(""), [bodyCondition,setBodyCondition]=useState(""), [note,setNote]=useState("");
-  const [preferredDate,setPreferredDate]=useState(""), [preferredTimeRange,setPreferredTimeRange]=useState(timeRanges[4]), [acceptLastMinuteSlot,setAcceptLastMinuteSlot]=useState(lastMinuteOptions[0]);
-  const [source,setSource]=useState("booking"), [loading,setLoading]=useState(false), [loadingData,setLoadingData]=useState(true), [message,setMessage]=useState(""), [success,setSuccess]=useState(false);
-  const selectedService=useMemo(()=>services.find(s=>s.id===serviceId) || services[0],[services,serviceId]);
-  const noPublicSlots=!loadingData && slots.length===0;
+  const [slots, setSlots] = useState<AvailabilitySlot[]>([]),
+    [services, setServices] = useState<BookingService[]>(
+      FALLBACK_BOOKING_SERVICES,
+    );
+  const [selectedSlotId, setSelectedSlotId] = useState(""),
+    [serviceId, setServiceId] = useState(FALLBACK_BOOKING_SERVICES[0].id);
+  const [selectedFasciaLineCode, setSelectedFasciaLineCode] =
+    useState("unknown");
+  const [name, setName] = useState(""),
+    [lineId, setLineId] = useState(""),
+    [phone, setPhone] = useState(""),
+    [bodyCondition, setBodyCondition] = useState(""),
+    [note, setNote] = useState("");
+  const [preferredDate, setPreferredDate] = useState(""),
+    [preferredTimeRange, setPreferredTimeRange] = useState(timeRanges[4]),
+    [acceptLastMinuteSlot, setAcceptLastMinuteSlot] = useState(
+      lastMinuteOptions[0],
+    );
+  const [source, setSource] = useState("booking"),
+    [loading, setLoading] = useState(false),
+    [loadingData, setLoadingData] = useState(true),
+    [message, setMessage] = useState(""),
+    [success, setSuccess] = useState(false);
+  const selectedService = useMemo(
+    () => services.find((s) => s.id === serviceId) || services[0],
+    [services, serviceId],
+  );
+  const selectedFasciaLine =
+    FASCIA_LINE_OPTIONS.find((line) => line.code === selectedFasciaLineCode) ??
+    FASCIA_LINE_OPTIONS[7];
+  const isFasciaLineService =
+    selectedService?.code === "fascia_line_selected_reset_60";
+  const noPublicSlots = !loadingData && slots.length === 0;
 
-  const loadData=useCallback(async()=>{ setLoadingData(true); let next=FALLBACK_BOOKING_SERVICES; try { const res=await fetch("/api/booking/public",{cache:"no-store"}); if(!res.ok) throw new Error(`Booking API: ${res.status}`); const data=await res.json(); setSlots(data.slots ?? []); next=getPublicBookingServices(data.services); } catch(error) { console.error("Booking data load failed; using fallback services.",error); setSlots([]); setMessage("目前無法載入公開時段，已改用預設服務項目，你仍可先送出卡位資料。"); } finally { const params=new URLSearchParams(window.location.search); const requested=params.get("service"); setSource(params.get("source") || "booking"); setServices(next); setServiceId(next.find(s=>s.code===requested)?.id || next[0].id); setLoadingData(false); } },[]);
-  useEffect(()=>{void loadData()},[loadData]);
+  const loadData = useCallback(async () => {
+    setLoadingData(true);
+    let next = FALLBACK_BOOKING_SERVICES;
+    try {
+      const res = await fetch("/api/booking/public", { cache: "no-store" });
+      if (!res.ok) throw new Error(`Booking API: ${res.status}`);
+      const data = await res.json();
+      setSlots(data.slots ?? []);
+      next = getPublicBookingServices(data.services);
+    } catch (error) {
+      console.error(
+        "Booking data load failed; using fallback services.",
+        error,
+      );
+      setSlots([]);
+      setMessage(
+        "目前無法載入公開時段，已改用預設服務項目，你仍可先送出卡位資料。",
+      );
+    } finally {
+      const params = new URLSearchParams(window.location.search);
+      const requested = params.get("service");
+      setSource(params.get("source") || "booking");
+      setServices(next);
+      setServiceId(next.find((s) => s.code === requested)?.id || next[0].id);
+      setLoadingData(false);
+    }
+  }, []);
+  useEffect(() => {
+    void loadData();
+  }, [loadData]);
 
-  async function submit(){ setMessage(""); if(!selectedService || !name.trim() || !lineId.trim()){setMessage("請選擇服務項目，並填寫姓名與 LINE ID。");return} if(slots.length && !selectedSlotId){setMessage("請先選擇公開時段，或稍後再送出卡位資料。");return} setLoading(true);
-    if(noPublicSlots){ const payload={serviceCode:selectedService.code,serviceName:selectedService.display_name_zh||selectedService.name,name:name.trim(),lineId:lineId.trim(),phone:phone.trim()||null,bodyCondition:bodyCondition.trim(),preferredDate:preferredDate.trim(),preferredTimeRange,acceptLastMinuteSlot,note:note.trim(),source,createdAt:new Date().toISOString()}; try{const saved=JSON.parse(localStorage.getItem("bodyfixBookingWaitlist")||"[]"); localStorage.setItem("bodyfixBookingWaitlist",JSON.stringify([...saved,payload])); setSuccess(true)}catch(error){console.error("Unable to save booking waitlist",error);setMessage("暫時無法儲存卡位資料，請改用 LINE 聯絡 Gavin。")}}
-    else { const res=await fetch("/api/booking/hold",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({slot_id:selectedSlotId,service_id:serviceId,client_name:name.trim(),line_id:lineId.trim(),phone:phone.trim()||null,body_notes:bodyCondition.trim()||null,message:note.trim()||null})}); if(res.ok)setSuccess(true);else setMessage("此時段暫時無法保留，請重新選擇或透過 LINE 聯絡 Gavin。") } setLoading(false);
+  async function submit() {
+    setMessage("");
+    if (!selectedService || !name.trim() || !lineId.trim()) {
+      setMessage("請選擇服務項目，並填寫姓名與 LINE ID。");
+      return;
+    }
+    if (slots.length && !selectedSlotId) {
+      setMessage("請先選擇公開時段，或稍後再送出卡位資料。");
+      return;
+    }
+    setLoading(true);
+    const fasciaLineFields = isFasciaLineService
+      ? {
+          selectedFasciaLineCode: selectedFasciaLine.code,
+          selectedFasciaLineName: selectedFasciaLine.name,
+        }
+      : {};
+    if (noPublicSlots) {
+      const payload = {
+        serviceCode: selectedService.code,
+        serviceName: selectedService.display_name_zh || selectedService.name,
+        ...fasciaLineFields,
+        name: name.trim(),
+        lineId: lineId.trim(),
+        phone: phone.trim() || null,
+        bodyCondition: bodyCondition.trim(),
+        preferredDate: preferredDate.trim(),
+        preferredTimeRange,
+        acceptLastMinuteSlot,
+        note: note.trim(),
+        source,
+        createdAt: new Date().toISOString(),
+      };
+      try {
+        const saved = JSON.parse(
+          localStorage.getItem("bodyfixBookingWaitlist") || "[]",
+        );
+        localStorage.setItem(
+          "bodyfixBookingWaitlist",
+          JSON.stringify([...saved, payload]),
+        );
+        setSuccess(true);
+      } catch (error) {
+        console.error("Unable to save booking waitlist", error);
+        setMessage("暫時無法儲存卡位資料，請改用 LINE 聯絡 Gavin。");
+      }
+    } else {
+      const res = await fetch("/api/booking/hold", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          slot_id: selectedSlotId,
+          service_id: serviceId,
+          ...fasciaLineFields,
+          client_name: name.trim(),
+          line_id: lineId.trim(),
+          phone: phone.trim() || null,
+          body_notes: bodyCondition.trim() || null,
+          message: note.trim() || null,
+        }),
+      });
+      if (res.ok) setSuccess(true);
+      else setMessage("此時段暫時無法保留，請重新選擇或透過 LINE 聯絡 Gavin。");
+    }
+    setLoading(false);
   }
-  if(success)return <main className="bf-container"><section className="bf-card bf-success"><h1>已收到你的卡位資料</h1><p>系統已先記下你的服務項目、偏好時段與身體狀況。正式預約仍以 LINE 確認為準。</p><div className="bf-actions"><Link className="bf-primary" href="/">回到 BodyFix OS</Link><button className="bf-primary" onClick={()=>setSuccess(false)}>再次填寫</button><a className="bf-primary" href="https://line.me/" target="_blank" rel="noreferrer">前往 LINE</a></div></section></main>;
-  return <main className="bf-container"><section className="bf-hero"><div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Booking</div><h1>選擇想整理的服務，先卡位</h1><p className="bf-subtitle">有公開時段可直接選擇；目前沒有公開時段時，也可以先送出卡位資料，我會再用 LINE 確認。</p></section><section className="bf-grid"><div className="bf-card"><h2 className="bf-section-title">目前可約時段</h2><div className="bf-slot-list">{loadingData&&<div className="bf-notice">正在載入可預約時段...</div>}{noPublicSlots&&<div className="bf-notice"><strong>目前沒有公開時段，也可以先卡位</strong><p>你可以先送出想預約的服務與偏好時段，Gavin 會再透過 LINE 與你確認。</p></div>}{slots.map(slot=><button key={slot.id} type="button" className={`bf-slot ${selectedSlotId===slot.id?"selected":""}`} onClick={()=>setSelectedSlotId(slot.id)}><strong>{formatSlotTime(slot.starts_at)}</strong><span className="bf-tag">{slot.city}</span></button>)}</div></div><div className="bf-card"><h2 className="bf-section-title">卡位資料</h2><div className="bf-form"><label>服務項目<select value={serviceId} onChange={e=>setServiceId(e.target.value)}>{services.map(s=><option key={s.id} value={s.id}>{serviceLabel(s)}</option>)}</select></label><label>姓名<input value={name} onChange={e=>setName(e.target.value)} placeholder="請填寫稱呼或姓名" /></label><label>LINE ID<input value={lineId} onChange={e=>setLineId(e.target.value)} placeholder="方便 Gavin 聯絡確認" /></label><label>電話，可不填<input value={phone} onChange={e=>setPhone(e.target.value)} placeholder="可不填" /></label><label>想處理的身體狀況<textarea value={bodyCondition} onChange={e=>setBodyCondition(e.target.value)} placeholder="例如肩頸緊、骨盆卡、下背反覆痠等" /></label>{noPublicSlots&&<><label>偏好日期<input value={preferredDate} onChange={e=>setPreferredDate(e.target.value)} placeholder="例如 6/15、這週五、下週晚上" /></label><label>偏好時段<select value={preferredTimeRange} onChange={e=>setPreferredTimeRange(e.target.value)}>{timeRanges.map(x=><option key={x}>{x}</option>)}</select></label><label>是否可接受臨時空檔<select value={acceptLastMinuteSlot} onChange={e=>setAcceptLastMinuteSlot(e.target.value)}>{lastMinuteOptions.map(x=><option key={x}>{x}</option>)}</select></label></>}<label>備註<textarea value={note} onChange={e=>setNote(e.target.value)} placeholder="例如第一次預約、可接受前後調整 30 分鐘等" /></label><button className="bf-primary" disabled={loading} type="button" onClick={submit}>{loading?"送出中...":noPublicSlots?"送出卡位資料":"送出並暫時保留時段"}</button>{message&&<div className="bf-notice">{message}</div>}</div></div></section></main>;
+  if (success)
+    return (
+      <main className="bf-container">
+        <section className="bf-card bf-success">
+          <h1>已收到你的卡位資料</h1>
+          <p>
+            系統已先記下你的服務項目、偏好時段與身體狀況。正式預約仍以 LINE
+            確認為準。
+          </p>
+          <div className="bf-actions">
+            <Link className="bf-primary" href="/">
+              回到 BodyFix OS
+            </Link>
+            <button className="bf-primary" onClick={() => setSuccess(false)}>
+              再次填寫
+            </button>
+            <a
+              className="bf-primary"
+              href="https://line.me/"
+              target="_blank"
+              rel="noreferrer"
+            >
+              前往 LINE
+            </a>
+          </div>
+        </section>
+      </main>
+    );
+  return (
+    <main className="bf-container">
+      <section className="bf-hero">
+        <div className="bf-brand">
+          <span className="bf-logo-box">BF</span> BodyFix Booking
+        </div>
+        <h1>選擇想整理的服務，先卡位</h1>
+        <p className="bf-subtitle">
+          有公開時段可直接選擇；目前沒有公開時段時，也可以先送出卡位資料，我會再用
+          LINE 確認。
+        </p>
+      </section>
+      <section className="bf-grid">
+        <div className="bf-card">
+          <h2 className="bf-section-title">目前可約時段</h2>
+          <div className="bf-slot-list">
+            {loadingData && (
+              <div className="bf-notice">正在載入可預約時段...</div>
+            )}
+            {noPublicSlots && (
+              <div className="bf-notice">
+                <strong>目前沒有公開時段，也可以先卡位</strong>
+                <p>
+                  你可以先送出想預約的服務與偏好時段，Gavin 會再透過 LINE
+                  與你確認。
+                </p>
+              </div>
+            )}
+            {slots.map((slot) => (
+              <button
+                key={slot.id}
+                type="button"
+                className={`bf-slot ${selectedSlotId === slot.id ? "selected" : ""}`}
+                onClick={() => setSelectedSlotId(slot.id)}
+              >
+                <strong>{formatSlotTime(slot.starts_at)}</strong>
+                <span className="bf-tag">{slot.city}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <div className="bf-card">
+          <h2 className="bf-section-title">卡位資料</h2>
+          <div className="bf-form">
+            <label>
+              服務項目
+              <select
+                value={serviceId}
+                onChange={(e) => setServiceId(e.target.value)}
+              >
+                {services.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {serviceLabel(s)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            {isFasciaLineService && (
+              <label>
+                指定筋膜線
+                <select
+                  value={selectedFasciaLineCode}
+                  onChange={(e) => setSelectedFasciaLineCode(e.target.value)}
+                  aria-describedby="fascia-line-help"
+                >
+                  <option value="" disabled>
+                    選擇一條你想優先整理的筋膜線
+                  </option>
+                  {FASCIA_LINE_OPTIONS.map((line) => (
+                    <option key={line.code} value={line.code}>
+                      {line.name}
+                    </option>
+                  ))}
+                </select>
+                <small id="fascia-line-help">
+                  不確定沒關係，現場會依張力判讀調整，不會硬照選項操作。
+                </small>
+              </label>
+            )}
+            <label>
+              姓名
+              <input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="請填寫稱呼或姓名"
+              />
+            </label>
+            <label>
+              LINE ID
+              <input
+                value={lineId}
+                onChange={(e) => setLineId(e.target.value)}
+                placeholder="方便 Gavin 聯絡確認"
+              />
+            </label>
+            <label>
+              電話，可不填
+              <input
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder="可不填"
+              />
+            </label>
+            <label>
+              想處理的身體狀況
+              <textarea
+                value={bodyCondition}
+                onChange={(e) => setBodyCondition(e.target.value)}
+                placeholder="例如肩頸緊、骨盆卡、下背反覆痠等"
+              />
+            </label>
+            {noPublicSlots && (
+              <>
+                <label>
+                  偏好日期
+                  <input
+                    value={preferredDate}
+                    onChange={(e) => setPreferredDate(e.target.value)}
+                    placeholder="例如 6/15、這週五、下週晚上"
+                  />
+                </label>
+                <label>
+                  偏好時段
+                  <select
+                    value={preferredTimeRange}
+                    onChange={(e) => setPreferredTimeRange(e.target.value)}
+                  >
+                    {timeRanges.map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  是否可接受臨時空檔
+                  <select
+                    value={acceptLastMinuteSlot}
+                    onChange={(e) => setAcceptLastMinuteSlot(e.target.value)}
+                  >
+                    {lastMinuteOptions.map((x) => (
+                      <option key={x}>{x}</option>
+                    ))}
+                  </select>
+                </label>
+              </>
+            )}
+            <div className="bf-notice">
+              若現場評估需要延長整理，會由 Gavin 依當日狀態討論是否加開 +30
+              分鐘。
+            </div>
+            <label>
+              備註
+              <textarea
+                value={note}
+                onChange={(e) => setNote(e.target.value)}
+                placeholder="例如第一次預約、可接受前後調整 30 分鐘等"
+              />
+            </label>
+            <button
+              className="bf-primary"
+              disabled={loading}
+              type="button"
+              onClick={submit}
+            >
+              {loading
+                ? "送出中..."
+                : noPublicSlots
+                  ? "送出卡位資料"
+                  : "送出並暫時保留時段"}
+            </button>
+            {message && <div className="bf-notice">{message}</div>}
+          </div>
+        </div>
+      </section>
+    </main>
+  );
 }
