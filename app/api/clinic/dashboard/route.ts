@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { requireClinicAdmin } from "@/lib/clinic-api";
+import { buildAdminDataErrorPayload } from "@/lib/admin-diagnostics";
 
 export async function GET() {
   const auth = await requireClinicAdmin("/api/clinic/dashboard");
@@ -20,7 +21,18 @@ export async function GET() {
         : planCandidates.error
           ? "Supabase plan_candidate_summary select"
           : "Supabase case_asset_candidates select";
-    return NextResponse.json({ error: error.message, requestPath: "/api/clinic/dashboard", failedRequest }, { status: 500 });
+    const payload = buildAdminDataErrorPayload("/api/clinic/dashboard", error.message);
+    return NextResponse.json({
+      ...payload,
+      error: error.message,
+      diagnostics: {
+        ...payload.diagnostics,
+        failedRequest,
+        errorReason: `Supabase 查詢失敗：${error.message}`,
+        nextStep: "請確認 Preview 使用的 Supabase 專案、schema / view 與 service role 權限；不會向前端顯示 secret value。"
+      },
+      failedRequest
+    }, { status: 500 });
   }
   return NextResponse.json({
     today_followups: todayFollowups.data ?? [],
