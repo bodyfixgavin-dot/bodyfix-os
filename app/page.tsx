@@ -5,7 +5,7 @@ type PortalCard = {
   eyebrow: string;
   description: string;
   tag: string;
-  tone: "primary" | "method" | "muted" | "owner";
+  tone: "primary" | "lab" | "method" | "muted" | "owner";
   actions: { label: string; href: string; secondary?: boolean }[];
 };
 
@@ -26,6 +26,17 @@ const entrances: PortalCard[] = [
     actions: [
       { label: "前往 Booking", href: "/booking" },
       { label: "填寫問卷", href: "/intake", secondary: true },
+    ],
+  },
+  {
+    title: "我是來做測驗的",
+    eyebrow: "測驗工具入口",
+    description: "空間、關係、身體狀態與生活選擇的小工具入口。先玩測驗，不一定要預約。",
+    tag: "Public",
+    tone: "lab",
+    actions: [
+      { label: "前往測驗工具", href: "/tests" },
+      { label: "直接玩空間6月", href: "/space-june", secondary: true },
     ],
   },
   {
@@ -82,6 +93,7 @@ export default function HomePage() {
             <p className="portal-intro">
               BodyFix OS 是 BodyFix 專屬服務管理系統，目前以內部運作、預約流程與未來學習入口為主。請依你的身份選擇要前往的功能。
             </p>
+            <p className="portal-hero-hint">也可以先從測驗工具開始，看看自己的身體、關係或空間狀態。</p>
           </div>
 
           <div className="portal-flow" aria-label="BodyFix OS system flow">
