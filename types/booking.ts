@@ -26,6 +26,7 @@ export type BookingService = {
   sort_order: number;
   booking_note: string | null;
   internal_note: string | null;
+  description?: string;
 };
 
 export type AvailabilitySlot = {
