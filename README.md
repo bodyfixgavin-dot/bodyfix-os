@@ -1,4 +1,10 @@
-# BodyFix Foundation v0
+# BodyFix OS
+
+> **Brand boundary:** BodyFix OS is a body-organization service and operations
+> platform. It must not be presented as a medical provider, diagnostic service,
+> treatment provider, or healthcare facility in public-facing names, copy,
+> deployment metadata, screenshots, or links.
+
 這是 BodyFix 地基工程 v0。
 ## 目前包含
 1. 產品階梯

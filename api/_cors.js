@@ -1,6 +1,6 @@
 const DEFAULT_ALLOWED_ORIGINS = [
   'https://bodyfix-tw.netlify.app',
-  'https://bodyfix-clinic.vercel.app',
+  'https://bodyfix-os.vercel.app',
   'http://localhost:3000'
 ];
 
