@@ -340,7 +340,7 @@ export function ConversionDashboard() {
                 ))}
               </tbody>
             </table>
-            {planCandidates.length === 0 && <p>目前沒有 plan candidates。可先從 Clinic V1 的服務紀錄或方案候選建立。</p>}
+            {planCandidates.length === 0 && <p>目前沒有 plan candidates。可先從 BodyFix OS 的服務紀錄或方案候選建立。</p>}
           </section>
 
           {data.client_candidates.length > 0 && (

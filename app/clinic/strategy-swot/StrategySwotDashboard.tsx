@@ -88,7 +88,7 @@ const quadrants: Record<QuadrantKey, Quadrant> = {
       },
       {
         title: "模組複雜度增加",
-        summary: "Clinic、Conversion、AI Copilot、城市需求與商業規則若不同步，會變成維護成本。",
+        summary: "BodyFix OS、Conversion、AI Copilot、城市需求與商業規則若不同步，會變成維護成本。",
         details: ["每個新模組都要先問：它是否讓決策更清楚，或只是多一頁資料。", "需要定期清理欄位、狀態與權限，避免 OS 變成資料迷宮。"],
       },
     ],

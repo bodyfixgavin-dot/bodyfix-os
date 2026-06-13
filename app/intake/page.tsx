@@ -247,7 +247,7 @@ export default function IntakePage() {
 
           <section className="intake-card">
             <h2>BodyFix 狀態小測驗</h2>
-            <p className="intake-hint">不用想太多，選最接近你現在的狀態就好。這不是心理診斷，只是幫 Gavin 在見面前更快理解你的身體與壓力狀態。</p>
+            <p className="intake-hint">不用想太多，選最接近你現在的狀態就好。這不是心理判讀，只是幫 Gavin 在見面前更快理解你的身體與壓力狀態。</p>
             <ChoiceGroup label="你最近比較像哪一種？" group="stateRecent" selections={selections} onToggle={toggleChoice} />
             <ChoiceGroup label="你最想改善的是什麼？" group="stateImprove" selections={selections} onToggle={toggleChoice} />
             <ChoiceGroup label="你希望這次整理帶給你什麼感覺？" group="stateFeeling" selections={selections} onToggle={toggleChoice} />

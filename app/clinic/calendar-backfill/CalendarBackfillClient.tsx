@@ -83,7 +83,7 @@ type AdminDiagnostics = {
 
 function formatBackfillError(json: { error?: string; diagnostics?: AdminDiagnostics; requestPath?: string; failedRequest?: string }, fallback: string) {
   if (json.diagnostics?.envErrors?.length) return `載入後台資料失敗：${json.diagnostics.envErrors.join("；")}。`;
-  return json.error ? `${json.error}（request path：${json.failedRequest ?? json.requestPath ?? json.diagnostics?.failedRequest ?? json.diagnostics?.requestPath ?? "/api/clinic/calendar-backfill"}）` : fallback;
+  return json.error ? `${json.error}（後台資料 API 連線失敗）` : fallback;
 }
 
 const pasteExample = `client_name\tcontact_method\tcontact_value\tservice_date\tservice_type\tservice_name\tduration_min\tlocation\tpayment_status\tamount\tpriority\tnote
