@@ -33,18 +33,20 @@ function FollowupCard({ item, onAction, onCopy, copiedId, busyId, actionable = t
       <div>
         <div className="followup-badges"><span className={`followup-priority priority-${item.priority.toLowerCase()}`}>{item.priority}{priorityLabels.get(item.priority) ? ` · ${priorityLabels.get(item.priority)}` : ""}</span><span className="followup-category">{item.category_label}</span>{taskCodes.get(item.category) ? <span className="followup-category">{taskCodes.get(item.category)}</span> : null}</div>
         <h3>{item.client_name}</h3>
-        <small>{item.client_code ?? "尚未設定客戶編號"} · 累計 {item.service_count} 次紀錄</small>
+        <small>{item.client_code ?? "尚未設定客戶編號"} · 累計 {item.service_count} 次服務紀錄</small>
       </div>
       <strong className="followup-due"><small>{item.source === "package_candidate" ? "方案候選" : "預計聯繫"}</small>{dateLabel(item.due_date)}</strong>
     </div>
     <dl className="followup-meta">
       <div><dt>最近紀錄</dt><dd>{dateLabel(item.last_visit_date)}{item.days_since_visit === null ? "" : ` · ${item.days_since_visit} 天前`}</dd></div>
-      {item.package_label ? <div><dt>建議方案</dt><dd>{item.package_label}</dd></div> : null}
-      <div><dt>提醒原因</dt><dd>{item.reason}</dd></div>
+      <div><dt>方案狀態</dt><dd>{item.package_label ?? item.package_status}</dd></div>
+      <div><dt>整理重點</dt><dd>{item.last_focus}</dd></div>
+      <div><dt>AI 建議</dt><dd>{item.reason}</dd></div>
+      <div><dt>語氣模式</dt><dd><span className="followup-mode">{item.mode}</span></dd></div>
     </dl>
-    <div className="followup-message"><span>suggested_message</span><p>{item.suggested_message}</p></div>
+    <div className="followup-message"><span>AI 生成 LINE 草稿 · 需 Gavin 確認</span><p>{item.suggested_message}</p></div>
     <div className="followup-actions">
-      <button className="bf-primary" type="button" onClick={() => onCopy(item)}>{copiedId === item.item_id ? "已複製" : "複製私訊"}</button>
+      <button className="bf-primary" type="button" onClick={() => onCopy(item)}>{copiedId === item.item_id ? "已複製" : "一鍵複製草稿"}</button>
       {actionable ? <><button className="bf-small-btn" type="button" disabled={busy} onClick={() => onAction(item, "complete")}>{busy ? "更新中…" : "標記已追蹤"}</button><button className="bf-small-btn" type="button" disabled={busy} onClick={() => onAction(item, "postpone")}>延後 7 天</button></> : null}
       <Link className="bf-small-btn" href={`/clinic/clients/${item.client_id}`}>查看客戶檔案</Link>
     </div>
@@ -94,12 +96,12 @@ export default function FollowupDashboard() {
   const priorityLabels = new Map(codebook?.items.filter((item) => item.category_key === "PRIORITY").map((item) => [item.code, item.name_zh]) ?? []);
   const taskCodes = new Map(codebook?.items.filter((item) => item.category_key === "FOLLOWUP_TASK" && item.metadata?.task_type).map((item) => [item.metadata!.task_type!, item.code]) ?? []);
   const shared = { onAction: updateTask, onCopy: copyMessage, copiedId, busyId, priorityLabels, taskCodes };
-  return <ClinicShell title="追蹤提醒儀表板" subtitle="直接整理現有追蹤任務與方案候選，讓今天的聯繫順序一眼清楚。">
+  return <ClinicShell title="BodyFix 回訪副駕" subtitle="AI 幫你整理誰該聯絡、為什麼該聯絡、該怎麼講；Gavin 確認後再手動傳送。">
     <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
     {actionError ? <div className="bf-notice bf-section-gap" role="alert">{actionError}</div> : null}
     {data ? <>
       <section className="followup-summary bf-section-gap">
-        <div><span>今日待追蹤</span><strong>{data.today.length}</strong><small>今天到期或尚未設定日期</small></div>
+        <div><span>今日回訪草稿</span><strong>{data.today.length}</strong><small>不會自動發送，由 Gavin 最後確認</small></div>
         <div><span>P1 高優先回訪</span><strong>{data.p1.length}</strong><small>優先完成本輪聯繫</small></div>
         <div><span>P2 中優先回訪</span><strong>{data.p2.length}</strong><small>依排程持續關心</small></div>
         <div><span>沉睡客戶</span><strong>{data.dormant_clients.length}</strong><small>dormant_client 提醒</small></div>

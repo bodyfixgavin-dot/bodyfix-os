@@ -1,5 +1,6 @@
 export type FollowupPriority = "P1" | "P2" | "P3";
 export type FollowupSource = "followup_task" | "package_candidate";
+export type FollowupMode = "關懷模式" | "接續模式" | "續約模式" | "喚醒模式";
 
 export type FollowupClient = {
   item_id: string;
@@ -17,6 +18,9 @@ export type FollowupClient = {
   reason: string;
   suggested_message: string;
   package_label: string | null;
+  mode: FollowupMode;
+  last_focus: string;
+  package_status: string;
 };
 
 export type FollowupDashboardData = {
@@ -93,6 +97,13 @@ function sortItems(items: FollowupClient[]) {
     || (b.days_since_visit ?? -1) - (a.days_since_visit ?? -1));
 }
 
+function followupMode(source: FollowupSource, category: string, days: number | null): FollowupMode {
+  if (category === "dormant_client" || (days ?? 0) >= 60) return "喚醒模式";
+  if (source === "package_candidate") return "續約模式";
+  if ((days ?? 0) >= 21) return "關懷模式";
+  return "接續模式";
+}
+
 export function buildFollowupDashboard(
   clients: Row[],
   records: Row[],
@@ -121,6 +132,8 @@ export function buildFollowupDashboard(
     const lastVisit = dateText(clientRecords[0] ?? {}, ["service_date", "created_at"])
       ?? dateText(client, ["last_session_date", "last_visit_date"]);
     const category = categoryValue(row);
+    const visitDays = daysSince(lastVisit, today);
+    const latestRecord = clientRecords[0] ?? {};
     return {
       item_id: String(row.id ?? `${source}-${clientId}`),
       source,
@@ -132,11 +145,14 @@ export function buildFollowupDashboard(
       category_label: categoryLabel(category, source),
       due_date: dateText(row, ["due_date", "scheduled_date", "followup_date", "next_followup_date"]),
       last_visit_date: lastVisit,
-      days_since_visit: daysSince(lastVisit, today),
+      days_since_visit: visitDays,
       service_count: clientRecords.length || numberValue(client, ["total_sessions", "service_count"]),
       reason: text(row, ["reason", "trigger_reason", "task_reason", "notes", "description"]) || "依目前追蹤節奏安排",
       suggested_message: text(row, ["suggested_message", "message", "message_template", "suggested_pitch", "proposal_message"]) || "嗨，最近還好嗎？想關心一下你近期的狀態與安排。",
-      package_label: source === "package_candidate" ? nullableText(row, ["package_name", "suggested_package", "offer_title", "candidate_type", "package_type"]) : null
+      package_label: source === "package_candidate" ? nullableText(row, ["package_name", "suggested_package", "offer_title", "candidate_type", "package_type"]) : null,
+      mode: followupMode(source, category, visitDays),
+      last_focus: text(latestRecord, ["next_focus", "processed_area", "main_complaint", "after_change"]) || "尚未記錄上次整理重點",
+      package_status: text(row, ["package_status", "balance_summary", "remaining_sessions", "status"]) || "尚未記錄方案狀態"
     };
   }
 

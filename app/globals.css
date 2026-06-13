@@ -2709,6 +2709,7 @@ main {
 .followup-message { border-left: 3px solid var(--bf-bronze); background: rgba(198,170,135,.12); border-radius: 12px; padding: 12px 14px; }
 .followup-message span { color: var(--bf-bronze); font-size: 12px; font-weight: 700; }
 .followup-message p { margin: 7px 0 0; line-height: 1.7; }
+.followup-mode { display: inline-flex; border-radius: 999px; padding: 3px 9px; background: rgba(47, 133, 90, .11); color: #287147; font-size: 12px; font-weight: 700; }
 .followup-actions { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 14px; }
 .followup-actions a { text-decoration: none; }
 .followup-actions .bf-primary { padding: 9px 12px; border-radius: 10px; }
