@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     let body;
     try {
       body = req.body ?? {};
-    } catch (_) {
+    } catch {
       return res.status(400).json({ ok: false, error: 'Invalid JSON' });
     }
 
