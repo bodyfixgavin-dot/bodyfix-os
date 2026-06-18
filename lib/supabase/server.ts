@@ -29,11 +29,15 @@ export function createSupabaseServerClient() {
     return null;
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false
-    }
-  });
+  try {
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false
+      }
+    });
+  } catch {
+    return null;
+  }
 }
 
 export function hasSupabaseAdminEnv() {
@@ -48,9 +52,13 @@ export function createSupabaseAdminClient() {
     return null;
   }
 
-  return createClient(supabaseUrl, serviceRoleKey, {
-    auth: {
-      persistSession: false
-    }
-  });
+  try {
+    return createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        persistSession: false
+      }
+    });
+  } catch {
+    return null;
+  }
 }
