@@ -3309,3 +3309,8 @@ main {
 .tension-visual>svg{height:275px;margin:0 auto;overflow:visible;stroke:none}
 .map-anatomy{fill:none;stroke:#f5f1e8;stroke-linecap:round;stroke-linejoin:round;stroke-width:1.35}.map-anatomy .map-detail{stroke:#c8a46d;stroke-dasharray:2 4;stroke-width:.75;opacity:.6}.map-glow{filter:blur(5px);stroke:#d4af7a;stroke-width:.8}.map-glow.soft{opacity:.65}.map-band{fill:none;filter:drop-shadow(0 0 5px #d4af7a);stroke:#d4af7a;stroke-linecap:round;stroke-width:5;opacity:.58}.map-band.dashed,.map-core{fill:none;stroke:#d4af7a;stroke-dasharray:4 4;stroke-width:1.2}.map-core{filter:drop-shadow(0 0 5px #d4af7a)}.map-secondary-badge{position:absolute;top:51px;right:18px;border:1px solid rgba(212,175,122,.35);border-radius:999px;background:rgba(16,38,31,.78);color:#f5e5ca;padding:6px 9px;font-size:9px;font-weight:800}.visual-zones{justify-content:center}.visual-zones span{background:rgba(245,241,232,.04);padding:6px 10px}.map-pelvic .map-anatomy{stroke-width:1.45}
 @media(max-width:700px){.report-hero{gap:22px}.report-hero h1{margin-bottom:10px;font-size:clamp(30px,9.5vw,42px)}.report-resonance{font-size:17px}.tension-visual{min-height:365px;padding:17px}.tension-visual>svg{height:260px}.visual-zones{gap:5px}.visual-zones span{font-size:9px}}
+
+/* Body Tension Report — fixed result artwork */
+.tension-visual.tension-hero-image{min-height:0;padding:0;overflow:hidden;background:#f8f5ee;box-shadow:0 18px 45px rgba(20,34,52,.16)}
+.tension-hero-image img{display:block;width:100%;height:auto;object-fit:contain}
+@media(max-width:700px){.tension-visual.tension-hero-image{min-height:0;padding:0;width:100%;max-width:100%}}
