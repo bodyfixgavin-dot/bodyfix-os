@@ -8,6 +8,7 @@ type ServiceCatalogRow = {
   service_line: string | null;
   service_name: string | null;
   service_variant: string | null;
+  price: number | null;
   standard_price: number | null;
   status: string | null;
 };
@@ -21,7 +22,7 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from("service_catalog")
-    .select("service_code, service_line, service_name, service_variant, standard_price, status")
+    .select("service_code, service_line, service_name, service_variant, price, standard_price:price, status")
     .in("status", ["active", "trial"])
     .order("service_line", { ascending: true })
     .order("service_code", { ascending: true });

@@ -8,6 +8,7 @@ type ServiceCatalogItem = {
   service_line: string | null;
   service_name: string | null;
   service_variant: string | null;
+  price: number | null;
   standard_price: number | null;
   status: string | null;
 };
@@ -18,9 +19,9 @@ function serviceLabel(service: ServiceCatalogItem) {
     service.service_line,
     service.service_name,
     service.service_variant,
-    service.standard_price === null || service.standard_price === undefined
+    service.price === null || service.price === undefined
       ? "NT$0"
-      : `NT$${Number(service.standard_price).toLocaleString("zh-TW")}`
+      : `NT$${Number(service.price).toLocaleString("zh-TW")}`
   ];
 
   return parts.map((part) => String(part ?? "-")).join("・");
@@ -30,7 +31,7 @@ export function EntryForm({ kind }: { kind: "income" | "appointment" }) {
   const [saved, setSaved] = useState(false);
   const [services, setServices] = useState<ServiceCatalogItem[]>([]);
   const [serviceCode, setServiceCode] = useState("");
-  const [amount, setAmount] = useState("");
+  const [amountActual, setAmountActual] = useState("");
   const [loadingServices, setLoadingServices] = useState(true);
   const [serviceError, setServiceError] = useState("");
   const appointment = kind === "appointment";
@@ -57,7 +58,7 @@ export function EntryForm({ kind }: { kind: "income" | "appointment" }) {
         if (nextServices.length > 0) {
           const firstService = nextServices[0] as ServiceCatalogItem;
           setServiceCode(firstService.service_code ?? "");
-          setAmount(firstService.standard_price === null || firstService.standard_price === undefined ? "" : String(firstService.standard_price));
+          setAmountActual(firstService.price === null || firstService.price === undefined ? "" : String(firstService.price));
         }
       } catch (error) {
         if (!active) return;
@@ -83,7 +84,7 @@ export function EntryForm({ kind }: { kind: "income" | "appointment" }) {
   function updateService(nextServiceCode: string) {
     setServiceCode(nextServiceCode);
     const nextService = services.find((service) => service.service_code === nextServiceCode);
-    setAmount(nextService?.standard_price === null || nextService?.standard_price === undefined ? "" : String(nextService.standard_price));
+    setAmountActual(nextService?.price === null || nextService?.price === undefined ? "" : String(nextService.price));
   }
 
   return (
@@ -94,7 +95,7 @@ export function EntryForm({ kind }: { kind: "income" | "appointment" }) {
       <Field label="服務類型">
         <select value={serviceCode} onChange={(event) => updateService(event.target.value)} disabled={loadingServices || services.length === 0} required>
           {loadingServices ? <option value="">讀取 service_catalog 中…</option> : null}
-          {!loadingServices && services.length === 0 ? <option value="">service_catalog 目前沒有 active / trial 服務</option> : null}
+          {!loadingServices && !serviceError && services.length === 0 ? <option value="">service_catalog 目前沒有 active / trial 服務</option> : null}
           {services.map((service) => (
             <option key={service.service_code ?? serviceLabel(service)} value={service.service_code ?? ""}>
               {serviceLabel(service)}
@@ -105,7 +106,7 @@ export function EntryForm({ kind }: { kind: "income" | "appointment" }) {
       {serviceError ? <p className="pulse-form-note">{serviceError}</p> : null}
       {selectedService ? <p className="pulse-form-note">已選服務狀態：{selectedService.status}</p> : null}
       <Field label={appointment ? "預估金額" : "實收金額"}>
-        <input type="number" inputMode="numeric" placeholder="0" value={amount} onChange={(event) => setAmount(event.target.value)} required={!appointment} />
+        <input name="amount_actual" type="number" inputMode="numeric" placeholder="0" value={amountActual} onChange={(event) => setAmountActual(event.target.value)} required={!appointment} />
       </Field>
       {appointment ? <Field label="狀態"><select>{["已排", "待確認", "已完成", "取消"].map((x) => <option key={x}>{x}</option>)}</select></Field> : <Field label="來源"><select>{["LINE", "IG", "軟體", "熟客", "FansOne", "其他"].map((x) => <option key={x}>{x}</option>)}</select></Field>}
       <Field label="備註"><textarea placeholder="有什麼值得記住？" /></Field>
