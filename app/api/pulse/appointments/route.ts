@@ -1,0 +1,4 @@
+import { NextResponse } from "next/server";
+import { createSupabaseAdminClient } from "@/lib/supabase/server";
+export const dynamic = "force-dynamic";
+export async function POST(req:Request){ const db=createSupabaseAdminClient(); if(!db) return NextResponse.json({error:"Supabase environment is not configured"},{status:500}); const body=await req.json(); const payload={appointment_date:body.appointment_date,start_time:body.appointment_time,client_id:body.client_id,client_name_snapshot:body.client_name_snapshot,service_code:body.service_code,service_line:body.service_line,service_name:body.service_name,service_variant:body.service_variant,standard_price:body.standard_price,amount_actual:body.amount_actual,status:body.status,note:body.note}; const {data,error}=await db.from("pulse_appointments").insert(payload).select("id").single(); if(error) return NextResponse.json({error:error.message},{status:500}); return NextResponse.json({appointment:data}); }
