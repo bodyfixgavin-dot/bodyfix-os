@@ -62,8 +62,8 @@ export default function MethodPage() {
         <header className="portal-detail-hero method-hero">
           <p className="portal-kicker">Professional Learning Entrance</p>
           <h1>BodyFix Method</h1>
-          <p className="portal-detail-lead">把個人手感，整理成可判讀、可回測、可記錄的方法。</p>
-          <p>BodyFix Method 以運動按摩為基礎，透過 4R 流程、筋膜線與張力分工判讀、低痛感且可呼吸的整理原則，以及安全邊界與服務紀錄，建立一套身體服務者能理解、執行與持續複核的工作流程。</p>
+          <p className="portal-detail-lead">很多人以為，身體服務拼的是手感。</p>
+          <p className="method-hero-intro">真正難的，是把手感說清楚、做得穩定，還能交給下一個人。BodyFix Method 就是把它整理成一套可判讀、可回測、可記錄的方法。</p>
           <p className="method-emphasis">不是教你做得更痛、更深，而是教你怎麼看、怎麼做、怎麼停，以及怎麼把身體接回動作與生活。</p>
           <div className="method-actions"><button className="method-btn method-btn-primary" onClick={() => scrollTo("learning-routes")}>查看學習入口</button><button className="method-btn method-btn-secondary" onClick={() => scrollTo("method-interest")}>登記課程興趣</button></div>
         </header>

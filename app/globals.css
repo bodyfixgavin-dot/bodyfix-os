@@ -3322,7 +3322,6 @@ main {
   gap: 28px;
 }
 
-.method-hero,
 .method-section,
 .method-form-section,
 .method-advanced,
@@ -3334,16 +3333,33 @@ main {
 
 .method-hero {
   overflow: hidden;
+  border: 1px solid rgba(155, 117, 80, .28);
+  box-shadow: 0 24px 70px rgba(23, 35, 51, .14);
 }
 
 .method-emphasis {
-  border-left: 4px solid var(--bf-bronze);
-  background: rgba(198, 170, 135, .16);
-  border-radius: 16px;
-  padding: 14px 16px;
+  border-left: 3px solid var(--bf-bronze);
+  background: rgba(198, 170, 135, .14);
+  border-radius: 14px;
+  padding: 16px 18px;
   color: var(--bf-navy);
-  font-weight: 800;
-  line-height: 1.75;
+  font-weight: 600;
+  line-height: 1.85;
+}
+
+.method-hero-intro {
+  max-width: 600px;
+  margin: 24px 0 0;
+  color: rgba(248, 245, 238, .78);
+  font-size: clamp(15px, 1.5vw, 17px);
+  line-height: 1.95;
+}
+
+.method-hero .method-emphasis {
+  margin-top: 22px;
+  color: rgba(248, 245, 238, .92);
+  background: rgba(198, 170, 135, .12);
+  border-color: var(--bf-bronze-soft);
 }
 
 .method-actions {
