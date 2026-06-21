@@ -1,9 +1,26 @@
 -- BodyFix Pulse v1. Prefixes avoid collisions with existing BodyFix OS tables.
 create extension if not exists pgcrypto;
 create table if not exists pulse_settings (id uuid primary key default gen_random_uuid(), month_target integer not null default 150000, period_start date not null, period_end date not null, rest_weekdays integer[] default '{2}', created_at timestamptz default now(), updated_at timestamptz default now());
-create table if not exists pulse_income_entries (id uuid primary key default gen_random_uuid(), entry_date date not null, client_name text, service_type text, amount integer not null check(amount >= 0), source text, note text, created_at timestamptz default now());
-create table if not exists pulse_appointments (id uuid primary key default gen_random_uuid(), appointment_date date not null, start_time time, client_name text not null, service_type text, estimated_amount integer, status text default '已排' check(status in ('已排','待確認','已完成','取消')), note text, created_at timestamptz default now());
+create table if not exists pulse_income_entries (id uuid primary key default gen_random_uuid(), entry_date date not null, client_id uuid references clients(id) on delete set null, client_name_snapshot text, client_name text, service_type text, amount integer not null check(amount >= 0), source text, note text, created_at timestamptz default now());
+create table if not exists pulse_appointments (id uuid primary key default gen_random_uuid(), appointment_date date not null, start_time time, client_id uuid references clients(id) on delete set null, client_name_snapshot text, client_name text, service_type text, estimated_amount integer, status text default '已排' check(status in ('已排','待確認','已完成','取消')), note text, created_at timestamptz default now());
 create table if not exists pulse_followups (id uuid primary key default gen_random_uuid(), client_name text not null, last_visit_date date, main_issue text, contact_method text, priority text default '中' check(priority in ('高','中','低')), followup_status text default '未聯絡' check(followup_status in ('未聯絡','已聯絡','已回覆','已預約','暫不打擾')), suggested_message text, created_at timestamptz default now());
+
+alter table clients add column if not exists display_name text;
+alter table clients add column if not exists nickname text;
+alter table clients add column if not exists client_name text;
+alter table clients add column if not exists contact_method text;
+alter table clients add column if not exists line_id text;
+alter table clients add column if not exists ig_id text;
+alter table clients add column if not exists phone text;
+alter table clients add column if not exists main_issue text;
+alter table clients add column if not exists last_visit_date date;
+alter table clients add column if not exists status text;
+update clients set display_name = coalesce(nullif(trim(display_name), ''), nullif(trim(client_name), ''), nullif(trim(nickname), ''), '未命名客戶') where display_name is null or trim(display_name) = '';
+alter table clients alter column display_name set not null;
+alter table pulse_income_entries add column if not exists client_id uuid references clients(id) on delete set null;
+alter table pulse_income_entries add column if not exists client_name_snapshot text;
+alter table pulse_appointments add column if not exists client_id uuid references clients(id) on delete set null;
+alter table pulse_appointments add column if not exists client_name_snapshot text;
 create index if not exists pulse_income_date_idx on pulse_income_entries(entry_date); create index if not exists pulse_appointment_date_idx on pulse_appointments(appointment_date,status);
 alter table pulse_settings enable row level security; alter table pulse_income_entries enable row level security; alter table pulse_appointments enable row level security; alter table pulse_followups enable row level security;
 insert into pulse_settings(month_target,period_start,period_end,rest_weekdays) select 150000,'2026-06-14','2026-06-30','{2}' where not exists(select 1 from pulse_settings);
