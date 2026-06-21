@@ -1,2 +1,0 @@
-import {PulseShell} from "@/components/pulse/PulseShell"; import {demoFollowups} from "@/lib/pulse/data";
-export default function Page(){return <PulseShell title="今天先找誰" eyebrow="FOLLOW-UP POOL"><p className="page-intro">不是廣撒訊息，是把值得照顧的人找回來。</p><section className="followup-list full">{demoFollowups.map(x=><article key={x[0]}><span className={`priority p-${x[4]}`}>{x[4]}</span><div><b>{x[0]}</b><p>{x[2]} · 最近來訪 {x[1]}</p><small>建議：嗨 {x[0]}，最近身體狀況還好嗎？上次提到的{x[2]}有沒有比較穩？</small></div><button>{x[3]} 聯絡</button></article>)}</section></PulseShell>}

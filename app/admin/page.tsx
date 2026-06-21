@@ -267,6 +267,12 @@ export default function AdminPage() {
       <AdminDataStatusCard diagnostics={diagnostics} errorMessage={errorMessage} />
 
       <section className="bf-card bf-section-gap">
+        <h2 className="bf-section-title">BodyFix Pulse</h2>
+        <p className="bf-subtitle">收入節奏、今日戰況與回訪空狀態。Pulse 放在 Admin 管理後台，不取代既有預約管理功能。</p>
+        <a className="bf-primary" href="/admin/pulse">進入 BodyFix Pulse</a>
+      </section>
+
+      <section className="bf-card bf-section-gap">
         <h2 className="bf-section-title">新增可約時段</h2>
         <div className="bf-form">
           <label>開始時間<input type="datetime-local" value={startsAt} onChange={(e) => setStartsAt(e.target.value)} /></label>
