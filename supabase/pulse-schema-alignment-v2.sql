@@ -1,0 +1,53 @@
+-- BodyFix Pulse schema alignment: clients are the only customer master; service_catalog is the service source of truth.
+alter table clients add column if not exists client_code text;
+alter table clients add column if not exists display_name text;
+alter table clients add column if not exists nickname text;
+alter table clients add column if not exists client_name text;
+alter table clients add column if not exists contact_method text;
+alter table clients add column if not exists line_id text;
+alter table clients add column if not exists instagram text;
+alter table clients add column if not exists ig_id text;
+alter table clients add column if not exists phone text;
+alter table clients add column if not exists birthday date;
+alter table clients add column if not exists source text;
+alter table clients add column if not exists home_city text;
+alter table clients add column if not exists preferred_city text;
+alter table clients add column if not exists first_pain_point text;
+alter table clients add column if not exists main_issue text;
+alter table clients add column if not exists current_stage text;
+alter table clients add column if not exists priority text;
+alter table clients add column if not exists case_permission text;
+alter table clients add column if not exists internal_notes text;
+alter table clients add column if not exists last_visit_date date;
+alter table clients add column if not exists client_type text default 'individual';
+alter table clients add column if not exists client_status text default 'active';
+alter table clients add column if not exists ownership_type text;
+alter table clients add column if not exists is_selectable boolean default true;
+alter table clients add column if not exists membership_code text;
+alter table clients add column if not exists note text;
+alter table clients add column if not exists created_at timestamptz default now();
+alter table clients add column if not exists updated_at timestamptz default now();
+
+alter table pulse_income_entries add column if not exists client_id uuid references clients(id);
+alter table pulse_income_entries add column if not exists client_name_snapshot text;
+alter table pulse_income_entries add column if not exists service_code text;
+alter table pulse_income_entries add column if not exists service_line text;
+alter table pulse_income_entries add column if not exists service_name text;
+alter table pulse_income_entries add column if not exists service_variant text;
+alter table pulse_income_entries add column if not exists standard_price integer;
+alter table pulse_income_entries add column if not exists amount_actual integer;
+update pulse_income_entries set amount_actual = amount where amount_actual is null and amount is not null;
+
+alter table pulse_appointments add column if not exists client_id uuid references clients(id);
+alter table pulse_appointments add column if not exists client_name_snapshot text;
+alter table pulse_appointments add column if not exists service_code text;
+alter table pulse_appointments add column if not exists service_line text;
+alter table pulse_appointments add column if not exists service_name text;
+alter table pulse_appointments add column if not exists service_variant text;
+alter table pulse_appointments add column if not exists standard_price integer;
+alter table pulse_appointments add column if not exists estimated_amount integer;
+alter table pulse_appointments add column if not exists amount_actual integer;
+
+create index if not exists clients_pulse_select_idx on clients(client_status, is_selectable, display_name);
+create index if not exists pulse_income_entries_client_idx on pulse_income_entries(client_id, entry_date);
+create index if not exists pulse_appointments_client_idx on pulse_appointments(client_id, appointment_date);

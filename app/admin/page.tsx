@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import type { AvailabilitySlot, BookingRequest, BookingService, BookingStatus } from "@/types/booking";
 
 type AdminDiagnostics = {
@@ -81,7 +81,7 @@ export default function AdminPage() {
   const [bypassMode, setBypassMode] = useState(false);
   const [localMode, setLocalMode] = useState(false);
 
-  async function loadAdminData() {
+  const loadAdminData = useCallback(async function loadAdminData() {
     if (localMode) {
       setSlots(JSON.parse(localStorage.getItem("bodyfix-preview-slots") || "[]") as AvailabilitySlot[]);
       return;
@@ -107,7 +107,7 @@ export default function AdminPage() {
     setSlots((data.slots ?? []) as AvailabilitySlot[]);
     setServices((data.services ?? []) as BookingService[]);
     setDiagnostics({ loginState: "authenticated", databaseState: "ready", requestPath: "/api/admin/slots" });
-  }
+  }, [localMode]);
 
   async function login() {
     if (bypassMode) { setLocalMode(true); setAuthed(true); setSlots(JSON.parse(localStorage.getItem("bodyfix-preview-slots") || "[]")); return; }
@@ -150,7 +150,7 @@ export default function AdminPage() {
     }
 
     checkSession();
-  }, []);
+  }, [loadAdminData]);
 
   async function updateBookingStatus(id: string, status: BookingStatus) {
     const res = await fetch("/api/admin/bookings/status", {
