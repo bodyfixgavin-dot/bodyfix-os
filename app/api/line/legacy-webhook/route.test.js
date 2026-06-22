@@ -102,6 +102,47 @@ describe("legacy LINE webhook", () => {
     expect(global.fetch).not.toHaveBeenCalled();
   });
 
+  it("uses the fixed coaching reply without OpenAI for one-on-one coaching inquiries", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(signedRequest([
+      {
+        type: "message",
+        replyToken: "reply-token",
+        source: { userId: "legacy-user-1" },
+        message: { type: "text", text: "我想了解 BodyFix 1 對 1 教練課" }
+      }
+    ]));
+
+    const fixedReply = "有的，BodyFix 提供一對一動作整合訓練。課程會依你目前的身體狀態、動作經驗與目標安排，也會留意代償、張力分工與過往不適，不只是帶你把動作做完。你可以先告訴我：目前想改善的目標、平常運動頻率，以及方便的地點與時間。";
+    const replyCall = global.fetch.mock.calls.find(([url]) => String(url).includes("/message/reply"));
+    expect(res.status).toBe(200);
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+    expect(replyCall[1].body).toContain(fixedReply);
+    expect(replyCall[1].body).not.toContain("不包含教練課");
+    expect(sheetMocks.upsertCrmRecord).toHaveBeenCalledWith(expect.objectContaining({
+      aiResult: expect.objectContaining({
+        classification: expect.objectContaining({ intent: "coaching" })
+      })
+    }));
+  });
+
+  it("keeps body reset inquiries on the OpenAI flow", async () => {
+    const { POST } = await import("./route");
+
+    const res = await POST(signedRequest([
+      {
+        type: "message",
+        replyToken: "reply-token",
+        source: { userId: "legacy-user-1" },
+        message: { type: "text", text: "我肩頸很緊，想了解身體整理" }
+      }
+    ]));
+
+    expect(res.status).toBe(200);
+    expect(openAiMocks.generateBodyFixReply).toHaveBeenCalledWith("我肩頸很緊，想了解身體整理", undefined);
+  });
+
   it("uses the fallback reply when OpenAI fails", async () => {
     openAiMocks.generateBodyFixReply.mockRejectedValueOnce(new Error("OpenAI unavailable"));
     const { POST } = await import("./route");

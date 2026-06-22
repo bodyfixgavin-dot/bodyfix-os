@@ -77,16 +77,16 @@ export async function generateBodyFixReply(message: string, crm?: CrmRecord): Pr
                   "notes"
                 ],
                 properties: {
-                  intent: { type: "string", enum: ["booking", "pricing", "service_difference", "body_issue", "location", "oil_massage", "sexual_service", "followup", "unclear"] },
+                  intent: { type: "string", enum: ["booking", "pricing", "service_difference", "body_issue", "coaching", "location", "oil_massage", "sexual_service", "followup", "unclear"] },
                   leadTemperature: { type: "string", enum: ["A", "B", "C", "D"] },
                   bookingStage: { type: "string", enum: ["new", "assessing", "ready_to_book", "waiting_time", "booked", "followup_needed", "not_fit", "human_takeover"] },
-                  preferredService: { type: "string", enum: ["standard_fascia_60", "pelvic_core_60", "fascia_extension_30", "pelvic_extension_30", "mixed_extension", "unknown"] },
+                  preferredService: { type: "string", enum: ["standard_fascia_60", "pelvic_core_60", "fascia_extension_30", "pelvic_extension_30", "mixed_extension", "one_on_one_coaching", "unknown"] },
                   needHuman: { type: "boolean" },
                   bodyIssue: { type: "string" },
                   bodyArea: { type: "string" },
                   preferredLocation: { type: "string" },
                   preferredTime: { type: "string" },
-                  nextAction: { type: "string", enum: ["ask_body_issue", "ask_time", "ask_location", "explain_difference", "send_price", "human_takeover", "followup_3_days", "followup_7_days"] },
+                  nextAction: { type: "string", enum: ["ask_body_issue", "ask_time", "ask_location", "ask_training_goal", "explain_difference", "send_price", "human_takeover", "followup_3_days", "followup_7_days"] },
                   notes: { type: "string" }
                 }
               }

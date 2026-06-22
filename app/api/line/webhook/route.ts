@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
+import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, verifyLineSignature } from "@/lib/bodyfix-ai/line";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
@@ -131,6 +132,10 @@ async function handleLineEvent(event: LineEvent) {
 }
 
 async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
+  if (isCoachingIntent(message)) {
+    return createCoachingResult();
+  }
+
   try {
     return await generateBodyFixReply(message, crm);
   } catch (error) {

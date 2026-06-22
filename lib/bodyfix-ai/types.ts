@@ -3,6 +3,7 @@ export type BodyFixIntent =
   | "pricing"
   | "service_difference"
   | "body_issue"
+  | "coaching"
   | "location"
   | "oil_massage"
   | "sexual_service"
@@ -27,12 +28,14 @@ export type PreferredService =
   | "fascia_extension_30"
   | "pelvic_extension_30"
   | "mixed_extension"
+  | "one_on_one_coaching"
   | "unknown";
 
 export type NextAction =
   | "ask_body_issue"
   | "ask_time"
   | "ask_location"
+  | "ask_training_goal"
   | "explain_difference"
   | "send_price"
   | "human_takeover"
