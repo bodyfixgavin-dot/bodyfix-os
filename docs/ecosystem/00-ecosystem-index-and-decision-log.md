@@ -9,7 +9,7 @@
 
 ## 文件包目的
 
-作為 Gavin 共根生態的導航、狀態追蹤與決策紀錄中心，確保 00～09 文件維持一致的層級、命名與依賴關係。
+作為 Gavin 共根生態的導航、狀態追蹤與決策紀錄中心，確保 00～10 文件維持一致的層級、命名與依賴關係。
 
 本文件不是所有領域的最高權威。每個領域由 Source of Truth Matrix 指定的文件或 Catalog 負責。
 
@@ -26,6 +26,7 @@
 | Pulse 指標 | 07-pulse-ecosystem-dashboard.md | not_yet_authored | 生態決策指標 |
 | Website IA | 08-website-information-architecture.md | not_yet_authored | 入口與導覽原則 |
 | Governance、版本與遷移 | 09-governance-versioning-and-migration.md | not_yet_authored | 版本控管與流程 |
+| Gavin Loam 與知識生命週期 | 10-gavin-loam-and-knowledge-lifecycle.md | draft | 知識腐植層、Internal Knowledge Base、Gavin Books 與出版生命週期 |
 | 服務代碼、名稱、價格、pricing model、status 與 Catalog 項目 | service-catalog.json | existing / to_be_normalized | 以 catalog_item_type 區分 service_definition、product_definition、offer |
 
 ## 文件依賴 DAG
@@ -43,7 +44,7 @@
        ├──→ 06
        └──→ 07
 
-09 橫向治理 00～08 與所有 Catalog。
+09 橫向治理 00～08、10 與所有 Catalog；10 不取代 09 Governance。
 ```
 
 ## 文件優先級與衝突裁決
@@ -57,9 +58,11 @@
 
 ## 已確認決策
 
-- Gavin Ecosystem 是一座持續生長的共根森林。
-- BodyFix、Chart Navigator、Space Guide 是同一座森林中的主要服務樹。
-- 服務線是主要枝幹，具體服務、方案、工具與內容產品是枝條、果實與種子。
+- Gavin Ecosystem 正式採用 Gavin Shared-Root Ecosystem 層級：整體土地、生態、氣候與共根架構。
+- 本次層級調整是正式架構遷移，取代舊有「一座森林、多棵 Domain 服務樹」比喻，不是單純文字校正。
+- domain 是正式技術實體名稱；BodyFix、Chart Navigator、Space Guide 是同一共根生態內的平行專業森林，不是彼此無關的品牌。
+- service_line 是各專業森林內的服務之樹；offer、product、content_asset 是枝條、果實、種子或商業取得方式。
+- Gavin Loam 是共根生態中的知識腐植層。
 - 核心句：「各自成樹，彼此成林，地下共生。」
 - 共根不代表資料無限制互通。
 - BodyFix 不是 Chart Navigator 的母品牌。
@@ -68,7 +71,11 @@
 - Markdown 規格與機器可讀 Catalog 分開維護。
 - service-catalog.json 是目前 service definition、product definition 與 sellable offer 的唯一正式機器可讀來源，並以 catalog_item_type 區分。
 - 00～04 可作為 canonical draft 存入 GitHub。
-- 05～09 尚未撰寫，不得由 Codex 自行補完。
+- 編號代表文件主題分類，不代表 05～09 已完成；05～09 尚未撰寫，不得由 Codex 自行補完。
+- 05 仍是 Referral & Permission；06～09 仍保留原規劃與狀態。
+- 10 Gavin Loam 專責 Gavin Loam、Internal Knowledge Base、Gavin Books、知識成熟與出版生命週期，不取代 09 Governance。
+- BodyFix Pulse 仍是營運觀測與決策中心；Shared Root Network 仍是資料與系統連接層。
+- Gavin Loam 不是 CRM、資料庫或 AI Router。
 
 ## 待 Gavin 確認決策
 
@@ -80,7 +87,7 @@
 - service-catalog.json 是否以及何時遷移為 offer-catalog.json。
 - cross-domain 分享欄位白名單與預設層級。
 - 保存期限、Merge / Unlink 權限與 AI Payload 白名單。
-- 24＋12 分期金額。
+- 24＋12 分期金額與筋膜權益組合規則：REQUIRES_GAVIN_CONFIRMATION。
 - 36 堂正式優惠價。
 - v1.0 簽核流程。
 - Pulse 第一階段指標。
