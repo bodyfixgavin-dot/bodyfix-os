@@ -1,0 +1,165 @@
+.ownerModeShell {
+  min-height: 100svh;
+  background:
+    linear-gradient(180deg, rgba(244, 238, 226, 0.06), transparent 28rem),
+    #111821;
+  color: #f5efe5;
+  padding: clamp(24px, 5vw, 76px);
+}
+
+.ownerModeWrap {
+  margin: 0 auto;
+  max-width: 1120px;
+}
+
+.ownerModeTopbar {
+  align-items: center;
+  border-bottom: 1px solid rgba(245, 239, 229, 0.14);
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 20px;
+}
+
+.ownerModeMark,
+.ownerModeNav {
+  color: rgba(245, 239, 229, 0.68);
+  font-size: 0.76rem;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+}
+
+.ownerModeNav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.ownerModeNav a {
+  text-decoration: none;
+}
+
+.ownerModeNav a:focus-visible,
+.ownerModeBack:focus-visible {
+  outline: 3px solid rgba(221, 201, 166, 0.46);
+  outline-offset: 5px;
+}
+
+.ownerModeHero {
+  display: grid;
+  gap: 32px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(260px, 0.9fr);
+  padding: clamp(48px, 10vw, 120px) 0 clamp(36px, 7vw, 80px);
+}
+
+.ownerModeTitle {
+  font-family: var(--font-tasa-orbiter), "Noto Serif TC", serif;
+  font-size: clamp(3.3rem, 12vw, 8.8rem);
+  font-weight: 500;
+  letter-spacing: -0.09em;
+  line-height: 0.88;
+  margin: 0;
+}
+
+.ownerModeIntro {
+  align-self: end;
+  border-left: 1px solid rgba(221, 201, 166, 0.42);
+  color: rgba(245, 239, 229, 0.74);
+  font-size: clamp(1rem, 2vw, 1.18rem);
+  line-height: 1.9;
+  padding-left: 24px;
+}
+
+.ownerModeGrid {
+  display: grid;
+  gap: 1px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  background: rgba(245, 239, 229, 0.14);
+  border: 1px solid rgba(245, 239, 229, 0.14);
+}
+
+.ownerModeModule {
+  background: #111821;
+  min-height: 340px;
+  padding: clamp(22px, 3vw, 34px);
+}
+
+.ownerModeIndex {
+  color: #cdbb9e;
+  display: block;
+  font-size: 0.72rem;
+  letter-spacing: 0.22em;
+  margin-bottom: 46px;
+}
+
+.ownerModeModule h2 {
+  font-size: clamp(1.25rem, 2.5vw, 1.65rem);
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  margin: 0 0 20px;
+}
+
+.ownerModeModule p {
+  color: rgba(245, 239, 229, 0.7);
+  line-height: 1.85;
+  margin: 0;
+}
+
+.ownerModeFooter {
+  align-items: end;
+  display: flex;
+  gap: 24px;
+  justify-content: space-between;
+  padding-top: clamp(36px, 7vw, 72px);
+}
+
+.ownerModeStatement {
+  color: rgba(245, 239, 229, 0.72);
+  line-height: 1.9;
+  margin: 0;
+  max-width: 680px;
+}
+
+.ownerModeBack {
+  border: 1px solid rgba(221, 201, 166, 0.58);
+  color: #f5efe5;
+  flex: 0 0 auto;
+  font-size: 0.75rem;
+  letter-spacing: 0.16em;
+  padding: 14px 18px;
+  text-decoration: none;
+  text-transform: uppercase;
+  transition: background 180ms ease, transform 180ms ease;
+}
+
+.ownerModeBack:hover {
+  background: rgba(221, 201, 166, 0.1);
+  transform: translateY(-1px);
+}
+
+@media (max-width: 860px) {
+  .ownerModeHero,
+  .ownerModeGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .ownerModeModule {
+    min-height: auto;
+  }
+
+  .ownerModeFooter,
+  .ownerModeTopbar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ownerModeBack {
+    transition: none;
+  }
+
+  .ownerModeBack:hover {
+    transform: none;
+  }
+}
