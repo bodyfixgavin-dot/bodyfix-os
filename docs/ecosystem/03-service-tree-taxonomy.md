@@ -55,9 +55,9 @@
 
 | 隱喻 | 技術實體 |
 |---|---|
-| 整座森林 | ecosystem |
-| 主要服務樹 | domain |
-| 樹幹與主要枝條 | service_line |
+| 整體土地、生態、氣候與共根架構 | ecosystem |
+| 平行專業森林 | domain |
+| 服務之樹 | service_line |
 | 客戶實際取得的內容 | deliverable |
 | 可購買或取得的商業項目 | offer |
 
@@ -72,7 +72,7 @@
 具有獨立問題空間、專業邊界與前台識別的服務系統。
 
 ### service_line
-Domain 內穩定且可重複維護的主要服務方向。
+Domain 專業森林內穩定且可重複維護的服務之樹。
 
 結構關係原則：
 
@@ -271,8 +271,10 @@ customer_journey_role = core_offer
 offer_tier = premium
 
 entitlement grants:
-- training = 24 sessions
-- fascia_time = 24 × 30-minute units
+- training_sessions = 24
+- fascia_sessions = 12
+
+若正式 Catalog 定義不同，應引用 Catalog；若尚未確認，標記 `REQUIRES_GAVIN_CONFIRMATION`，不得自行推測筋膜權益單位。
 ```
 
 Package 定義組合。
@@ -296,6 +298,8 @@ usage_ledger 記錄實際扣除與剩餘。
 記錄每次使用、扣除、調整、剩餘與來源。
 
 不得把「客戶剩餘幾次」寫在 Service definition 裡。
+
+Entitlement 是客戶權益層，不是 Deliverable Type；不得使用 `service entitlement` 或 `service entitlements` 作為 deliverable_type。
 
 ## 15. Internal Entity ID 與 Catalog Code
 
@@ -374,8 +378,8 @@ archived 不屬於 Visibility，由 lifecycle 管理。
 | Pelvic Core | service_line | null | null | null | null | null | public | describable | BodyFix |
 | Movement Integration | service_line | null | null | null | null | null | public | describable | BodyFix |
 | 單堂動作整合 | null | service | null | single_offer | core_offer | standard | public | describable, bookable | BF-MI-001 |
-| 12 / 24 / 36 堂方案 | null | service entitlement | null | package | core_offer | standard | public | describable, purchasable | 引用 Catalog |
-| 24＋12 | null | service entitlements | null | package | core_offer | premium | public | describable, purchasable | BodyFix 內跨 Service Line |
+| 12 / 24 / 36 堂方案 | null | service | null | package | core_offer | standard | public | describable, purchasable | deliverable_type = service；commercial_form = package；components / entitlement_grants = service entitlements；引用 Catalog |
+| 24＋12 | null | service | null | package | core_offer | premium | public | describable, purchasable | deliverable_type = service；commercial_form = package；components / entitlement_grants = service entitlements；BodyFix 內跨 Service Line |
 | 頭眼頸重校準 | null | internal_protocol | null | not_sellable | null | null | REQUIRES_GAVIN_CONFIRMATION | REQUIRES_GAVIN_CONFIRMATION | 不可直接購買 |
 | 硬撐型身體測驗 | null | content_asset | null | free_offer | lead_magnet | entry | public | describable | BodyFix |
 | Chart Navigator | domain | null | null | null | null | null | public | describable | active |
