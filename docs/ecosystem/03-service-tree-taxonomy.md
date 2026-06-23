@@ -55,13 +55,14 @@
 
 | 隱喻 | 技術實體 |
 |---|---|
-| 整座森林 | ecosystem |
-| 主要服務樹 | domain |
-| 樹幹與主要枝條 | service_line |
-| 客戶實際取得的內容 | deliverable |
+| Gavin Shared-Root Ecosystem：整體土地、生態、氣候與共根架構 | ecosystem |
+| 平行專業森林，例如 BodyFix、Chart Navigator、Space Guide | domain |
+| 各專業森林內的服務之樹 | service_line |
+| 客戶實際取得的枝條、果實或種子 | deliverable / product / content_asset |
 | 可購買或取得的商業項目 | offer |
+| 共根生態中的知識腐植層 | Gavin Loam |
 
-技術欄位不得使用 forest_id、tree_id 或 branch_id。
+這是正式架構遷移，取代舊有「一座森林、多棵 Domain 服務樹」比喻，不是單純文字校正。技術欄位不得使用 forest_id、tree_id 或 branch_id。
 
 ## 5. Structural Hierarchy
 
@@ -271,8 +272,8 @@ customer_journey_role = core_offer
 offer_tier = premium
 
 entitlement grants:
-- training = 24 sessions
-- fascia_time = 24 × 30-minute units
+- training_sessions = 24
+- fascia_time_units_30m = 24
 ```
 
 Package 定義組合。
@@ -280,6 +281,8 @@ Package 定義組合。
 customer_entitlement 記錄客戶取得的權益。
 
 usage_ledger 記錄實際扣除與剩餘。
+
+24 個 30 分鐘筋膜權益單位等值於 12 次 60 分鐘；實際組合、延長與兌換規則仍應引用正式 Catalog。若 Catalog 尚未正式鎖定，標記 `REQUIRES_GAVIN_CONFIRMATION`，不得由 Codex 自行推測固定 session 結構。
 
 ## 14. Service、Offer、Entitlement 與 Usage Ledger
 

@@ -11,20 +11,24 @@
 生態 → 森林 → 三座森林 → 每座森林再有樹
 ```
 
-因此正式改為「一座森林、多棵服務樹」。
+因此曾改為「一座森林、多棵服務樹」，後續再遷移為 Gavin Shared-Root Ecosystem、多個平行專業森林與 service_line 服務之樹。
 
 ## 2. 鎖定架構
 
 ```text
-Gavin Ecosystem
-├─ BodyFix
-├─ Chart Navigator
-├─ Space Guide
+Gavin Shared-Root Ecosystem
+├─ BodyFix domain / parallel professional forest
+│  └─ service_line as service trees
+├─ Chart Navigator domain / parallel professional forest
+│  └─ service_line as service trees
+├─ Space Guide domain / parallel professional forest
+│  └─ service_line as service trees
+├─ Gavin Loam / knowledge humus layer
 └─ Future Domains
 ```
 
 - Gavin Ecosystem 是整體共根生態。
-- BodyFix、Chart Navigator、Space Guide 是平行服務系統。
+- BodyFix、Chart Navigator、Space Guide 是平行專業森林，且 domain 仍是正式技術實體名稱。
 - BodyFix 不是 Chart Navigator 的母品牌。
 - Chart Navigator 不是與 BodyFix 完全無關的孤立品牌。
 - Space Guide 目前為 incubating。

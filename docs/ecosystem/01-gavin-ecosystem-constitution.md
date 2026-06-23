@@ -35,19 +35,21 @@ Gavin Ecosystem 是由 Gavin 建立與維護的共根生態，包含已運作、
 ## 唯一生態層級
 
 ```text
-Gavin Ecosystem
-└─ 一座持續生長的森林
-   ├─ BodyFix 服務樹
-   ├─ Chart Navigator 服務樹
-   ├─ Space Guide 服務樹
-   └─ 未來可新增的服務樹
+Gavin Shared-Root Ecosystem
+├─ BodyFix domain / 平行專業森林
+│  └─ service_line / 服務之樹
+├─ Chart Navigator domain / 平行專業森林
+│  └─ service_line / 服務之樹
+├─ Space Guide domain / 平行專業森林
+│  └─ service_line / 服務之樹
+└─ Future Domains
 ```
 
-- 整座森林是 Gavin Ecosystem。
-- BodyFix、Chart Navigator、Space Guide 是主要服務樹。
-- 各服務線是樹幹與主要枝條。
-- 服務、方案、報告、工具與內容產品是枝條、果實與種子。
-- CRM、身份識別、AI、付款、預約、紀錄與分析是地下共根網絡。
+- Gavin Shared-Root Ecosystem 是整體土地、生態、氣候與共根架構。
+- BodyFix、Chart Navigator、Space Guide 是同一共根生態內的平行專業森林，且 domain 仍是正式技術實體名稱。
+- service_line 是各專業森林內的服務之樹。
+- offer、product、content_asset 是枝條、果實、種子或商業取得方式。
+- Shared Root Network 是資料與系統連接層，不等於無限制資料互通。
 
 ## 核心哲學
 
@@ -171,7 +173,7 @@ Gavin 確認以下內容後，本文件才可升為 approved：
 ## 版本紀錄
 
 ### 0.2.1
-- 鎖定一座森林、多棵服務樹。
+- 鎖定 Gavin Shared-Root Ecosystem、多個平行專業森林與 service_line 服務之樹。
 - 修正專業邊界。
 - 區分統一身份與跨 Domain 資料共享。
 - 加入 Consent、Permission 與 Profile Merge 不可動原則。
