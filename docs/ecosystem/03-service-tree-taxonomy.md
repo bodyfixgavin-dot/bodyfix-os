@@ -273,7 +273,7 @@ offer_tier = premium
 
 entitlement grants:
 - training_sessions = 24
-- fascia_time_units_30m = 24
+- fascia_sessions = 12
 ```
 
 Package 定義組合。
@@ -282,7 +282,9 @@ customer_entitlement 記錄客戶取得的權益。
 
 usage_ledger 記錄實際扣除與剩餘。
 
-24 個 30 分鐘筋膜權益單位等值於 12 次 60 分鐘；實際組合、延長與兌換規則仍應引用正式 Catalog。若 Catalog 尚未正式鎖定，標記 `REQUIRES_GAVIN_CONFIRMATION`，不得由 Codex 自行推測固定 session 結構。
+24＋12 的正式產品語言為 24 堂訓練與 12 次筋膜整理：`training_sessions = 24`、`fascia_sessions = 12`。
+
+本文件不得自行拆成 30 分鐘權益單位，也不得自行設計自由組合、延長或兌換規則。若正式 Catalog 之後需要使用分鐘單位，必須另案由 Gavin 確認；在確認前標記 `REQUIRES_GAVIN_CONFIRMATION`，不得在本文件中預先定義。
 
 ## 14. Service、Offer、Entitlement 與 Usage Ledger
 

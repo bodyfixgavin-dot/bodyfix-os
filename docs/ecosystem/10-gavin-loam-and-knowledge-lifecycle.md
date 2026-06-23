@@ -41,26 +41,53 @@ Gavin Loam 不是：
 ## 4. 知識生命週期
 
 ```text
-raw_observation
-→ internal_note
-→ internal_knowledge_base
-→ reusable_framework
-→ gavin_books_candidate
-→ published_or_shareable_work
+Raw Capture｜原始落葉
+↓
+對話、整理、去識別、補足上下文
+↓
+Gavin Loam｜已沉澱材料
+├─ 核准成正式規則 → Internal Knowledge Base
+├─ 被服務或系統吸收 → BodyFix／Chart Navigator／Space Guide／Pulse／AI
+├─ 轉譯成公開內容 → Gavin Notes
+└─ 發展成完整作品 → Gavin Books
 ```
 
-每個階段都必須保留來源、適用範圍、可見性與是否可公開的判斷。
+Raw Capture 不等於 Gavin Loam。原始聊天、截圖、零碎想法或尚未整理的 raw observation，不能自動進入 Gavin Loam。
 
-## 5. Gavin Book / Gavin Books 命名
+內容進入 Gavin Loam 前，至少需要完成：
+
+- 基本整理
+- 上下文補足
+- 去識別
+- 再利用價值判斷
+
+Gavin Loam 是已沉澱材料，不是未整理素材的暫存桶。每份進入 Loam 的內容都必須保留來源、適用範圍、可見性與是否可公開的判斷。
+
+Internal Knowledge Base 不是所有 Loam 內容必經的下一站。只有被 Gavin 核准成正式規則、標準、判斷框架或內部作業準則的 Loam 內容，才進入 Internal Knowledge Base。
+
+同一份 Loam 內容可以同時被多個服務、系統或公開內容吸收，例如 BodyFix、Chart Navigator、Space Guide、Pulse、AI、Gavin Notes 或 Gavin Books。內容 Published 之後仍可保留在 Loam 中，繼續被其他用途重新使用。
+
+核心區分：
+
+> Gavin Loam 負責累積與供養；Internal Knowledge Base 負責定案；Gavin Notes 負責公開；Gavin Books 負責完整出版。
+
+## 5. Gavin Notes / Gavin Books 命名
 
 ```yaml
-public_name: REQUIRES_GAVIN_CONFIRMATION
-working_name: Gavin Books
+gavin_notes:
+  public_name: REQUIRES_GAVIN_CONFIRMATION
+  working_name: Gavin Notes
+gavin_books:
+  public_name: REQUIRES_GAVIN_CONFIRMATION
+  working_name: Gavin Books
 ```
 
-內部概念：Gavin Books 是從 Gavin Loam 中成熟、整理並可公開閱讀、分享或出版的作品層。
+內部概念：
 
-不得由 Codex 自行決定公開名稱使用單數或複數。
+- Gavin Notes 目前作為公開內容入口的 working name，負責從 Gavin Loam 轉譯出可公開分享的短文、筆記、觀點或其他公開內容。
+- Gavin Books 目前作為完整出版作品的 working name，負責從 Gavin Loam 發展成結構完整、可閱讀、可分享或可出版的作品。
+
+公開正式名稱若尚未核准，保留 `REQUIRES_GAVIN_CONFIRMATION`。不得由 Codex 自行決定公開名稱使用單數或複數，也不得新增 Gavin Library、Gavin Lab 或其他新品牌名稱。
 
 ## 6. 與 05～09 的關係
 
@@ -68,7 +95,7 @@ working_name: Gavin Books
 - 05 仍是 Referral & Permission。
 - 06～09 仍維持原規劃與狀態。
 - 10 不取代 09 Governance。
-- 10 專責 Gavin Loam、Internal Knowledge Base、Gavin Books、知識成熟與出版生命週期。
+- 10 專責 Gavin Loam、Internal Knowledge Base、Gavin Notes、Gavin Books、知識成熟與出版生命週期。
 
 ## 7. 文件狀態
 
