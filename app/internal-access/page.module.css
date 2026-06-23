@@ -1,0 +1,192 @@
+.systemAccessShell {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 15% 10%, rgba(191, 169, 139, 0.16), transparent 34rem),
+    linear-gradient(145deg, #101723 0%, #17202d 52%, #efe8dc 180%);
+  color: #f7f2e8;
+  display: grid;
+  place-items: center;
+  padding: clamp(24px, 5vw, 72px);
+}
+
+.systemAccessPanel {
+  width: min(760px, 100%);
+  border: 1px solid rgba(247, 242, 232, 0.18);
+  background: rgba(15, 21, 31, 0.72);
+  backdrop-filter: blur(24px);
+  padding: clamp(28px, 6vw, 64px);
+  box-shadow: 0 32px 100px rgba(0, 0, 0, 0.24);
+}
+
+.systemAccessEyebrow {
+  color: #c9b695;
+  font-size: 0.76rem;
+  letter-spacing: 0.22em;
+  margin: 0 0 28px;
+  text-transform: uppercase;
+}
+
+.systemAccessTitle {
+  font-family: var(--font-tasa-orbiter), "Noto Serif TC", serif;
+  font-size: clamp(2.2rem, 8vw, 5.6rem);
+  font-weight: 500;
+  letter-spacing: -0.07em;
+  line-height: 0.95;
+  margin: 0;
+  max-width: 680px;
+}
+
+.systemAccessLead {
+  color: #f1eadf;
+  font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+  line-height: 1.45;
+  margin: 28px 0 18px;
+}
+
+.systemAccessNote {
+  border-top: 1px solid rgba(247, 242, 232, 0.14);
+  color: rgba(247, 242, 232, 0.74);
+  font-size: 1rem;
+  line-height: 1.9;
+  margin: 28px 0 0;
+  max-width: 620px;
+  padding-top: 24px;
+}
+
+.systemAccessForm {
+  display: grid;
+  gap: 12px;
+  margin-top: 34px;
+  max-width: 460px;
+}
+
+.systemAccessLabel {
+  color: #c9b695;
+  font-size: 0.75rem;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+.systemAccessInput {
+  appearance: none;
+  background: rgba(247, 242, 232, 0.06);
+  border: 1px solid rgba(247, 242, 232, 0.2);
+  color: #f7f2e8;
+  font: inherit;
+  min-height: 54px;
+  padding: 0 16px;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+  width: 100%;
+}
+
+.systemAccessInput::placeholder {
+  color: rgba(247, 242, 232, 0.4);
+}
+
+.systemAccessInput:focus-visible,
+.systemAccessButton:focus-visible,
+.systemAccessRevealLink:focus-visible {
+  outline: 3px solid rgba(240, 223, 191, 0.5);
+  outline-offset: 4px;
+}
+
+.systemAccessInputDenied {
+  animation: systemAccessShake 220ms ease-in-out;
+  border-color: rgba(205, 83, 76, 0.95);
+  box-shadow: 0 0 0 3px rgba(205, 83, 76, 0.16);
+}
+
+.systemAccessButton {
+  align-items: center;
+  background: transparent;
+  border: 1px solid rgba(201, 182, 149, 0.72);
+  color: #f7f2e8;
+  cursor: pointer;
+  display: inline-flex;
+  font: inherit;
+  font-size: 0.78rem;
+  justify-content: center;
+  letter-spacing: 0.18em;
+  min-height: 52px;
+  padding: 16px 20px;
+  text-transform: uppercase;
+  transition: border-color 180ms ease, background 180ms ease, transform 180ms ease;
+}
+
+.systemAccessButton:hover {
+  background: rgba(201, 182, 149, 0.12);
+  border-color: #f0dfbf;
+  transform: translateY(-1px);
+}
+
+.systemAccessStatus {
+  color: rgba(247, 242, 232, 0.78);
+  line-height: 1.9;
+  min-height: 120px;
+}
+
+.systemAccessDenied {
+  color: #f1aaa4;
+  letter-spacing: 0.02em;
+  margin: 24px 0 0;
+}
+
+.systemAccessReveal {
+  animation: systemAccessFadeIn 420ms ease both;
+  border-top: 1px solid rgba(247, 242, 232, 0.14);
+  margin-top: 28px;
+  padding-top: 24px;
+}
+
+.systemAccessReveal p {
+  margin: 0 0 10px;
+}
+
+.systemAccessRevealLink {
+  color: #f0dfbf;
+  display: inline-flex;
+  margin-top: 8px;
+  text-decoration-color: rgba(240, 223, 191, 0.42);
+  text-underline-offset: 5px;
+}
+
+@keyframes systemAccessShake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  30% {
+    transform: translateX(-5px);
+  }
+
+  65% {
+    transform: translateX(4px);
+  }
+}
+
+@keyframes systemAccessFadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .systemAccessButton,
+  .systemAccessInput {
+    transition: none;
+  }
+
+  .systemAccessButton:hover,
+  .systemAccessReveal,
+  .systemAccessInputDenied {
+    animation: none;
+    transform: none;
+  }
+}
