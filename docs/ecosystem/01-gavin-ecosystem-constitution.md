@@ -35,25 +35,32 @@ Gavin Ecosystem 是由 Gavin 建立與維護的共根生態，包含已運作、
 ## 唯一生態層級
 
 ```text
-Gavin Ecosystem
-└─ 一座持續生長的森林
-   ├─ BodyFix 服務樹
-   ├─ Chart Navigator 服務樹
-   ├─ Space Guide 服務樹
-   └─ 未來可新增的服務樹
+Gavin Shared-Root Ecosystem
+└─ 整體土地、生態、氣候與共根架構
+   ├─ BodyFix 專業森林
+   │  ├─ 筋膜整理服務之樹
+   │  ├─ 教練課服務之樹
+   │  └─ 骨盆核心服務之樹
+   ├─ Chart Navigator 專業森林
+   │  ├─ 紫微服務之樹
+   │  └─ 塔羅服務之樹
+   ├─ Space Guide 專業森林
+   │  └─ 空間判讀服務之樹
+   └─ 未來可新增的專業森林與服務之樹
 ```
 
-- 整座森林是 Gavin Ecosystem。
-- BodyFix、Chart Navigator、Space Guide 是主要服務樹。
-- 各服務線是樹幹與主要枝條。
-- 服務、方案、報告、工具與內容產品是枝條、果實與種子。
-- CRM、身份識別、AI、付款、預約、紀錄與分析是地下共根網絡。
+- Gavin Shared-Root Ecosystem 是整體土地、生態、氣候與共根架構。
+- BodyFix、Chart Navigator、Space Guide 是同一共根生態中的平行專業森林，各自擁有專業邊界與服務樹，並透過 Shared Root Network 在地下共享必要的系統基礎。
+- 筋膜整理、教練課、骨盆核心、紫微、塔羅、空間判讀等專項是服務之樹。
+- 具體方案、內容、工具與 Offer 是各服務之樹長出的枝條、果實、種子或商業取得方式。
+- CRM、身份識別、AI、付款、預約、紀錄與分析屬於 Shared Root Network 的必要系統基礎，不是知識倉庫。
+- BodyFix Pulse 是營運觀測與決策中心，不是服務樹或知識腐植層。
 
 ## 核心哲學
 
-> 各自成樹，彼此成林，地下共生。
+> 各自成林，彼此共根，地下共生。
 
-### 各自成樹
+### 各自成林
 
 每個服務系統有自己的：
 
@@ -142,7 +149,7 @@ customer_domain_context、服務內容、摘要與敏感資料的跨域揭露，
 
 ## 禁止事項
 
-- 不得把 BodyFix、Chart Navigator、Space Guide 描述為三座彼此獨立的森林。
+- 不得把 BodyFix、Chart Navigator、Space Guide 描述為三座彼此無關的森林。
 - 不得把 Chart Navigator 描述為 BodyFix 子品牌。
 - 不得把 BodyFix 描述為所有命盤與空間服務的母體。
 - 不得把共根解釋為資料無限制互通。
@@ -171,7 +178,7 @@ Gavin 確認以下內容後，本文件才可升為 approved：
 ## 版本紀錄
 
 ### 0.2.1
-- 鎖定一座森林、多棵服務樹。
+- Supersedes：鎖定一座森林、多棵服務樹。改為 Gavin Shared-Root Ecosystem 下的平行專業森林與服務之樹。
 - 修正專業邊界。
 - 區分統一身份與跨 Domain 資料共享。
 - 加入 Consent、Permission 與 Profile Merge 不可動原則。

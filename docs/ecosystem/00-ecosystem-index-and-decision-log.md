@@ -9,7 +9,7 @@
 
 ## 文件包目的
 
-作為 Gavin 共根生態的導航、狀態追蹤與決策紀錄中心，確保 00～09 文件維持一致的層級、命名與依賴關係。
+作為 Gavin 共根生態的導航、狀態追蹤與決策紀錄中心，確保 00～10 文件維持一致的層級、命名與依賴關係。
 
 本文件不是所有領域的最高權威。每個領域由 Source of Truth Matrix 指定的文件或 Catalog 負責。
 
@@ -26,6 +26,7 @@
 | Pulse 指標 | 07-pulse-ecosystem-dashboard.md | not_yet_authored | 生態決策指標 |
 | Website IA | 08-website-information-architecture.md | not_yet_authored | 入口與導覽原則 |
 | Governance、版本與遷移 | 09-governance-versioning-and-migration.md | not_yet_authored | 版本控管與流程 |
+| Gavin Loam 與知識生命週期 | 10-gavin-loam-and-knowledge-lifecycle.md | draft | 知識腐植層、Internal Knowledge Base、Gavin Books、Pulse 與 Shared Root Network 的位置 |
 | 服務代碼、名稱、價格、pricing model、status 與 Catalog 項目 | service-catalog.json | existing / to_be_normalized | 以 catalog_item_type 區分 service_definition、product_definition、offer |
 
 ## 文件依賴 DAG
@@ -43,7 +44,8 @@
        ├──→ 06
        └──→ 07
 
-09 橫向治理 00～08 與所有 Catalog。
+09 橫向治理 00～10 與所有 Catalog。
+10 依賴 01 的生態層級、03 的分類語言與 04 的資料邊界。
 ```
 
 ## 文件優先級與衝突裁決
@@ -57,17 +59,18 @@
 
 ## 已確認決策
 
-- Gavin Ecosystem 是一座持續生長的共根森林。
-- BodyFix、Chart Navigator、Space Guide 是同一座森林中的主要服務樹。
-- 服務線是主要枝幹，具體服務、方案、工具與內容產品是枝條、果實與種子。
-- 核心句：「各自成樹，彼此成林，地下共生。」
+- Gavin Shared-Root Ecosystem 是整體土地、生態、氣候與共根架構。
+- BodyFix、Chart Navigator、Space Guide 是同一共根生態中的平行專業森林，各自擁有專業邊界與服務樹，並透過 Shared Root Network 在地下共享必要的系統基礎。
+- 筋膜整理、教練課、骨盆核心、紫微、塔羅、空間判讀等專項是服務之樹。
+- 具體方案、內容、工具與 Offer 是各服務之樹長出的枝條、果實、種子或商業取得方式。
+- 核心句：「各自成林，彼此共根，地下共生。」
 - 共根不代表資料無限制互通。
 - BodyFix 不是 Chart Navigator 的母品牌。
 - Chart Navigator 不是與 BodyFix 完全無關的孤立品牌。
 - 品牌隱喻與技術命名必須分離。
 - Markdown 規格與機器可讀 Catalog 分開維護。
 - service-catalog.json 是目前 service definition、product definition 與 sellable offer 的唯一正式機器可讀來源，並以 catalog_item_type 區分。
-- 00～04 可作為 canonical draft 存入 GitHub。
+- 00～04 與 10 可作為 canonical draft 存入 GitHub。
 - 05～09 尚未撰寫，不得由 Codex 自行補完。
 
 ## 待 Gavin 確認決策
@@ -84,9 +87,12 @@
 - 36 堂正式優惠價。
 - v1.0 簽核流程。
 - Pulse 第一階段指標。
+- 24＋12 方案若正式 Catalog 定義不同，應引用 Catalog；若尚未確認，標記 `REQUIRES_GAVIN_CONFIRMATION`。
 
 ## 已棄用或不得引用
 
+- BodyFix、Chart Navigator、Space Guide 是主要服務樹。
+- 整座森林＝ecosystem、主要服務樹＝domain 的強制對照。
 - 三座彼此獨立森林的說法。
 - Chart Navigator 是 BodyFix 子品牌。
 - BodyFix 包含所有命盤與空間服務。
