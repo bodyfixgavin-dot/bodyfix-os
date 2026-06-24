@@ -63,14 +63,6 @@ const entrances: PortalCard[] = [
     tone: "muted",
     actions: [{ label: "Learner Portal Coming Soon", href: "/learn" }],
   },
-  {
-    title: "我是老闆",
-    eyebrow: "老闆模式｜請本人進入",
-    description: "有些人來整理身體，有些人會開始思考：一套服務，究竟是怎麼成立的？",
-    tag: "Owner Mode",
-    tone: "owner",
-    actions: [{ label: "進入老闆模式", href: "/owner" }],
-  },
 ];
 
 export default function HomePage() {
@@ -82,7 +74,7 @@ export default function HomePage() {
             <span>BF</span>
             <strong>BodyFix OS</strong>
           </Link>
-          <Link className="portal-admin-link" href="/clinic/dashboard">Admin</Link>
+          <Link className="portal-admin-link" href="/internal-access?entry=admin">Admin</Link>
         </nav>
 
         <section className="portal-hero" aria-labelledby="portal-title">
@@ -141,8 +133,13 @@ export default function HomePage() {
         </section>
 
         <footer className="portal-footer">
-          <span>BodyFix OS</span>
-          <p>服務從理解開始，系統讓每一次整理都能留下下一步。</p>
+          <div>
+            <span>BodyFix OS</span>
+            <p>服務從理解開始，系統讓每一次整理都能留下下一步。</p>
+          </div>
+          <Link className="portal-system-noise-link" href="/internal-access?entry=footer">
+            BodyFix OS v1.4.2 // INTERNAL_ACCESS →
+          </Link>
         </footer>
       </div>
     </main>

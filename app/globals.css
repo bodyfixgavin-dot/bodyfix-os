@@ -2939,6 +2939,11 @@ main {
 .portal-admin-link { padding: 10px 0 10px 14px; }
 .portal-admin-link:hover,
 .portal-back-link:hover { color: #9b7550; }
+.portal-admin-link:focus-visible,
+.portal-system-noise-link:focus-visible {
+  outline: 2px solid rgba(181, 139, 91, .72);
+  outline-offset: 4px;
+}
 
 .portal-hero {
   display: grid;
@@ -3120,9 +3125,18 @@ main {
 .portal-card-lab .portal-button { border-color: #d6b98f; background: #d6b98f; color: #18372f; }
 .portal-card-lab .portal-button-secondary { background: transparent; color: #f8f5ee; }
 .portal-card-muted .portal-button { border-color: rgba(20,34,52,.25); background: transparent; color: #142234; }
-.portal-footer { display: flex; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(20,34,52,.13); color: #6f6a63; font-size: 11px; letter-spacing: .04em; }
+.portal-footer { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; padding-top: 25px; border-top: 1px solid rgba(20,34,52,.13); color: #6f6a63; font-size: 11px; letter-spacing: .04em; }
 .portal-footer span { color: #142234; font-weight: 700; }
-.portal-footer p { margin: 0; }
+.portal-footer p { margin: 6px 0 0; }
+.portal-system-noise-link {
+  flex: 0 0 auto;
+  color: rgba(20, 34, 52, .45);
+  font: 700 10px/1.4 var(--font-tasa-orbiter), ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+  letter-spacing: .08em;
+  text-decoration: none;
+  transition: color .2s ease;
+}
+.portal-system-noise-link:hover { color: rgba(20, 34, 52, .56); }
 
 .portal-detail-shell { padding: 28px 0 80px; }
 .portal-back-link { display: inline-block; margin-bottom: 25px; }
@@ -3203,6 +3217,7 @@ main {
   .portal-card-actions { display: grid; }
   .portal-button { min-height: 48px; }
   .portal-footer { display: grid; }
+  .portal-system-noise-link { font-size: 9px; }
   .portal-detail-shell { padding-top: 18px; }
   .portal-detail-hero { padding: 45px 24px; border-radius: 22px; }
   .portal-detail-hero h1 { font-size: clamp(48px, 17vw, 70px); }
