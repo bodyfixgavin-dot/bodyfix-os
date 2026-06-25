@@ -29,7 +29,7 @@ export async function POST(request: Request) {
     ...data.data,
     learning_question: data.data.learning_question || null,
     consent: true,
-    source: "method-page",
+    source: "method-register",
     status: "new",
   });
 

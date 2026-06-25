@@ -1,0 +1,6 @@
+import Link from "next/link";
+import { learningTracks } from "@/data/learning/tracks";
+
+export default function LearningPage() {
+  return <main className="portal-page learning-page"><div className="portal-detail-shell learning-shell"><Link className="portal-back-link" href="/">← 返回 BodyFix OS</Link><header className="portal-detail-hero learning-hero"><p className="portal-kicker">LEARNING PORTAL</p><h1>從你現在的位置，進入適合的學習路徑。</h1><p className="portal-detail-lead">這裡整理 BodyFix 與 Chart Navigator 的學習內容。每一條路徑都有自己的方法、章節與適用對象，但共用一致的學習進度與帳號紀錄。</p><div className="learning-progress-note"><strong>學習進度介面</strong><span>匿名瀏覽：尚未開始／登入後可記錄進度。此版本不製作假登入、假儲存或假百分比。</span></div></header><section className="portal-detail-section learning-section"><div className="portal-detail-heading"><span>Choose a Track</span><h2>四條學習路徑，分屬不同品牌與學科。</h2></div><div className="learning-track-grid">{learningTracks.map((track) => <article className="learning-track-card" key={track.id}><div className="learning-card-top"><span>{track.brand}</span><em>{track.status}</em></div><h3>{track.title}</h3><strong>{track.subtitle}</strong><p>{track.description}</p><div className="learning-progress-row"><span>目前狀態</span><b>{track.progressLabel}</b></div><Link className="method-btn method-btn-primary" href={track.href}>{track.cta}</Link></article>)}</div></section></div></main>;
+}
