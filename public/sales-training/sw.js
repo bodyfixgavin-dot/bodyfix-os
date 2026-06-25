@@ -1,10 +1,11 @@
 /* BodyFix 成交肌肉 — Service Worker
    提供離線使用與「加到主畫面」。改版時把 VERSION 加一，使用者就會自動更新。 */
-const VERSION = "v1.0.0";
+const VERSION = "v1.0.1";
 const CACHE = "bodyfix-" + VERSION;
 const ASSETS = [
   "./",
   "./index.html",
+  "./app.js",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
