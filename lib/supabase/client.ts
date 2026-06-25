@@ -1,4 +1,4 @@
-import { createClient } from "@supabase/supabase-js";
+import { createBrowserClient } from "@supabase/ssr";
 import { getSupabaseBrowserEnvStatus, validateSupabaseProjectUrl } from "@/lib/supabase/env";
 
 export function hasSupabaseBrowserEnv() {
@@ -13,5 +13,5 @@ export function createSupabaseBrowserClient() {
     return null;
   }
 
-  return createClient(supabaseUrl, supabaseAnonKey);
+  return createBrowserClient(supabaseUrl, supabaseAnonKey);
 }
