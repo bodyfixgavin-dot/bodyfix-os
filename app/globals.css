@@ -3077,9 +3077,9 @@ main {
 }
 .portal-section-heading > p { margin: 0; color: #6f6a63; font-size: 14px; line-height: 1.8; }
 
-.portal-card-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 18px; }
+.portal-card-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 18px; align-items: stretch; }
 .portal-card {
-  grid-column: span 2;
+  grid-column: span 6;
   display: flex;
   flex-direction: column;
   min-height: 350px;
@@ -3089,10 +3089,11 @@ main {
   background: rgba(251,250,246,.78);
   box-shadow: 0 18px 50px rgba(20,34,52,.055);
 }
-.portal-card-primary { grid-column: span 3; background: #142234; color: #f8f5ee; }
-.portal-card-lab { grid-column: span 3; border-color: rgba(181,139,91,.48); background: linear-gradient(145deg, #18372f, #21483d); color: #f8f5ee; }
-.portal-card-method { grid-column: span 3; border-color: rgba(181,139,91,.38); background: #f7f1e7; }
-.portal-card-muted { min-height: 320px; opacity: .68; box-shadow: none; }
+.portal-card-primary { background: #142234; color: #f8f5ee; }
+.portal-card-lab { border-color: rgba(181,139,91,.48); background: linear-gradient(145deg, #18372f, #21483d); color: #f8f5ee; }
+.portal-card-method { border-color: rgba(181,139,91,.38); background: #f7f1e7; }
+.portal-card-muted { opacity: .68; box-shadow: none; }
+.portal-card:last-child { grid-column: 4 / span 6; }
 .portal-card-owner { background: #e8dece; }
 .portal-card-topline { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .portal-card-index { color: #b58b5b; font: 700 11px/1 var(--font-tasa-orbiter); letter-spacing: .12em; }
@@ -3183,10 +3184,6 @@ main {
   .portal-hero-copy { min-height: 470px; }
   .portal-flow { padding: 38px; }
   .portal-flow::before { left: 62px; }
-  .portal-card { grid-column: span 3; }
-  .portal-card-primary,
-  .portal-card-lab,
-  .portal-card-method { grid-column: span 3; }
   .portal-stage-grid { grid-template-columns: 1fr; }
 }
 
@@ -3211,7 +3208,10 @@ main {
   .portal-card,
   .portal-card-primary,
   .portal-card-lab,
-  .portal-card-method { grid-column: auto; min-height: 330px; padding: 24px; }
+  .portal-card-method,
+  .portal-card-muted,
+  .portal-card:last-child { grid-column: auto; }
+  .portal-card { min-height: 330px; padding: 24px; }
   .portal-card-muted { min-height: 300px; }
   .portal-card-eyebrow { margin-top: 35px; }
   .portal-card-actions { display: grid; }
