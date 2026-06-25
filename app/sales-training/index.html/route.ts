@@ -7,16 +7,29 @@ import chunk05 from "./chunk-05";
 
 export const runtime = "nodejs";
 
+const encodedDocument = [
+  chunk00,
+  chunk01,
+  chunk02,
+  chunk03,
+  chunk04,
+  chunk05,
+].join("");
+
+function readDocument() {
+  return Buffer.from(encodedDocument, "base64").toString("utf8");
+}
+
 export function GET() {
-  const html = Buffer.from(
-    [chunk00, chunk01, chunk02, chunk03, chunk04, chunk05].join(""),
-    "base64",
-  ).toString("utf8");
+  const html = readDocument().replace(
+    /<script>[\s\S]*?<\/script>/,
+    '<script src="./app.js" defer></script>',
+  );
 
   return new Response(html, {
     headers: {
       "Content-Type": "text/html; charset=utf-8",
-      "Cache-Control": "no-cache",
+      "Cache-Control": "no-cache, no-store, must-revalidate",
     },
   });
 }
