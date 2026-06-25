@@ -6,7 +6,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: "codex-docs-calibration"
 ---
 
@@ -53,15 +53,18 @@ Service Trees 是各專業森林內可被使用、購買或持續培育的服務
 
 ## 與其他層的關係
 
+現行 canonical 敘事採用三層垂直關係，避免把品牌林、知識層、底層能力與出版結果誤認為同一層級：
+
 ```text
 Gavin Shared-Root Ecosystem
-├─ Professional Forests
-│  ├─ BodyFix
-│  ├─ Chart Navigator
-│  └─ Space Guide
-├─ Shared Root Network
-├─ Operations & Decision Layer
-├─ Internal Knowledge Base
-├─ Gavin Loam
-└─ Gavin Books / Public Content
+└─ Canopy & Forests｜對外品牌林
+   ├─ BodyFix
+   ├─ Chart Navigator
+   └─ Space Guide
+      ↓
+   Gavin Loam｜知識腐植與方法代謝層
+      ↓
+   Shared Root Network｜帳號、資料、權限、付款與報告等底層能力
 ```
+
+Operations & Decision Layer、Internal Knowledge Base 與 Published Works 是治理、知識定稿與出版功能，不作為首頁對外品牌林。歷史文件中曾並列多層角色的版本，保留為演進證據；目前有效決策見 [`architecture-decisions.md`](./architecture-decisions.md)，未決問題見 [`conflicts.md`](./conflicts.md)。

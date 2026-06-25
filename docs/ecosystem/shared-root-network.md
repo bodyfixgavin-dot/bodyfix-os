@@ -6,7 +6,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: "codex-docs-calibration"
 ---
 
@@ -35,3 +35,10 @@ Shared Root Network 負責不同專業森林之間的底層連接與資料傳輸
 - Shared Root Network 不會讓 BodyFix、Chart Navigator、Space Guide 在前台混成同一項服務。
 - Shared Root Network 不等於所有資料自動互通。
 - 跨森林資料使用仍需符合 consent、permission、data classification 與最小必要原則。
+
+
+## Canonical capability boundary
+
+Shared Root Network 只提供帳號、資料、權限、付款與報告等底層能力。它不擁有 BodyFix、Chart Navigator 或 Space Guide 的品牌與服務內容，也不代表使用者資料可在森林之間自動流動。
+
+若服務或工具產生互動紀錄，資料進入 Gavin Loam 前仍需通過隱私權、目的、同意、資料最小化、去識別化、必要聚合與人工審核流程。
