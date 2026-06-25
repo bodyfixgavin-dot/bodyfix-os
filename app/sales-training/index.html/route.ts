@@ -23,7 +23,7 @@ function readDocument() {
 export function GET() {
   const html = readDocument().replace(
     /<script>[\s\S]*?<\/script>/,
-    '<script src="./app.js" defer></script>',
+    '<script src="/sales-training/app-script" defer></script>',
   );
 
   return new Response(html, {
