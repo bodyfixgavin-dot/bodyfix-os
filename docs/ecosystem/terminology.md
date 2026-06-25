@@ -6,7 +6,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: "codex-docs-calibration"
 ---
 
@@ -24,7 +24,8 @@ source: "codex-docs-calibration"
 | BodyFix Pulse | BodyFix Pulse | BodyFix 的營運與決策觀測中心。 |
 | Internal Knowledge Base | 正式內部知識庫 | 保存目前正式怎麼做的現行規則。 |
 | Gavin Loam | 知識腐植層 | 保存累積材料、觀察、未成熟框架與未定稿內容。 |
-| Gavin Books | 完整出版系列 | 經提煉、編輯、驗證與定稿的完整專題作品。 |
+| Published Works | 正式出版功能名稱 | 現階段 canonical 功能名稱，包含專題作品、方法手冊、數位小書、白皮書、教材與公開工具包。 |
+| Gavin Books | 歷史出版提案／待確認品牌名稱 | 保留既有演進脈絡；是否升級為正式出版品牌需另立決策。 |
 | Public Content | 公開內容 | 文章、圖卡、影片或公開工具。 |
 
 ## Gavin Library 收攏規則
@@ -58,7 +59,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: ""
 ---
 ```
@@ -71,3 +72,11 @@ source: ""
 - `type`：observation、research、framework、sop、spec、article、book
 - `version`：文件版本
 - `source`：原始來源，例如 chat-session、client-observation、book、research
+
+
+## Tarot 與 Zi Wei 層級規則
+
+- Tarot Status Reading 作為真人服務與獨立數位產品時維持 BodyFix 品牌歸屬。
+- Chart Navigator 可以使用 Tarot 當下狀態模組，但不擁有 Tarot Status Reading 品牌。
+- Zi Wei Structural Analysis 真人服務歸 BodyFix。
+- 排盤、計算與導航能力可由 Chart Navigator 提供。

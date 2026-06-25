@@ -6,7 +6,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: "codex-docs-calibration"
 ---
 
@@ -38,3 +38,8 @@ Gavin Loam 可以提供材料、觀點、案例與研究筆記；Internal Knowle
 3. 明確版本與狀態。
 4. 與現有正式規則無衝突，或已標記取代關係。
 5. 可被實際營運或技術執行。
+
+
+## Public release boundary
+
+Internal Knowledge Base 不得未經審核直接公開。任何內容若要成為 Published Works、公開工具包、文章或前台說明，必須另經適用性判斷、隱私檢查、編輯與公開發布審核。

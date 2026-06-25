@@ -6,7 +6,7 @@ status: draft
 type: framework
 version: 0.1.0
 created_at: 2026-06-24
-updated_at: 2026-06-24
+updated_at: 2026-06-25
 source: "codex-docs-calibration"
 ---
 
@@ -46,3 +46,31 @@ Gavin Loam
 ```
 
 不得把 Gavin Loam 中的內容自動視為現行規則。
+
+
+## Data Governance｜資料進入 Loam 的治理流程
+
+服務與工具產生的互動紀錄不得直接進入 Gavin Loam。任何材料進入 Loam 前，必須依序完成以下治理流程：
+
+```text
+服務與工具產生互動紀錄
+→ Shared Root Network 保存
+→ 隱私權、目的與使用者同意檢查
+→ 資料最小化
+→ 去識別化
+→ 視用途進行聚合
+→ 人工審核與適用性判斷
+→ 合格材料才可進入 Gavin Loam
+```
+
+### Mandatory Rules｜必要規則
+
+- 原始個人資料不得直接進入 Loam。
+- 身體、健康、命盤、抽牌與敏感服務紀錄不得自動轉為研究材料。
+- Loam 僅接收具合法用途與適當授權，並完成資料最小化、去識別化及人工審核的材料。
+- Loam 不得自動升級為 Internal Knowledge Base。
+- Internal Knowledge Base 不得未經審核直接公開。
+
+### Relationship to Knowledge Base｜與正式知識庫的關係
+
+Gavin Loam 保存可被沉澱、比較、重組與方法化的材料；Internal Knowledge Base 保存已確認、可執行且目前有效的正式規則。Loam 內容若要進入 Internal Knowledge Base，必須另經人工審核、驗證、定稿與版本管理。
