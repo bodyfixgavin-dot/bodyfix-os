@@ -1,11 +1,11 @@
 /* BodyFix 成交肌肉 — Service Worker
    提供離線使用與「加到主畫面」。改版時把 VERSION 加一，使用者就會自動更新。 */
-const VERSION = "v1.0.1";
+const VERSION = "v1.0.2";
 const CACHE = "bodyfix-" + VERSION;
 const ASSETS = [
   "./",
   "./index.html",
-  "./app.js",
+  "./app-script",
   "./manifest.webmanifest",
   "./icon-192.png",
   "./icon-512.png",
@@ -29,7 +29,6 @@ self.addEventListener("fetch", (e) => {
   const req = e.request;
   if (req.method !== "GET") return;
   const url = new URL(req.url);
-  // 同源資源：快取優先（離線可用）
   if (url.origin === location.origin) {
     e.respondWith(
       caches.match(req).then((hit) =>
@@ -43,7 +42,6 @@ self.addEventListener("fetch", (e) => {
     );
     return;
   }
-  // 跨來源（例如 Google Fonts）：網路優先，失敗再走快取
   e.respondWith(
     fetch(req).then((res) => {
       const copy = res.clone();
@@ -53,8 +51,6 @@ self.addEventListener("fetch", (e) => {
   );
 });
 
-/* 預留：未來每日提醒推播。
-   需搭配後端（Supabase Edge Function + 排程 + Web Push 金鑰）才會送出。 */
 self.addEventListener("push", (e) => {
   let data = { title: "BodyFix 成交肌肉", body: "今天的一格，點亮它 💪" };
   try { if (e.data) data = Object.assign(data, e.data.json()); } catch (_) {}
