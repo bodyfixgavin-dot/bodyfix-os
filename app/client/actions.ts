@@ -1,6 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { createSupabaseUserServerClient } from "@/lib/supabase/server";
 
 export async function markRecommendationComplete(recommendationId: string) {
@@ -37,4 +38,11 @@ export async function markRecommendationComplete(recommendationId: string) {
   if (error) return { ok: false, message: "標記失敗，請稍後再試。" };
   revalidatePath("/client");
   return { ok: true, message: "已標記今天完成。" };
+}
+
+
+export async function signOutClientPortal() {
+  const supabase = await createSupabaseUserServerClient();
+  await supabase?.auth.signOut();
+  redirect("/client");
 }

@@ -2937,6 +2937,7 @@ main {
   transition: color .2s ease;
 }
 .portal-admin-link { padding: 10px 0 10px 14px; }
+.client-login-link { min-height: 44px; padding: 13px 16px; border: 1px solid rgba(20,34,52,.22); border-radius: 999px; color: #142234; font-size: 12px; letter-spacing: .12em; }
 .portal-admin-link:hover,
 .portal-back-link:hover { color: #9b7550; }
 .portal-admin-link:focus-visible,
@@ -3193,6 +3194,7 @@ main {
   .portal-shell { padding-top: 14px; }
   .portal-nav { margin-bottom: 12px; }
   .portal-admin-link { font-size: 8px; letter-spacing: .12em; }
+  .client-login-link { min-height: 44px; padding: 12px 15px; color: #142234; font-size: 12px; }
   .portal-wordmark strong { font-size: 12px; }
   .portal-hero { min-height: 0; border-radius: 22px; }
   .portal-hero-copy { min-height: 430px; padding: 38px 24px; }
@@ -3655,6 +3657,7 @@ main {
   box-shadow: 0 25px 70px rgba(20,34,52,.09);
 }
 .client-portal-hero h1 { max-width: 820px; margin: 16px 0; font-family: var(--font-tasa-orbiter), "Noto Serif TC", serif; font-size: clamp(42px, 8vw, 86px); line-height: .95; letter-spacing: -.05em; }
+.client-portal-hero .portal-intro { color: #334155; font-size: 15px; font-weight: 600; line-height: 1.9; }
 .client-welcome { margin: 24px 0 0; color: #9b7550; font-weight: 800; letter-spacing: .04em; }
 .client-portal-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; margin-top: 22px; }
 .client-portal-card,
@@ -3673,6 +3676,8 @@ main {
 .client-detail-list { display: grid; gap: 12px; color: #5f5a53; line-height: 1.75; }
 .client-detail-list b { color: #142234; font-size: 18px; }
 .client-empty-text { margin: 0; color: #6f6a63; line-height: 1.9; }
+.client-state-actions { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 24px; }
+.client-state-actions form { margin: 0; }
 .client-recommendation-list { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; }
 .client-recommendation-list section { display: grid; gap: 10px; padding: 18px; border: 1px solid rgba(155,117,80,.24); border-radius: 18px; background: #f8f5ee; }
 .client-recommendation-list h3 { margin: 0; font-family: "Noto Serif TC", serif; }
@@ -3699,4 +3704,5 @@ main {
   .client-metric-grid { grid-template-columns: 1fr; }
   .client-wide-card { grid-column: auto; }
   .client-portal-hero { border-radius: 22px; padding: 32px 22px; }
+  .client-portal-hero .portal-intro { color: #27364a; font-size: 15px; line-height: 1.85; }
 }
