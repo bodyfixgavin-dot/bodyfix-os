@@ -57,11 +57,11 @@ const entrances: PortalCard[] = [
   },
   {
     title: "我是課程學員",
-    eyebrow: "教材與進度功能開發中",
-    description: "給未來已報名 BodyFix 課程的學員使用，可查看教材、練習任務與課程進度。",
-    tag: "Coming Soon",
+    eyebrow: "BodyFix 讀體場",
+    description: "進入讀體場、方法圖譜與讀體星圖，練習留下可被查證的研判軌跡。",
+    tag: "Learner",
     tone: "muted",
-    actions: [{ label: "Learner Portal Coming Soon", href: "/learn" }],
+    actions: [{ label: "進入 BodyFix 讀體場", href: "/learner" }],
   },
 ];
 
