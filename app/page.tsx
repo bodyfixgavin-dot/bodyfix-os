@@ -74,7 +74,7 @@ export default function HomePage() {
             <span>BF</span>
             <strong>BodyFix OS</strong>
           </Link>
-          <Link className="portal-admin-link" href="/internal-access?entry=admin">Admin</Link>
+          <Link className="portal-admin-link" href="/admin">Admin</Link>
         </nav>
 
         <section className="portal-hero" aria-labelledby="portal-title">
