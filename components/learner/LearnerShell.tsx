@@ -17,7 +17,7 @@ function isActivePath(pathname: string, activePaths: string[]) {
 export function LearnerShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
 
-  return <main className="learner-page"><div className="learner-shell"><nav className="learner-nav"><Link className="portal-wordmark" href="/learner"><span>BF</span><strong>BodyFix 讀體場</strong></Link><div>{navItems.map((item) => <Link className={isActivePath(pathname, item.activePaths) ? "is-active" : undefined} href={item.href} key={item.href} aria-current={isActivePath(pathname, item.activePaths) ? "page" : undefined}>{item.label}</Link>)}</div></nav>{children}<footer className="learner-footer"><Link href="/">返回 BodyFix OS</Link><span>原型階段 · 各自成樹，彼此成林；地下共生，向光循環。</span></footer></div></main>;
+  return <main className="learner-page"><div className="learner-shell"><nav className="learner-nav"><Link className="portal-wordmark" href="/learner"><span>BF</span><strong>BODYFIX 讀體場</strong></Link><div>{navItems.map((item) => <Link className={isActivePath(pathname, item.activePaths) ? "is-active" : undefined} href={item.href} key={item.href} aria-current={isActivePath(pathname, item.activePaths) ? "page" : undefined}>{item.label}</Link>)}</div></nav>{children}<footer className="learner-footer"><Link href="/">返回 BodyFix OS</Link><span>原型階段 · 各自成樹，彼此成林；地下共生，向光循環。</span></footer></div></main>;
 }
 
 export function LearnerHero({ eyebrow, title, children }: { eyebrow: string; title: string; children: ReactNode }) {
