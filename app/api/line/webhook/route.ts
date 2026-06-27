@@ -3,7 +3,8 @@ import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, verifyLineSignature } from "@/lib/bodyfix-ai/line";
-import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
+import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, recordIncomingMessage, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
+import { getAutomationDecision } from "@/lib/bodyfix-ai/conversation-state";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
 export const runtime = "nodejs";
@@ -43,9 +44,7 @@ export async function POST(req: Request) {
   }
 
   const events = payload.events || [];
-  if (events.length === 0) {
-    return NextResponse.json({ ok: true });
-  }
+  if (events.length === 0) return NextResponse.json({ ok: true });
 
   try {
     await ensureSheetHeaders();
@@ -54,7 +53,6 @@ export async function POST(req: Request) {
   }
 
   await Promise.all(events.map((event) => handleLineEventSafely(event)));
-
   return NextResponse.json({ ok: true });
 }
 
@@ -75,16 +73,17 @@ async function handleLineEvent(event: LineEvent) {
 
   if (event.type === "follow") {
     const displayName = await getLineDisplayName(userId);
-    try {
-      await replyLineMessage(event.replyToken, WELCOME_REPLY);
-    } catch (error) {
-      logWebhookError("Failed to send LINE welcome reply", error, { eventType: event.type, userId });
+    const decision = await getAutomationDecision(userId);
+    if (!decision.allowSend) {
+      await notifyGavin(`LINE 自動歡迎已暫停\n客戶：${displayName || userId}\n原因：${decision.reason}`);
+      return;
     }
 
     try {
+      await replyLineMessage(event.replyToken, WELCOME_REPLY);
       await createWelcomeRecord({ userId, displayName, replyText: WELCOME_REPLY });
     } catch (error) {
-      logWebhookError("Failed to create welcome CRM record", error, { eventType: event.type, userId });
+      logWebhookError("Failed to send LINE welcome reply", error, { eventType: event.type, userId });
     }
     return;
   }
@@ -92,20 +91,39 @@ async function handleLineEvent(event: LineEvent) {
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
 
   const displayName = await getLineDisplayName(userId);
-
   let existing: Awaited<ReturnType<typeof getCrmRecord>> = null;
   try {
     existing = await getCrmRecord(userId);
+    await recordIncomingMessage({
+      userId,
+      displayName,
+      userMessage: event.message.text,
+      existing,
+      note: "LINE message received before automation decision."
+    });
   } catch (error) {
-    logWebhookError("Failed to read CRM record", error, { eventType: event.type, userId });
+    logWebhookError("Failed to save incoming LINE message", error, { eventType: event.type, userId });
+  }
+
+  const beforeAi = await getAutomationDecision(userId);
+  if (!beforeAi.allowAi) {
+    await notifyGavin(formatSuppressedNotification(displayName || userId, event.message.text, beforeAi.reason));
+    return;
   }
 
   const aiResult = await generateReplyWithFallback(event.message.text, existing?.record, event.type, userId);
+
+  const beforeSend = await getAutomationDecision(userId);
+  if (!beforeSend.allowSend) {
+    await notifyGavin(formatDraftNotification(displayName || userId, event.message.text, aiResult.replyText, beforeSend.reason));
+    return;
+  }
 
   try {
     await replyLineMessage(event.replyToken, aiResult.replyText);
   } catch (error) {
     logWebhookError("Failed to send LINE reply", error, { eventType: event.type, userId });
+    return;
   }
 
   let recordDisplayName = displayName || userId;
@@ -114,8 +132,7 @@ async function handleLineEvent(event: LineEvent) {
       userId,
       displayName,
       userMessage: event.message.text,
-      aiResult,
-      existing
+      aiResult
     });
     recordDisplayName = record.displayName || userId;
   } catch (error) {
@@ -132,9 +149,7 @@ async function handleLineEvent(event: LineEvent) {
 }
 
 async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
-  if (isCoachingIntent(message)) {
-    return createCoachingResult();
-  }
+  if (isCoachingIntent(message)) return createCoachingResult();
 
   try {
     return await generateBodyFixReply(message, crm);
@@ -146,6 +161,14 @@ async function generateReplyWithFallback(message: string, crm: Parameters<typeof
 
 function shouldNotifyHuman(classification: BodyFixClassification) {
   return classification.needHuman || classification.leadTemperature === "A" || classification.bookingStage === "human_takeover";
+}
+
+function formatSuppressedNotification(displayName: string, userMessage: string, reason: string) {
+  return `LINE 待人工處理：\n客戶：${displayName}\n原因：${reason}\n訊息：${userMessage.slice(0, 1200)}`;
+}
+
+function formatDraftNotification(displayName: string, userMessage: string, draft: string, reason: string) {
+  return `LINE AI 草稿未送出：\n客戶：${displayName}\n原因：${reason}\n客戶訊息：${userMessage.slice(0, 800)}\n\n草稿：${draft.slice(0, 1800)}`;
 }
 
 function formatHumanNotification(displayName: string, classification: BodyFixClassification) {

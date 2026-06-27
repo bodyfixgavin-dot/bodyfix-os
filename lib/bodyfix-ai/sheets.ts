@@ -51,6 +51,56 @@ export async function listCrmRecords() {
     .filter(({ record }) => Boolean(record.userId));
 }
 
+export async function recordIncomingMessage(input: {
+  userId: string;
+  displayName?: string;
+  userMessage: string;
+  existing?: { record: CrmRecord; rowNumber: number } | null;
+  note?: string;
+  now?: Date;
+}) {
+  const now = input.now || new Date();
+  const iso = now.toISOString();
+  const existing = input.existing ?? (await getCrmRecord(input.userId));
+
+  if (existing) {
+    const record: CrmRecord = {
+      ...existing.record,
+      displayName: input.displayName || existing.record.displayName,
+      lastUserMessageAt: iso,
+      lastUserMessage: input.userMessage,
+      notes: mergeNotes(existing.record.notes, input.note || "")
+    };
+    await updateSheetValues(`A${existing.rowNumber}:T${existing.rowNumber}`, [recordToRow(record)]);
+    return record;
+  }
+
+  const record: CrmRecord = {
+    userId: input.userId,
+    displayName: input.displayName || "",
+    firstSeenAt: iso,
+    lastUserMessageAt: iso,
+    lastBotMessageAt: "",
+    lastUserMessage: input.userMessage,
+    lastBotReply: "",
+    lastIntent: "unclear",
+    bodyIssue: "",
+    bodyArea: "",
+    preferredService: "unknown",
+    bookingStage: "human_takeover",
+    leadTemperature: "C",
+    nextAction: "human_takeover",
+    needHuman: "true",
+    preferredLocation: "",
+    preferredTime: "",
+    followupCount: "0",
+    lastFollowupAt: "",
+    notes: input.note || "Incoming LINE message saved without automated reply."
+  };
+  await appendSheetValues("A:T", [recordToRow(record)]);
+  return record;
+}
+
 export async function upsertCrmRecord(input: {
   userId: string;
   displayName?: string;
@@ -243,7 +293,7 @@ async function getGoogleAccessToken() {
   if (!res.ok) throw new Error(`Google token request failed: ${res.status} ${await res.text()}`);
   const data = (await res.json()) as { access_token: string; expires_in: number };
   cachedToken = { token: data.access_token, expiresAt: Date.now() + data.expires_in * 1000 };
-  return data.access_token;
+  return cachedToken.token;
 }
 
 function signJwt(header: Record<string, unknown>, payload: Record<string, unknown>, privateKey: string) {
