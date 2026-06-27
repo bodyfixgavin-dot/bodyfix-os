@@ -1,3 +1,4 @@
+-- DO NOT RUN — superseded because Production uses city_registrations/city_sessions schema.
 -- BodyFix City Service MVP v0.1 | Phase 0 additive draft
 -- Purpose: extend location_demand_leads for city-service intent capture and seed additional city_markets.
 -- Safe to review before execution. Do not run automatically in Phase 0.
