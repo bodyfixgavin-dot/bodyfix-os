@@ -26,15 +26,15 @@ describe("public booking services", () => {
     expect(getPublicBookingServices([...FALLBACK_BOOKING_SERVICES, addon]).length).toBe(4);
   });
 
-  it("provides seven fascia lines and an unknown fallback", () => {
+  it("provides seven formal fascia-line entries and an unknown fallback", () => {
     expect(FASCIA_LINE_OPTIONS.map((line) => line.code)).toEqual([
-      "sbl",
-      "sfl",
-      "ll",
-      "sl",
-      "al",
-      "fl",
-      "dfl",
+      "BF-FL-SBL",
+      "BF-FL-SFL",
+      "BF-FL-LL",
+      "BF-FL-SL",
+      "BF-FL-DFL",
+      "BF-FLG-ARM",
+      "BF-FLG-FUNC",
       "unknown",
     ]);
   });

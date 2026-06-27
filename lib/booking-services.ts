@@ -1,3 +1,4 @@
+import { FASCIA_LINE_ENTRIES } from "./fascia-lines";
 import type { BookingService } from "@/types/booking";
 
 export const FALLBACK_BOOKING_SERVICES: BookingService[] = [
@@ -76,41 +77,13 @@ export function getPublicBookingServices(
 }
 
 export const FASCIA_LINE_OPTIONS = [
-  {
-    code: "sbl",
-    name: "背側緊繃線｜淺背線 SBL",
-    description: "常見於後頸、背部、臀部、腿後側緊繃。",
-  },
-  {
-    code: "sfl",
-    name: "前側壓縮線｜淺前線 SFL",
-    description: "常見於胸口卡住、肋骨緊、髖屈肌緊、呼吸受限。",
-  },
-  {
-    code: "ll",
-    name: "側邊失衡線｜側線 LL",
-    description: "常見於身體側邊緊繃、骨盆側傾、單側不穩定。",
-  },
-  {
-    code: "sl",
-    name: "旋轉代償線｜螺旋線 SL",
-    description: "常見於旋轉受限、核心代償、動作左右不對稱。",
-  },
-  {
-    code: "al",
-    name: "肩頸手臂線｜手臂線 AL",
-    description: "常見於肩頸緊繃、手臂痠麻、上肢張力高。",
-  },
-  {
-    code: "fl",
-    name: "動作連動線｜功能線 FL",
-    description: "常見於動作卡卡、發力不順、運動表現受限。",
-  },
-  {
-    code: "dfl",
-    name: "深層核心線｜深前線 DFL",
-    description: "常見於核心無力、骨盆前傾、腰椎壓力大、呼吸卡住。",
-  },
+  ...FASCIA_LINE_ENTRIES.map((line) => ({
+    code: line.code,
+    name: `${line.nameZh} ${line.code}`,
+    description: line.aliases.length
+      ? `名稱別名：${line.aliases.join("、")}。`
+      : "正式筋膜線代碼，無名稱別名。",
+  })),
   {
     code: "unknown",
     name: "我不確定，請 Gavin 現場判讀",
