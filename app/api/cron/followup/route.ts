@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { pushLineMessage } from "@/lib/bodyfix-ai/line";
 import { SEVEN_DAY_FOLLOWUP, THREE_DAY_FOLLOWUP } from "@/lib/bodyfix-ai/prompt";
 import { ensureSheetHeaders, listCrmRecords, markFollowupSent } from "@/lib/bodyfix-ai/sheets";
+import { getAutomationDecision } from "@/lib/bodyfix-ai/conversation-state";
 import type { CrmRecord } from "@/lib/bodyfix-ai/types";
 
 export const runtime = "nodejs";
@@ -16,6 +17,7 @@ export async function GET(req: Request) {
   const rows = await listCrmRecords();
   const now = new Date();
   const sent: Array<{ userId: string; action: string }> = [];
+  const skipped: Array<{ userId: string; action: string; reason: string }> = [];
   const failed: Array<{ userId: string; error: string }> = [];
 
   for (const row of rows) {
@@ -24,6 +26,12 @@ export async function GET(req: Request) {
 
     const message = action === "followup_3_days" ? THREE_DAY_FOLLOWUP : SEVEN_DAY_FOLLOWUP;
     try {
+      const decision = await getAutomationDecision(row.record.userId);
+      if (!decision.allowSend) {
+        skipped.push({ userId: row.record.userId, action, reason: decision.reason });
+        continue;
+      }
+
       await pushLineMessage(row.record.userId, message);
       await markFollowupSent(row.record, row.rowNumber, message, action);
       sent.push({ userId: row.record.userId, action });
@@ -32,7 +40,7 @@ export async function GET(req: Request) {
     }
   }
 
-  return NextResponse.json({ ok: failed.length === 0, sent, failed });
+  return NextResponse.json({ ok: failed.length === 0, sent, skipped, failed });
 }
 
 function verifyCron(req: Request) {
