@@ -89,16 +89,17 @@ begin
     nullif(v_service->>'internal_notes', ''),
     '來源：ChatGPT CRM Write Bridge',
     'idempotency_key：' || trim(p_payload->>'idempotency_key'),
-    case when nullif(v_service->>'calendar_event_id', '') is not null then 'calendar_event_id：' || v_service->>'calendar_event_id' end,
-    case when nullif(v_service->>'raw_summary', '') is not null then '口述摘要：' || v_service->>'raw_summary' end
+    case when nullif(v_service->>'calendar_event_id', '') is not null then 'calendar_event_id：' || (v_service->>'calendar_event_id') end,
+    case when nullif(v_service->>'raw_summary', '') is not null then '口述摘要：' || (v_service->>'raw_summary') end
   );
 
   insert into public.service_records (
     client_id, service_date, record_mode, service_code, service_name_snapshot,
-    duration_minutes, price_twd, main_complaint, main_tension_area,
-    processed_area, strategy, client_reaction, after_change, next_focus,
-    internal_notes, dominant_fascia_line, body_region, satisfaction_score,
-    followup_needed, next_followup_date, case_candidate, plan_candidate
+    duration_minutes, price_twd, main_complaint, fatigue_state_assessment,
+    main_tension_area, processed_area, strategy, client_reaction,
+    after_change, next_focus, internal_notes, dominant_fascia_line,
+    body_region, satisfaction_score, followup_needed, next_followup_date,
+    case_candidate, plan_candidate
   ) values (
     v_client_id,
     v_service_date,
@@ -108,6 +109,7 @@ begin
     nullif(v_service->>'duration_minutes', '')::integer,
     nullif(v_service->>'price_twd', '')::integer,
     nullif(v_service->>'main_complaint', ''),
+    nullif(v_service->>'fatigue_state_assessment', ''),
     nullif(v_service->>'main_tension_area', ''),
     nullif(v_service->>'processed_area', ''),
     nullif(v_service->>'strategy', ''),
@@ -143,7 +145,7 @@ begin
 
   update public.clients
   set last_session_date = case when last_session_date is null or v_service_date > last_session_date then v_service_date else last_session_date end,
-      next_followup_date = coalesce(v_followup_date, next_followup_date),
+      next_followup_date = coalesce(v_followup_date, nullif(v_service->>'next_followup_date', '')::date, next_followup_date),
       updated_at = now()
   where id = v_client_id;
 
