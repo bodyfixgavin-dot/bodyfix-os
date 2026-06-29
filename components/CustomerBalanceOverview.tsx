@@ -82,7 +82,7 @@ function EmptyState({ activeTab }: { activeTab: TabKey }) {
       <div className="bf-empty-actions">
         <Link className="bf-primary bf-link-button" href="/clinic/clients/new">新增客戶</Link>
         <button className="bf-secondary bf-link-button" type="button" disabled title="規劃中">建立方案（規劃中）</button>
-        <Link className="bf-secondary bf-link-button" href="/clinic">返回 BodyFix 後台</Link>
+        <Link className="bf-secondary bf-link-button" href="/clinic">返回 BodyFix Admin</Link>
       </div>
     </section>
   );
@@ -242,7 +242,7 @@ export function CustomerBalanceOverview() {
   return (
     <main className="bf-container bf-os-page bf-client-balance-page">
       <section className="bf-hero">
-        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Operating System</div>
+        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix OS</div>
         <p className="bf-kicker">Client balance overview</p>
         <h1>客戶列表 / 方案餘額</h1>
         <p className="bf-subtitle">查看客戶方案、剩餘堂數、未收款與續約提醒。</p>

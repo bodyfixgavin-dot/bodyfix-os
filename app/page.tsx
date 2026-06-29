@@ -79,11 +79,11 @@ export default function HomePage() {
 
         <section className="portal-hero" aria-labelledby="portal-title">
           <div className="portal-hero-copy">
-            <p className="portal-kicker">BodyFix System Entrance</p>
+            <p className="portal-kicker">BodyFix Service Operating System</p>
             <h1 id="portal-title">BodyFix OS</h1>
             <p className="portal-lead">身體服務、預約管理、紀錄追蹤與工具系統入口</p>
             <p className="portal-intro">
-              BodyFix OS 是 BodyFix 專屬服務管理系統，目前以內部運作、預約流程與未來學習入口為主。請依你的身份選擇要前往的功能。
+              BodyFix OS 是 BodyFix 專屬身體服務作業系統，目前以內部運作、預約流程與未來學習入口為主。請依你的身份選擇要前往的功能。
             </p>
             <p className="portal-hero-hint">也可以先從測驗工具開始，看看自己的身體、關係或空間狀態。</p>
           </div>

@@ -22,7 +22,7 @@ export default function InternalAccessClient() {
   return (
     <main className={styles.systemAccessShell}>
       <section className={styles.systemAccessPanel} aria-labelledby="system-access-title">
-        <p className={styles.systemAccessEyebrow}>BODYFIX OS / RESTRICTED INTERFACE</p>
+        <p className={styles.systemAccessEyebrow}>BodyFix OS / Restricted Interface</p>
         <h1 id="system-access-title" className={styles.systemAccessTitle}>
           Restricted system interface.
         </h1>

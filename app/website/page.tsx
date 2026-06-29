@@ -106,7 +106,7 @@ export default function BodyFixWebsitePage() {
     <main className={styles.page}>
       <nav className={styles.nav} aria-label="BodyFix official website navigation">
         <div className={styles.navInner}>
-          <Link className={styles.logo} href="/" aria-label="BodyFix 回首頁"><span className={styles.logoMark}>BF</span><span>BodyFix</span></Link>
+          <Link className={styles.logo} href="/" aria-label="BodyFix OS 回首頁"><span className={styles.logoMark}>BF</span><span>BodyFix OS</span></Link>
           <div className={styles.navLinks}>
             <a href="#method">方法</a>
             <a href="#services">服務</a>
@@ -120,8 +120,8 @@ export default function BodyFixWebsitePage() {
       <section className={styles.hero} id="top">
         <div className={`${styles.container} ${styles.heroGrid}`}>
           <div>
-            <span className={styles.eyebrow}>Premium Body State Management</span>
-            <h1 className={styles.heroTitle}>不是硬壓痛點，而是讓身體願意<em>放下張力</em>。</h1>
+            <span className={styles.eyebrow}>BodyFix Service Operating System</span>
+            <h1 className={styles.heroTitle}>BodyFix 身體服務作業系統</h1>
             <p className={styles.heroLead}>
               BodyFix 筋膜整理，是以運動按摩為基礎，透過筋膜線判讀與張力分工整理，
               在低痛感、可呼吸、身體能接受的深度裡，讓肌肉與外層筋膜一起回到更穩定、有韌性、有彈性的狀態。

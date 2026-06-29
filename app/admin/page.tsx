@@ -267,9 +267,9 @@ export default function AdminPage() {
       <AdminDataStatusCard diagnostics={diagnostics} errorMessage={errorMessage} />
 
       <section className="bf-card bf-section-gap">
-        <h2 className="bf-section-title">BodyFix Pulse</h2>
+        <h2 className="bf-section-title">BodyFix Admin｜營運管理後台</h2>
         <p className="bf-subtitle">收入節奏、今日戰況與回訪空狀態。Pulse 放在 Admin 管理後台，不取代既有預約管理功能。</p>
-        <a className="bf-primary" href="/admin/pulse">進入 BodyFix Pulse</a>
+        <a className="bf-primary" href="/admin/pulse">進入 BodyFix Admin｜營運管理後台</a>
       </section>
 
       <section className="bf-card bf-section-gap">

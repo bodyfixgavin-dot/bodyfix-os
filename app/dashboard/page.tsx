@@ -25,7 +25,7 @@ export default function DashboardPage() {
   return (
     <main className="bf-container bf-os-page">
       <section className="bf-hero" aria-labelledby="dashboard-title">
-        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Operating System</div>
+        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix OS</div>
         <p className="bf-kicker">Operations overview</p>
         <h1 id="dashboard-title">BodyFix OS Dashboard</h1>
         <p className="bf-subtitle">MVP 管理後台，先完成核心流程。</p>

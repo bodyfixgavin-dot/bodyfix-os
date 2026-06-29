@@ -24,6 +24,6 @@ export function LearnerHero({ eyebrow, title, children }: { eyebrow: string; tit
   return <section className="learner-hero"><p className="portal-kicker">{eyebrow}</p><h1>{title}</h1>{children}</section>;
 }
 
-export function BoundaryNotice({ children = "此為教學用合成文本，不代表真實個案診斷。" }: { children?: ReactNode }) {
+export function BoundaryNotice({ children = "此為教學用合成文本，不代表真實個案判定。" }: { children?: ReactNode }) {
   return <div className="learner-notice" role="note">{children}</div>;
 }
