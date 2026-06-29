@@ -275,7 +275,7 @@ export default function IntakePage() {
           <p className="intake-eyebrow">Public Intake Entry</p>
           <h1>BodyFix 預約前狀態整理表</h1>
           <p className="intake-lead">第一次預約前，請先簡單填寫目前的身體狀態。這份資料會幫助 Gavin 在服務前先了解你的需求，現場更快進入判讀與整理。</p>
-          <p className="intake-note">這是公開填寫入口，不會顯示任何 BodyFix 後台資料。內容僅作為預約前溝通與狀態整理參考。</p>
+          <p className="intake-note">這是公開填寫入口，不會顯示任何 BodyFix Admin 資料。內容僅作為預約前溝通與狀態整理參考。</p>
         </header>
 
         <form className="intake-form" onSubmit={submitIntake}>

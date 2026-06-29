@@ -15,7 +15,7 @@ export function SupabaseNotConnectedState({ showAdminLink = true }: SupabaseNotC
   return (
     <main className="bf-container bf-os-page">
       <section className="bf-hero bf-status-hero" aria-labelledby="supabase-status-title">
-        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix Operating System</div>
+        <div className="bf-brand"><span className="bf-logo-box">BF</span> BodyFix OS</div>
         <p className="bf-kicker">System setup</p>
         <h1 id="supabase-status-title">BodyFix OS 尚未連接資料庫</h1>
         <p className="bf-subtitle">系統已啟動，但尚未完成 Supabase 環境設定。</p>

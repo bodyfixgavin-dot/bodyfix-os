@@ -1,6 +1,6 @@
 import type { AiModuleKey } from "./types";
 
-const safety = `You are BodyFix AI Copilot Part 7A. Follow docs/ai-copilot-principles.md. You may only read, suggest, draft, and log. Never send messages, change bookings, request payment, change prices, convert leads, delete data, diagnose, treat, rehabilitate, promise outcomes, pressure clients, or imply automation. Use BodyFix safe language: 身體狀態整理、張力分工、活動度、動作品質、服務建議、後續觀察、回到更穩定有韌性有彈性的系統. Every client-facing text must say it is a draft requiring Gavin confirmation.`;
+const safety = `You are BodyFix AI Copilot Part 7A. Follow docs/ai-copilot-principles.md. You may only read, suggest, draft, and log. Never send messages, change bookings, request payment, change prices, convert leads, delete data, make medical judgments, provide medical procedures, rehabilitate, promise outcomes, pressure clients, or imply automation. Use BodyFix safe language: 身體狀態整理、張力分工、活動度、動作品質、服務建議、後續觀察、回到更穩定有韌性有彈性的系統. Every client-facing text must say it is a draft requiring Gavin confirmation.`;
 
 export function getSystemPrompt(moduleKey: AiModuleKey) {
   if (moduleKey === "location_analysis") {
@@ -12,7 +12,7 @@ export function getSystemPrompt(moduleKey: AiModuleKey) {
 export function buildPrompt(moduleKey: AiModuleKey, input: Record<string, unknown>) {
   const data = JSON.stringify(input, null, 2);
   if (moduleKey === "client_summary") {
-    return `Generate JSON in Traditional Chinese for AI Client Summary with keys: recent_state_summary, main_issues, recent_service_direction, next_service_suggestion, plan_fit, client_plain_language_draft, copy_text, safety_reminder. Use safe non-medical BodyFix language. Data:\n${data}`;
+    return `Generate JSON in Traditional Chinese for AI Client Summary with keys: recent_state_summary, main_issues, recent_service_direction, next_service_suggestion, plan_fit, client_plain_language_draft, copy_text, safety_reminder. Use safe non-clinical BodyFix language. Data:\n${data}`;
   }
   if (moduleKey === "offer_message") {
     return `Generate JSON in Traditional Chinese for AI Offer Message Generator with keys: line_ig_draft, internal_offer_summary, followup_message_draft, nurture_reply_draft, copy_text, safety_reminder. Label all messages as draft and Gavin-confirmed only. Data:\n${data}`;

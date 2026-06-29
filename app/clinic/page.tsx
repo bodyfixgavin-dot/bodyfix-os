@@ -7,7 +7,7 @@ type Dashboard = { today_followups: any[]; recent_clients: any[]; plan_candidate
 export default function ClinicDashboardPage() {
   const { data, loading, error, diagnostics } = useClinicFetch<Dashboard>("/api/clinic/dashboard");
   return (
-    <ClinicShell title="BodyFix OS 後台總覽" subtitle="管理個案、預約、服務紀錄、方案轉換與內部工具。" showDashboardMenu>
+    <ClinicShell title="BodyFix Admin｜營運管理後台" subtitle="管理個案、預約、服務紀錄、方案轉換與內部工具。" showDashboardMenu>
       <ClinicNotice loading={loading} error={error} diagnostics={diagnostics} />
       {data && <>
         <section className="clinic-grid bf-section-gap">

@@ -3,10 +3,10 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 
 export const metadata: Metadata = {
-  title: { default: "BodyFix Pulse", template: "%s · BodyFix Pulse" },
-  description: "BodyFix 老闆每日營運脈搏",
+  title: { default: "BodyFix OS｜身體服務作業系統", template: "%s｜BodyFix OS" },
+  description: "BodyFix Service Operating System",
   manifest: "/manifest.webmanifest",
-  appleWebApp: { capable: true, title: "Pulse", statusBarStyle: "black-translucent" },
+  appleWebApp: { capable: true, title: "BodyFix OS", statusBarStyle: "black-translucent" },
   icons: { icon: "/icons/pulse-icon.svg", apple: "/icons/pulse-icon.svg" },
 };
 

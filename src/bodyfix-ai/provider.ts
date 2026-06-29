@@ -11,7 +11,7 @@ function mockOutput(moduleKey: AiModuleKey, input: Record<string, unknown>) {
     return {
       recent_state_summary: "Mock：已整理客戶主檔、最近服務紀錄、方案候選與追蹤資料，供 Gavin 快速判讀。",
       main_issues: ["以身體狀態整理、張力分工、活動度與動作品質作為描述框架。"],
-      recent_service_direction: "Mock：依最近 3 筆服務紀錄歸納主要整理方向，避免醫療診斷語氣。",
+      recent_service_direction: "Mock：依最近 3 筆服務紀錄歸納主要整理方向，避免醫療判定語氣。",
       next_service_suggestion: "Mock：建議 Gavin 先確認身體反應，再決定下一次服務方向。",
       plan_fit: { three_session: "可觀察", twelve_session: "需 Gavin 判斷", deep_24_plus_12: "高信任方案，暫不自動建議成交" },
       client_plain_language_draft: "【AI 草稿，需 Gavin 確認】我先幫你把這次身體狀態整理成幾個重點，接下來會觀察張力分工、活動度與動作品質是否能回到更穩定、有韌性、有彈性的狀態。",
