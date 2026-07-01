@@ -72,20 +72,19 @@ export default function HomePage() {
         <nav className="portal-nav" aria-label="BodyFix OS navigation">
           <Link className="portal-wordmark" href="/" aria-label="BodyFix OS 首頁">
             <span>BF</span>
-            <strong>BodyFix OS</strong>
+            <strong>BODYFIX OS</strong>
           </Link>
           <Link className="portal-admin-link" href="/admin">Admin</Link>
         </nav>
 
         <section className="portal-hero" aria-labelledby="portal-title">
           <div className="portal-hero-copy">
-            <p className="portal-kicker">BodyFix Service Operating System</p>
-            <h1 id="portal-title">BodyFix OS</h1>
-            <p className="portal-lead">身體服務、預約管理、紀錄追蹤與工具系統入口</p>
+            <p className="portal-kicker">BODYFIX SERVICE OPERATING SYSTEM</p>
+            <h1 id="portal-title"><span>BodyFix</span><span>身體服務作業系統</span></h1>
+            <p className="portal-lead">服務、預約、紀錄、追蹤與營運工具的統一入口</p>
             <p className="portal-intro">
-              BodyFix OS 是 BodyFix 專屬身體服務作業系統，目前以內部運作、預約流程與未來學習入口為主。請依你的身份選擇要前往的功能。
+              BodyFix 身體服務作業系統，整合服務入口、預約流程、身體狀態紀錄、課後追蹤與內部營運工具。請依你的身份，前往適合的功能入口。
             </p>
-            <p className="portal-hero-hint">也可以先從測驗工具開始，看看自己的身體、關係或空間狀態。</p>
           </div>
 
           <div className="portal-flow" aria-label="BodyFix OS system flow">
