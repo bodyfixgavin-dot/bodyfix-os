@@ -334,7 +334,7 @@ function renderPage(content: string) {
       ".error{padding:16px;border:1px solid #ff7b7b;border-radius:12px;background:rgba(255,100,100,.12)}" +
       "code{color:#e8bd78}" +
       "</style>" +
-      "</head><body><div class="card">" +
+      '</head><body><div class="card">' +
       content +
       "</div></body></html>",
     {
