@@ -100,7 +100,7 @@ function page(content: string) {
       ".error{padding:16px;margin-bottom:20px;border-radius:12px;background:rgba(255,100,100,.12);border:1px solid #ff7b7b}" +
       "a{color:#e8bd78}" +
       "</style>" +
-      "</head><body><div class="card">" +
+      '</head><body><div class="card">' +
       content +
       "</div></body></html>",
     {
