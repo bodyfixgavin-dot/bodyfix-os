@@ -89,5 +89,9 @@ export type LineEvent = {
   replyToken?: string;
   source?: { userId?: string; type?: string };
   message?: { type: string; text?: string };
+  postback?: {
+    data?: string;
+    params?: Record<string, string>;
+  };
   timestamp?: number;
 };
