@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
-import { getLineDisplayName, notifyGavin, replyLineMessage, verifyLineSignature } from "@/lib/bodyfix-ai/line";
+import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
+import { availabilitySetupMessages, bookingPromptMessages, immediateBookingMessages } from "@/lib/bodyfix-ai/richmenu";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
@@ -89,6 +90,11 @@ async function handleLineEvent(event: LineEvent) {
     return;
   }
 
+  if (event.type === "postback" && event.postback?.data) {
+    await handlePostbackEvent(event);
+    return;
+  }
+
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
 
   const displayName = await getLineDisplayName(userId);
@@ -129,6 +135,31 @@ async function handleLineEvent(event: LineEvent) {
       logWebhookError("Failed to notify Gavin", error, { eventType: event.type, userId });
     }
   }
+}
+
+async function handlePostbackEvent(event: LineEvent) {
+  if (!event.replyToken || !event.postback?.data) return;
+
+  const params = new URLSearchParams(event.postback.data);
+  const action = params.get("action");
+  const mode = params.get("mode");
+
+  if (action !== "booking") return;
+
+  if (mode === "immediate") {
+    await replyLineMessages(event.replyToken, immediateBookingMessages());
+    return;
+  }
+
+  if (mode === "this-week") {
+    await replyLineMessages(event.replyToken, availabilitySetupMessages());
+    return;
+  }
+
+  await replyLineMessages(
+    event.replyToken,
+    bookingPromptMessages(mode || "immediate")
+  );
 }
 
 async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
