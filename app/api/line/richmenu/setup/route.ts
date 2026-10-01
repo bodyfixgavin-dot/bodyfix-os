@@ -1,4 +1,3 @@
-import { timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -21,26 +20,6 @@ function getLineToken() {
   }
 
   return token;
-}
-
-function getAdminToken() {
-  const token = process.env.BODYFIX_ADMIN_TOKEN;
-
-  if (!token) {
-    throw new Error("BODYFIX_ADMIN_TOKEN is not configured");
-  }
-
-  return token;
-}
-
-function isValidAdminToken(input: string) {
-  const expected = Buffer.from(getAdminToken());
-  const actual = Buffer.from(input);
-
-  return (
-    expected.length === actual.length &&
-    timingSafeEqual(expected, actual)
-  );
 }
 
 function lineHeaders(extra?: Record<string, string>) {
@@ -460,11 +439,9 @@ export async function GET() {
   return page(
     [
       "<h1>BodyFix｜Rich Menu ABC Setup</h1>",
-      "<p>一次建立新版 A／B／C 三頁 Rich Menu，尺寸固定 <strong>2500 × 1686</strong>，並建立或更新 <code>bodyfix-a</code>、<code>bodyfix-b</code>、<code>bodyfix-c</code> Alias。</p>",
+      "<p>一次建立新版 A／B／C 三頁 Rich Menu，尺寸固定 <strong>2500 × 1686</strong>，並建立或更新 <code>bodyfix-a</code>、<code>bodyfix-b</code>、<code>bodyfix-c</code> Alias。</p><p class="note">暫時免 Admin Token，僅限 Preview 環境使用。</p>",
       '<p class="note">不會設定 default rich menu。建立完成後，再到 Preview 只套給 Gavin 測試。</p>',
       '<form method="POST" enctype="multipart/form-data">',
-      '<label for="token">Admin Token</label>',
-      '<input id="token" name="token" type="password" autocomplete="off" required placeholder="輸入 BODYFIX_ADMIN_TOKEN" />',
       '<label for="imageA">A｜服務・價格</label>',
       '<input id="imageA" type="file" name="imageA" accept="image/png,image/jpeg" required />',
       '<label for="imageB">B｜預約・據點</label>',
@@ -492,14 +469,6 @@ export async function POST(req: Request) {
 
   try {
     const formData = await req.formData();
-    const token = String(formData.get("token") || "");
-
-    if (!token || !isValidAdminToken(token)) {
-      return page(
-        '<h1>BodyFix｜Rich Menu ABC Setup</h1><div class="error">Admin Token 不正確。</div>'
-      );
-    }
-
     const images: any = {
       a: validateImage(formData.get("imageA"), "A｜服務・價格"),
       b: validateImage(formData.get("imageB"), "B｜預約・據點"),
