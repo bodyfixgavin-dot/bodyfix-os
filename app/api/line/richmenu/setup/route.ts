@@ -460,17 +460,25 @@ export async function GET() {
   return page(
     [
       "<h1>BodyFix｜Rich Menu ABC Setup</h1>",
-      "<p>一次建立新版 A／B／C 三頁 Rich Menu，尺寸固定 <strong>2500 × 1686</strong>，並建立或更新 <code>bodyfix-a</code>、<code>bodyfix-b</code>、<code>bodyfix-c</code> Alias。</p>",
-      '<p class="note">暫時免 Admin Token，且不會設定 default rich menu。建立完成後，再到 Preview 只套給 Gavin 測試。</p>',
+      "<p>改成 <strong>一次只上傳一張</strong>，避免 Vercel 413 request too large。三頁尺寸固定 <strong>2500 × 1686</strong>。</p>",
+      '<p class="note">暫時免 Admin Token，且不會設定 default rich menu。請依序更新 A → B → C，最後再到 Preview 只套給 Gavin 測試。</p>',
       '<form method="POST" enctype="multipart/form-data">',
-      '<input name="token" type="hidden" value="preview-bypass" />',
+      '<input name="menuKey" type="hidden" value="a" />',
       '<label for="imageA">A｜服務・價格</label>',
-      '<input id="imageA" type="file" name="imageA" accept="image/png,image/jpeg" required />',
+      '<input id="imageA" type="file" name="image" accept="image/png,image/jpeg" required />',
+      '<button type="submit">建立／更新 A</button>',
+      "</form>",
+      '<form method="POST" enctype="multipart/form-data">',
+      '<input name="menuKey" type="hidden" value="b" />',
       '<label for="imageB">B｜預約・據點</label>',
-      '<input id="imageB" type="file" name="imageB" accept="image/png,image/jpeg" required />',
+      '<input id="imageB" type="file" name="image" accept="image/png,image/jpeg" required />',
+      '<button type="submit">建立／更新 B</button>',
+      "</form>",
+      '<form method="POST" enctype="multipart/form-data">',
+      '<input name="menuKey" type="hidden" value="c" />',
       '<label for="imageC">C｜更多</label>',
-      '<input id="imageC" type="file" name="imageC" accept="image/png,image/jpeg" required />',
-      '<button type="submit">建立／更新 ABC Rich Menu</button>',
+      '<input id="imageC" type="file" name="image" accept="image/png,image/jpeg" required />',
+      '<button type="submit">建立／更新 C</button>',
       "</form>"
     ].join("")
   );
@@ -487,62 +495,55 @@ export async function POST(req: Request) {
     );
   }
 
-  const createdIds: string[] = [];
+  let createdId: string | null = null;
 
   try {
     const formData = await req.formData();
-    const token = String(formData.get("token") || "");
+    const menuKey = String(formData.get("menuKey") || "");
+    const config = MENU_CONFIGS.find((item) => item.key === menuKey);
 
-    if (false) {
-      return page(
-        '<h1>BodyFix｜Rich Menu ABC Setup</h1><div class="error">Admin Token 不正確。</div>'
-      );
+    if (!config) {
+      throw new Error("未知的 Rich Menu 頁面。");
     }
 
-    const images: any = {
-      a: validateImage(formData.get("imageA"), "A｜服務・價格"),
-      b: validateImage(formData.get("imageB"), "B｜預約・據點"),
-      c: validateImage(formData.get("imageC"), "C｜更多")
+    const labelMap: Record<string, string> = {
+      a: "A｜服務・價格",
+      b: "B｜預約・據點",
+      c: "C｜更多"
     };
 
-    const results: any[] = [];
+    const image = validateImage(
+      formData.get("image"),
+      labelMap[menuKey] || menuKey
+    );
 
-    for (const config of MENU_CONFIGS) {
-      const richMenuId = await createRichMenu(
-        config,
-        images[config.key]
-      );
-
-      createdIds.push(richMenuId);
-      results.push({
-        key: config.key,
-        alias: config.alias,
-        richMenuId
-      });
-    }
-
-    for (const result of results) {
-      await upsertAlias(result.alias, result.richMenuId);
-    }
+    createdId = await createRichMenu(config, image);
+    await upsertAlias(config.alias, createdId);
 
     return NextResponse.json({
       ok: true,
-      message: "BodyFix A／B／C Rich Menu 已建立並更新 Alias。",
+      message: labelMap[menuKey] + " 已建立並更新 Alias。",
       size: {
         width: WIDTH,
         height: HEIGHT
       },
-      menus: results,
+      menu: {
+        key: config.key,
+        alias: config.alias,
+        richMenuId: createdId
+      },
       defaultMenuChanged: false,
       next:
-        "前往 /api/line/richmenu/preview，只套給 Gavin 測試 A/B/C。"
+        menuKey === "c"
+          ? "A/B/C 都完成後，前往 /api/line/richmenu/preview，只套給 Gavin 測試。"
+          : "返回上一頁，繼續上傳下一張。"
     });
   } catch (error) {
-    console.error("Rich Menu ABC setup failed", error);
+    console.error("Rich Menu setup failed", error);
 
-    for (const richMenuId of createdIds) {
+    if (createdId) {
       try {
-        await fetch(LINE_API_BASE + "/richmenu/" + richMenuId, {
+        await fetch(LINE_API_BASE + "/richmenu/" + createdId, {
           method: "DELETE",
           headers: lineHeaders()
         });
