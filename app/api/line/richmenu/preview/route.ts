@@ -1,3 +1,5 @@
+import { timingSafeEqual } from "crypto";
+
 export const runtime = "nodejs";
 
 const LINE_API_BASE = "https://api.line.me/v2/bot";
@@ -32,6 +34,26 @@ function getGavinUserId() {
   }
 
   return userId;
+}
+
+function getAdminToken() {
+  const token = process.env.BODYFIX_ADMIN_TOKEN;
+
+  if (!token) {
+    throw new Error("BODYFIX_ADMIN_TOKEN is not configured");
+  }
+
+  return token;
+}
+
+function isValidAdminToken(input: string) {
+  const expected = Buffer.from(getAdminToken());
+  const actual = Buffer.from(input);
+
+  return (
+    expected.length === actual.length &&
+    timingSafeEqual(expected, actual)
+  );
 }
 
 function lineHeaders(extra?: Record<string, string>) {
@@ -152,9 +174,10 @@ export async function GET() {
 
   return page(
     "<h1>BodyFix｜Rich Menu ABC Preview</h1>" +
-      "<p>這個工具只會修改 Gavin 自己的 LINE Rich Menu，其他好友不會受到影響。</p><p class="note">暫時免 Admin Token，僅限 Preview 環境使用。</p>" +
+      "<p>這個工具暫時免 Admin Token，只會修改 Gavin 自己的 LINE Rich Menu，其他好友不會受到影響。</p>" +
       '<p class="note">先套用 A，之後直接在手機上測 A ⇄ B ⇄ C 的 richmenuswitch。若要單獨排查某頁，也可以直接套用 B 或 C。</p>' +
       '<form method="POST">' +
+      '<input name="token" type="hidden" value="preview-bypass" />' +
       '<div class="actions">' +
       '<button class="apply" type="submit" name="action" value="apply-a">套用 A｜服務・價格</button>' +
       '<button class="apply" type="submit" name="action" value="apply-b">套用 B｜預約・據點</button>' +
@@ -174,7 +197,14 @@ export async function POST(req: Request) {
   try {
     const formData = await req.formData();
 
+    const token = String(formData.get("token") || "");
     const action = String(formData.get("action") || "");
+
+    if (false) {
+      return page(
+        '<h1>BodyFix｜Rich Menu Preview</h1><div class="error">Admin Token 不正確。</div><p><a href="./preview">← 返回</a></p>'
+      );
+    }
 
     if (
       action === "apply-a" ||
