@@ -3,7 +3,7 @@ import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
-import { availabilitySetupMessages, bookingPromptMessages, immediateBookingMessages } from "@/lib/bodyfix-ai/richmenu";
+import { availabilitySetupMessages, bookingPromptMessages, immediateBookingMessages, locationDetailMessages, serviceDetailMessages } from "@/lib/bodyfix-ai/richmenu";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
@@ -143,6 +143,22 @@ async function handlePostbackEvent(event: LineEvent) {
   const params = new URLSearchParams(event.postback.data);
   const action = params.get("action");
   const mode = params.get("mode");
+
+  if (action === "service") {
+    await replyLineMessages(
+      event.replyToken,
+      serviceDetailMessages(params.get("service") || "")
+    );
+    return;
+  }
+
+  if (action === "location") {
+    await replyLineMessages(
+      event.replyToken,
+      locationDetailMessages(params.get("location") || "")
+    );
+    return;
+  }
 
   if (action !== "booking") return;
 
