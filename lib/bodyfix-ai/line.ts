@@ -19,7 +19,22 @@ export function verifyLineSignature(rawBody: string, signature: string | null) {
   return expected.length === actual.length && timingSafeEqual(expected, actual);
 }
 
-export async function replyLineMessage(replyToken: string, text: string) {
+export type LineMessage = Record<string, unknown>;
+
+export async function replyLineMessages(
+  replyToken: string,
+  messages: LineMessage[]
+) {
+  const normalized = messages.map((message) => {
+    if (message.type === "text" && typeof message.text === "string") {
+      return {
+        ...message,
+        text: truncateLineText(message.text)
+      };
+    }
+    return message;
+  });
+
   const res = await fetch(`${LINE_API_BASE}/message/reply`, {
     method: "POST",
     headers: {
@@ -28,11 +43,17 @@ export async function replyLineMessage(replyToken: string, text: string) {
     },
     body: JSON.stringify({
       replyToken,
-      messages: [{ type: "text", text: truncateLineText(text) }]
+      messages: normalized
     })
   });
 
-  if (!res.ok) throw new Error(`LINE reply failed: ${res.status} ${await res.text()}`);
+  if (!res.ok) {
+    throw new Error(`LINE reply failed: ${res.status} ${await res.text()}`);
+  }
+}
+
+export async function replyLineMessage(replyToken: string, text: string) {
+  await replyLineMessages(replyToken, [{ type: "text", text }]);
 }
 
 export async function pushLineMessage(userId: string, text: string) {
