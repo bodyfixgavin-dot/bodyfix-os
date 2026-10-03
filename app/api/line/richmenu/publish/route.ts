@@ -98,20 +98,15 @@ export async function GET() {
   }
 
   try {
-    const [currentId, targetId] = await Promise.all([
-      getCurrentDefaultId(),
-      getAliasRichMenuId()
-    ]);
+    const targetId = await getAliasRichMenuId();
 
     return page(
       "<h1>BodyFix｜公開新版 ABC</h1>" +
       "<p>把 <strong>A｜服務・價格</strong> 設成所有好友的預設 Rich Menu。A 頁上的 Tab 可切換到 B／C。</p>" +
-      '<div class="ok">新版 A ID：<br><code>' + targetId + "</code></div>" +
-      '<p class="note">目前預設 ID：<br><code>' + (currentId || "目前沒有預設 Rich Menu") + "</code></p>" +
-      '<div class="warn">這會影響所有好友。現階段 postback 會先顯示客戶點擊的文字；完整 Flex／Google Calendar 可再逐步補上。</div>' +
+      '<div class="ok">新版 A 已準備完成。<br><code>' + targetId + "</code></div>" +
+      '<div class="warn">按下後會影響所有好友。現階段按鈕會先留下客戶點擊意圖；Flex／Google Calendar 可以再逐步補上。</div>' +
       '<form method="POST">' +
       '<input type="hidden" name="action" value="publish" />' +
-      '<input type="hidden" name="previousId" value="' + (currentId || "") + '" />' +
       '<button type="submit">正式公開新版 ABC 給所有好友</button>' +
       "</form>"
     );
@@ -132,8 +127,6 @@ export async function POST(req: Request) {
   try {
     const form = await req.formData();
     const action = String(form.get("action") || "");
-    const previousId = String(form.get("previousId") || "");
-
     if (action !== "publish") {
       throw new Error("未知操作");
     }
@@ -144,8 +137,7 @@ export async function POST(req: Request) {
     return page(
       "<h1>BodyFix｜已公開 ✅</h1>" +
       '<div class="ok">新版 ABC 已正式開放給所有好友。<br><br>預設頁：<strong>A｜服務・價格</strong></div>' +
-      "<p>所有沒有個人指定 Rich Menu 的好友，現在會看到新版 A，並可切換 B／C。</p>" +
-      '<p class="note">切換前預設 ID：<br><code>' + (previousId || "無") + "</code></p>"
+      "<p>所有沒有個人指定 Rich Menu 的好友，現在會看到新版 A，並可切換 B／C。</p>"
     );
   } catch (error) {
     return page(
