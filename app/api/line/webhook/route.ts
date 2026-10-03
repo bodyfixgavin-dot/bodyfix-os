@@ -3,7 +3,8 @@ import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
-import { locationDetailMessages, serviceDetailMessages } from "@/lib/bodyfix-ai/richmenu";
+import { availabilityMessages, locationDetailMessages, serviceDetailMessages } from "@/lib/bodyfix-ai/richmenu";
+import { getBodyFixAvailability, googleCalendarConfigured } from "@/lib/bodyfix-ai/google-calendar";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
@@ -157,6 +158,33 @@ async function handlePostbackEvent(event: LineEvent) {
       locationDetailMessages(params.get("location") || "")
     );
     return;
+  }
+
+  if (action === "booking") {
+    const mode = params.get("mode");
+
+    if (mode === "this-week") {
+      if (!googleCalendarConfigured()) {
+        await replyLineMessage(
+          event.replyToken,
+          "本週可約時段正在完成 Google Calendar 串接，暫時可以直接傳想約的日期與時間。"
+        );
+        return;
+      }
+
+      const availability = await getBodyFixAvailability({
+        days: 7,
+        requiredMinutes: 120,
+        stepMinutes: 30,
+        maxSlotsPerDay: 5
+      });
+
+      await replyLineMessages(
+        event.replyToken,
+        availabilityMessages(availability)
+      );
+      return;
+    }
   }
 
   // 其他按鈕先維持「留下點擊文字」的漸進式上線策略。
