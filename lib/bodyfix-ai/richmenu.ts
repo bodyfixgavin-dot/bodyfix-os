@@ -426,3 +426,94 @@ export function locationDetailMessages(location: string): LineMessage[] {
     }
   ];
 }
+
+
+export function availabilityMessages(
+  days: Array<{
+    date: string;
+    label: string;
+    slots: Array<{ start: string; label: string; location: string }>;
+  }>
+): LineMessage[] {
+  if (!days.length) {
+    return [
+      {
+        type: "text",
+        text:
+          "目前未找到可直接預約的時段。你也可以直接傳想約的日期與大概時間，我會再幫你確認。"
+      }
+    ];
+  }
+
+  const bubbles = days.map((day) => ({
+    type: "bubble",
+    size: "kilo",
+    styles: {
+      body: { backgroundColor: IVORY },
+      footer: { backgroundColor: IVORY }
+    },
+    body: {
+      type: "box",
+      layout: "vertical",
+      spacing: "sm",
+      paddingAll: "18px",
+      contents: [
+        {
+          type: "text",
+          text: day.label,
+          size: "lg",
+          color: NAVY,
+          weight: "bold"
+        },
+        {
+          type: "text",
+          text: day.slots[0]?.location || "BodyFix",
+          size: "xs",
+          color: GOLD,
+          weight: "bold",
+          wrap: true
+        },
+        {
+          type: "text",
+          text: "選一個方便的開始時間",
+          size: "xs",
+          color: MUTED,
+          wrap: true
+        }
+      ]
+    },
+    footer: {
+      type: "box",
+      layout: "vertical",
+      spacing: "sm",
+      paddingAll: "14px",
+      contents: day.slots.map((slot) =>
+        postbackButton(
+          slot.label,
+          "action=booking&mode=slot&start=" +
+            encodeURIComponent(slot.start) +
+            "&location=" +
+            encodeURIComponent(slot.location),
+          "我想預約 " + day.label + " " + slot.label,
+          true
+        )
+      )
+    }
+  }));
+
+  return [
+    {
+      type: "text",
+      text:
+        "這些是目前 Google Calendar 即時算出的可約時間 👇\n時段會隨行事曆變動，實際預約送出前會再確認一次。"
+    },
+    {
+      type: "flex",
+      altText: "BodyFix｜本週可約時段",
+      contents: {
+        type: "carousel",
+        contents: bubbles
+      }
+    }
+  ];
+}
