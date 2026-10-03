@@ -2,7 +2,8 @@ import { NextResponse } from "next/server";
 import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
-import { getLineDisplayName, notifyGavin, replyLineMessage, verifyLineSignature } from "@/lib/bodyfix-ai/line";
+import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
+import { locationDetailMessages, serviceDetailMessages } from "@/lib/bodyfix-ai/richmenu";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
@@ -89,6 +90,11 @@ async function handleLineEvent(event: LineEvent) {
     return;
   }
 
+  if (event.type === "postback" && event.postback?.data) {
+    await handlePostbackEvent(event);
+    return;
+  }
+
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
 
   const displayName = await getLineDisplayName(userId);
@@ -129,6 +135,32 @@ async function handleLineEvent(event: LineEvent) {
       logWebhookError("Failed to notify Gavin", error, { eventType: event.type, userId });
     }
   }
+}
+
+async function handlePostbackEvent(event: LineEvent) {
+  if (!event.replyToken || !event.postback?.data) return;
+
+  const params = new URLSearchParams(event.postback.data);
+  const action = params.get("action");
+
+  if (action === "service") {
+    await replyLineMessages(
+      event.replyToken,
+      serviceDetailMessages(params.get("service") || "")
+    );
+    return;
+  }
+
+  if (action === "location") {
+    await replyLineMessages(
+      event.replyToken,
+      locationDetailMessages(params.get("location") || "")
+    );
+    return;
+  }
+
+  // 其他按鈕先維持「留下點擊文字」的漸進式上線策略。
+  return;
 }
 
 async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
