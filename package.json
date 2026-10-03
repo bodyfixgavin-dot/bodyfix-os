@@ -16,7 +16,8 @@
     "next": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "zod": "latest"
+    "zod": "latest",
+    "google-auth-library": "latest"
   },
   "devDependencies": {
     "@types/node": "latest",
