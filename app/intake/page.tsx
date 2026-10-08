@@ -130,14 +130,24 @@ export default function IntakePage() {
       unsure: "不確定，希望 Gavin 建議",
     }[text(answers, "service")] || "");
 
-    const lines: [string, string][] = [
+    const bookingLines: [string, string][] = [
       ["稱呼", text(answers, "name")],
       ["聯絡", `${text(answers, "contactMethod")} ${text(answers, "contact")}`.trim()],
       ["首次／回訪", text(answers, "visit")],
       ["服務", serviceName],
+      ["地點", text(answers, "location")],
+      ["可行時段", text(answers, "availability")],
+      ["時長", text(answers, "sessionDuration")],
+    ];
+    const bodyLines: [string, string][] = [
       ["主要目的", text(answers, "purposes")],
       ["主要區域", text(answers, "regions")],
       ["目前狀況", text(answers, "condition")],
+      ["職業", text(answers, "occupation")],
+      ["工作型態", text(answers, "work")],
+      ["運動頻率", text(answers, "exerciseFrequency")],
+      ["主要運動", text(answers, "sports")],
+      ["舊傷／手術", text(answers, "injuryHistory")],
       ["安全", text(answers, "safety")],
       ["安全補充", text(answers, "safetyNote")],
       ["需人工確認", requiresReview ? "是" : ""],
@@ -145,7 +155,8 @@ export default function IntakePage() {
       ["不希望整理", text(answers, "noTouchDetail")],
     ];
 
-    let output = "【BodyFix Intake】\n" + lines.filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
+    let output = "【BodyFix Intake】\n【預約】\n" + bookingLines.filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
+    output += "\n【身體與生活】\n" + bodyLines.filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
     if (pelvic) {
       output += "\n【Pelvic Core】\n" + [
         ["方向", text(answers, "pelvicGoal")],
@@ -161,11 +172,18 @@ export default function IntakePage() {
         ["偏好安排", text(answers, "arrangement")],
       ].filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
     }
-    output += "\n" + [
+    output += "\n【RETURN】\n" + [
       ["本次期待", text(answers, "expectation")],
       ["補充", text(answers, "notes")],
-      ["填寫日期", new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium" }).format(new Date())],
     ].filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
+    const profileLines: [string, string][] = [
+      ["年齡", text(answers, "age")],
+      ["生日", text(answers, "birthday")],
+      ["身高", text(answers, "height") ? `${text(answers, "height")} cm` : ""],
+      ["體重", text(answers, "weight") ? `${text(answers, "weight")} kg` : ""],
+    ];
+    if (profileLines.some(([, v]) => v)) output += "\n【首次建檔】\n" + profileLines.filter(([, v]) => v).map(([k, v]) => `${k}：${v}`).join("\n");
+    output += "\n填寫日期：" + new Intl.DateTimeFormat("zh-TW", { dateStyle: "medium" }).format(new Date());
     return output;
   }, [answers, movement, pelvic, requiresReview]);
 
@@ -178,7 +196,7 @@ export default function IntakePage() {
   function submit(e: FormEvent) {
     e.preventDefault();
     setError("");
-    const requiredKeys = ["name", "contactMethod", "contact", "visit", "service", "regions", "condition", "exerciseFrequency", "safety", "depth", "expectation"];
+    const requiredKeys = ["name", "contactMethod", "contact", "visit", "service", "location", "availability", "sessionDuration", "purposes", "regions", "condition", "occupation", "work", "exerciseFrequency", "injuryHistory", "safety", "depth", "expectation"];
     const missing = requiredKeys.find(key => !hasAnswer(answers[key]));
     const invalid = formRef.current?.querySelector<HTMLInputElement | HTMLTextAreaElement>(":invalid");
     if (missing || invalid) {
@@ -225,9 +243,9 @@ export default function IntakePage() {
       <Link href="/website" className="intake-v2-brand"><span>BF</span> BODYFIX</Link>
       <span className="intake-v2-kicker">PRE-SERVICE INTAKE · 單頁快速填寫</span>
       <h1>預約前，先讓我認識你的身體</h1>
-      <p>告訴我這次想整理什麼、身體最近的狀況，以及需要先注意的地方。</p>
+      <p>用來協助預約安排、身體追蹤與個人紀錄建立；告訴我這次想整理什麼、最近的身體狀況，以及需要先注意的地方。</p>
       <strong>READ → RESET → RECONNECT → RETURN</strong>
-      <small>一般約 1–2 分鐘；Pelvic Core 會多幾項必要的專業界線確認。沒有標準答案，照現在的感受填即可。</small>
+      <small>一般約 2 分鐘；Pelvic Core 會多幾項必要的專業界線確認。沒有標準答案，照現在的感受填即可。</small>
     </header>
 
     <form ref={formRef} onSubmit={submit} noValidate>
@@ -251,7 +269,10 @@ export default function IntakePage() {
           { value: "movement-combo", label: "Movement Training ＋ 筋膜整理", detail: "想把訓練與身體整理一起安排" },
           { value: "unsure", label: "不確定，希望 Gavin 看完狀況後建議" },
         ]} /></Question>
-        <Question number="Q6" title="這次最主要想處理什麼？"><Choice name="purposes" options={purposes} answers={answers} setAnswers={setAnswers} multiple /></Question>
+        <Question number="Q5-1" title="希望服務地點？" required><Choice name="location" options={["六張犁工作室", "西門共享工作室", "國父紀念館共享工作室", "到府／其他安排（先確認）", "不確定，想先問 Gavin"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Field label="Q5-2｜可行日期與時段" name="availability" answers={answers} setAnswers={setAnswers} required textarea placeholder="例：10/10 18:00、10/11 20:00；可填 1–3 個方便的時間。" />
+        <Question number="Q5-3" title="希望本次時長？" required><Choice name="sessionDuration" options={["60 分鐘", "90 分鐘", "120 分鐘", "不確定，希望 Gavin 依狀況建議"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Question number="Q6" title="這次最主要想處理什麼？" required><Choice name="purposes" options={purposes} answers={answers} setAnswers={setAnswers} multiple /></Question>
         <Question number="Q7" title="最有感的區域？" required><Choice name="regions" options={regions} answers={answers} setAnswers={setAnswers} multiple /></Question>
         <Field label="Q8｜用自己的話說，現在身體怎麼了？" name="condition" answers={answers} setAnswers={setAnswers} required textarea placeholder="例：久坐右腰會緊、深蹲到底髖會卡。" />
         <details className="intake-v2-summary"><summary>補充更多身體狀況（選填）</summary>
@@ -262,23 +283,25 @@ export default function IntakePage() {
       </section>
 
       <section className="intake-v2-card">
-        <h2>C｜生活與訓練</h2>
-        <Question number="Q12" title="平常有運動或重量訓練嗎？" required><Choice name="exerciseFrequency" options={["目前沒有", "偶爾運動", "每週 1–2 次", "每週 3–4 次", "每週 5 次以上／運動是工作之一"]} answers={answers} setAnswers={setAnswers} required /></Question>
-        {answers.exerciseFrequency && answers.exerciseFrequency !== "目前沒有" && <Question number="Q12-1" title="主要做哪些運動？"><Choice name="sports" options={["重量訓練", "跑步／球類", "游泳", "瑜珈／皮拉提斯", "格鬥／拳擊", "登山／自行車", "其他"]} answers={answers} setAnswers={setAnswers} multiple /></Question>}
-        <details className="intake-v2-summary"><summary>工作與過去處理（選填）</summary>
-          <Question number="Q13" title="工作大部分時間是？"><Choice name="work" options={["久坐為主", "久站為主", "走動很多", "搬重物／體力工作", "開車／騎車很多", "混合型／其他"]} answers={answers} setAnswers={setAnswers} /></Question>
-          <Question number="Q14" title="之前有為這個狀況做過處理嗎？"><Choice name="past" options={["沒有", "按摩／筋膜整理", "物理治療／復健／醫療", "徒手／整脊類", "自己伸展／滾筒", "教練／訓練調整／其他"]} answers={answers} setAnswers={setAnswers} /></Question>
+        <h2>C｜生活、工作與身體背景</h2>
+        <Field label="Q12｜你的職業／主要工作是？" name="occupation" answers={answers} setAnswers={setAnswers} required placeholder="例：工程師、護理師、教師、餐飲、自由工作者" />
+        <Question number="Q13" title="工作時身體大部分怎麼使用？" required><Choice name="work" options={["久坐為主", "久站為主", "走動很多", "搬重物／體力工作", "開車／騎車很多", "混合型／其他"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Question number="Q14" title="平常有運動或重量訓練嗎？" required><Choice name="exerciseFrequency" options={["目前沒有", "偶爾運動", "每週 1–2 次", "每週 3–4 次", "每週 5 次以上／運動是工作之一"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        {answers.exerciseFrequency && answers.exerciseFrequency !== "目前沒有" && <Question number="Q14-1" title="主要做哪些運動？"><Choice name="sports" options={["重量訓練", "跑步／球類", "游泳", "瑜珈／皮拉提斯", "格鬥／拳擊", "登山／自行車", "其他"]} answers={answers} setAnswers={setAnswers} multiple /></Question>}
+        <Field label="Q15｜過去舊傷或手術紀錄" name="injuryHistory" answers={answers} setAnswers={setAnswers} required textarea placeholder="有的話簡單寫部位與時間；沒有可填「無」。" />
+        <details className="intake-v2-summary"><summary>過去處理方式（選填）</summary>
+          <Question number="Q15-1" title="之前有為這個狀況做過處理嗎？"><Choice name="past" options={["沒有", "按摩／筋膜整理", "物理治療／復健／醫療", "徒手／整脊類", "自己伸展／滾筒", "教練／訓練調整／其他"]} answers={answers} setAnswers={setAnswers} /></Question>
           {answers.past && answers.past !== "沒有" && <Field label="之前處理後，有沒有什麼希望這次特別注意？" name="pastAvoid" answers={answers} setAnswers={setAnswers} textarea />}
         </details>
       </section>
 
       <section className="intake-v2-card">
         <h2>D｜安全與 RESET</h2>
-        <Question number="Q15" title="目前有沒有以下狀況？" required><Choice name="safety" options={safetyOptions} answers={answers} setAnswers={setAnswers} multiple /></Question>
+        <Question number="Q16" title="目前有沒有以下狀況？" required><Choice name="safety" options={safetyOptions} answers={answers} setAnswers={setAnswers} multiple /></Question>
         {(answers.safety as string[] || []).some(v => v !== "以上皆無") && <Field label="如果有勾選，可以簡單補充嗎？" name="safetyNote" answers={answers} setAnswers={setAnswers} textarea placeholder="例如什麼時候受傷／手術、目前是否仍有限制。" />}
         <aside className="intake-v2-warning">如目前有突然出現的明顯無力或麻木、胸痛、呼吸困難、重大急性外傷，或其他你認為需要立即醫療處理的狀況，應先尋求醫療評估。</aside>
-        <Question number="Q16" title="整理過程中，你偏好的深度？" required hint="BodyFix 不以「越痛越有效」為原則；過程中可以隨時要求調整或停止。"><Choice name="depth" options={["從輕柔開始", "有明顯痠感，但不要痛", "可以較深，但仍要能正常呼吸、放鬆", "不確定，依當下身體反應判斷"]} answers={answers} setAnswers={setAnswers} required /></Question>
-        <Question number="Q17" title="有沒有不希望被碰觸或整理的區域？"><Choice name="noTouch" options={["沒有", "有"]} answers={answers} setAnswers={setAnswers} /></Question>
+        <Question number="Q17" title="整理過程中，你偏好的深度？" required hint="BodyFix 不以「越痛越有效」為原則；過程中可以隨時要求調整或停止。"><Choice name="depth" options={["從輕柔開始", "有明顯痠感，但不要痛", "可以較深，但仍要能正常呼吸、放鬆", "不確定，依當下身體反應判斷"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Question number="Q18" title="有沒有不希望被碰觸或整理的區域？"><Choice name="noTouch" options={["沒有", "有"]} answers={answers} setAnswers={setAnswers} /></Question>
         {answers.noTouch === "有" && <Field label="請告訴我哪些區域" name="noTouchDetail" answers={answers} setAnswers={setAnswers} textarea />}
       </section>
 
@@ -300,11 +323,16 @@ export default function IntakePage() {
 
       <section className="intake-v2-card">
         <h2>F｜RETURN｜最後確認</h2>
-        <Question number="Q18" title="這次結束後，你最希望帶走什麼？" required><Choice name="expectation" options={["身體不要那麼緊", "某個動作更順", "訓練比較能正常發力", "髖／骨盆活動更自然", "肩頸／腰背負擔降低", "全身重新整理過", "知道回去可以怎麼訓練／使用身體", "單純想舒服地整理與恢復", "其他"]} answers={answers} setAnswers={setAnswers} required /></Question>
-        <Field label="Q19｜還有什麼想先讓 Gavin 知道的？（選填）" name="notes" answers={answers} setAnswers={setAnswers} textarea placeholder="怕痛、過去經驗、希望多花時間的區域或服務疑問，都可以寫。" />
-        <Field label="Q20｜生日（選填；不影響服務）" name="birthday" answers={answers} setAnswers={setAnswers} type="date" />
+        <Question number="Q19" title="這次結束後，你最希望帶走什麼？" required><Choice name="expectation" options={["身體不要那麼緊", "某個動作更順", "訓練比較能正常發力", "髖／骨盆活動更自然", "肩頸／腰背負擔降低", "全身重新整理過", "知道回去可以怎麼訓練／使用身體", "單純想舒服地整理與恢復", "其他"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Field label="Q20｜還有什麼想先讓 Gavin 知道的？（選填）" name="notes" answers={answers} setAnswers={setAnswers} textarea placeholder="怕痛、過去經驗、希望多花時間的區域或服務疑問，都可以寫。" />
+        <details className="intake-v2-summary"><summary>首次建檔資料（選填）</summary>
+          <Field label="Q21｜年齡（生日已填可略過）" name="age" answers={answers} setAnswers={setAnswers} type="number" placeholder="例：31" />
+          <Field label="Q22｜生日" name="birthday" answers={answers} setAnswers={setAnswers} type="date" />
+          <Field label="Q23｜身高（cm）" name="height" answers={answers} setAnswers={setAnswers} type="number" placeholder="例：175" />
+          <Field label="Q24｜體重（kg）" name="weight" answers={answers} setAnswers={setAnswers} type="number" placeholder="例：70" />
+        </details>
         {requiresReview && <aside className="intake-v2-warning">你的資料中有需要 Gavin 先人工確認的安全項目；送出不代表已核准服務。</aside>}
-        <Question number="Q21" title="服務與資料確認" required><Choice name="finalConsent" options={finalConsent} answers={answers} setAnswers={setAnswers} multiple /></Question>
+        <Question number="Q25" title="服務與資料確認" required><Choice name="finalConsent" options={finalConsent} answers={answers} setAnswers={setAnswers} multiple /></Question>
         <details className="intake-v2-summary"><summary>預覽 LINE 摘要</summary><pre>{summary}</pre></details>
       </section>
 
