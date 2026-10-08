@@ -269,7 +269,7 @@ export default function IntakePage() {
           { value: "movement-combo", label: "Movement Training ＋ 筋膜整理", detail: "想把訓練與身體整理一起安排" },
           { value: "unsure", label: "不確定，希望 Gavin 看完狀況後建議" },
         ]} /></Question>
-        <Question number="Q5-1" title="希望服務地點？" required><Choice name="location" options={["六張犁工作室", "西門合作店", "到府／其他安排（先確認）", "不確定，想先問 Gavin"]} answers={answers} setAnswers={setAnswers} required /></Question>
+        <Question number="Q5-1" title="希望服務地點？" required><Choice name="location" options={["六張犁工作室", "西門共享工作室", "國父紀念館共享工作室", "到府／其他安排（先確認）", "不確定，想先問 Gavin"]} answers={answers} setAnswers={setAnswers} required /></Question>
         <Field label="Q5-2｜可行日期與時段" name="availability" answers={answers} setAnswers={setAnswers} required textarea placeholder="例：10/10 18:00、10/11 20:00；可填 1–3 個方便的時間。" />
         <Question number="Q5-3" title="希望本次時長？" required><Choice name="sessionDuration" options={["60 分鐘", "90 分鐘", "120 分鐘", "不確定，希望 Gavin 依狀況建議"]} answers={answers} setAnswers={setAnswers} required /></Question>
         <Question number="Q6" title="這次最主要想處理什麼？" required><Choice name="purposes" options={purposes} answers={answers} setAnswers={setAnswers} multiple /></Question>
