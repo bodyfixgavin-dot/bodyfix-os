@@ -4,6 +4,7 @@ type PortalCard = {
   title: string;
   eyebrow: string;
   description: string;
+  note?: string;
   tag: string;
   tone: "primary" | "lab" | "method" | "muted" | "owner";
   actions: { label: string; href: string; secondary?: boolean }[];
@@ -29,14 +30,15 @@ const entrances: PortalCard[] = [
     ],
   },
   {
-    title: "我是來做測驗的",
-    eyebrow: "測驗工具入口",
-    description: "身體、關係、空間與命盤的小工具入口。先玩測驗，不一定要預約。",
+    title: "我想先做狀態初判",
+    eyebrow: "狀態初判與完整解析",
+    description: "從身體、關係、空間或命盤狀態開始，先取得一份簡短結果；需要完整解析時，可再解鎖完整報告。",
+    note: "完整解析可依項目小額解鎖",
     tag: "Public",
     tone: "lab",
     actions: [
-      { label: "前往測驗工具", href: "/tests" },
-      { label: "測身體張力", href: "/tests/body-tension", secondary: true },
+      { label: "開始狀態初判", href: "/tests" },
+      { label: "從身體狀態開始", href: "/tests/body-tension", secondary: true },
     ],
   },
   {
@@ -119,6 +121,7 @@ export default function HomePage() {
                 <p className="portal-card-eyebrow">{entrance.eyebrow}</p>
                 <h3>{entrance.title}</h3>
                 <p className="portal-card-copy">{entrance.description}</p>
+                {entrance.note && <p className="portal-card-note">{entrance.note}</p>}
                 <div className="portal-card-actions">
                   {entrance.actions.map((action) => (
                     <Link className={action.secondary ? "portal-button portal-button-secondary" : "portal-button"} href={action.href} key={action.href}>

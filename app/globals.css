@@ -3135,6 +3135,7 @@ main {
 .portal-card-copy { margin: 15px 0 24px; color: #6f6a63; font-size: 14px; line-height: 1.8; }
 .portal-card-primary .portal-card-copy { color: rgba(248,245,238,.62); }
 .portal-card-lab .portal-card-copy { color: rgba(248,245,238,.68); }
+.portal-card-note { margin: -12px 0 24px; color: #f1b867; font-size: 12px; font-weight: 700; letter-spacing: .04em; }
 .portal-card-actions { display: flex; flex-wrap: wrap; gap: 9px; margin-top: auto; }
 .portal-button {
   display: inline-flex;
