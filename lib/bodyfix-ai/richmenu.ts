@@ -147,16 +147,16 @@ export function serviceDetailMessages(service: string): LineMessage[] {
       {
         type: "text",
         text:
-          "這裡是 BodyFix 最常使用的筋膜整理系列。可以依你想處理的範圍與時間，選 60 或 90 分鐘。"
+          "肌筋膜整理以 60 分鐘為主，可依當次需求與後續空檔加時 30 分鐘。多條筋膜線整合為獨立的 90 分鐘方案。"
       },
       detailBubble(
         "BODYFIX · BODY RESET",
         "筋膜整理系列",
         "教練視角 × 筋膜線判讀 × 徒手張力整理",
         [
-          infoRow("筋膜鏈整理 60 分", "NT$2,200", "依整體張力分工安排"),
-          infoRow("指定筋膜線 60 分", "NT$2,300", "針對指定筋膜線整理"),
-          infoRow("多線整合 90 分", "NT$3,600", "適合想做較完整整合")
+          infoRow("肌筋膜整理 60 分", "NT$2,200", "依整體張力分工安排"),
+          infoRow("多條筋膜線整合 90 分", "NT$3,600", "跨多條筋膜線的完整整理"),
+          infoRow("加時 30 分", "+NT$1,000", "視當日空檔安排")
         ],
         [
           postbackButton(
@@ -175,7 +175,7 @@ export function serviceDetailMessages(service: string): LineMessage[] {
       {
         type: "text",
         text:
-          "骨盆核心整理會依狀況處理下腹、腹股溝、內收、髖與骨盆周邊張力。一般版與 VIP 深度版的時間和整合範圍不同。"
+          "骨盆核心整理會依狀況處理下腹、腹股溝、內收、髖與骨盆周邊張力，也可依需求討論龍筋區周邊的外部張力整理；敏感區域接觸會事先清楚說明並取得同意。"
       },
       detailBubble(
         "BODYFIX · PELVIC CORE",
@@ -183,13 +183,13 @@ export function serviceDetailMessages(service: string): LineMessage[] {
         "骨盆核心 · 髖部 · 下肢張力整合",
         [
           infoRow("骨盆核心整理 60 分", "NT$2,500"),
-          infoRow("VIP 深度整理 120 分", "NT$6,800", "六大面向｜一天限一名")
+          infoRow("加時 30 分", "+NT$1,000", "視當日空檔安排")
         ],
         [
           postbackButton(
-            "了解 VIP 120 分",
-            "action=service&service=vip-pelvic",
-            "我想了解 VIP 骨盆核心深層整理",
+            "詢問骨盆核心預約",
+            "action=booking&mode=immediate",
+            "我想預約骨盆核心整理",
             true
           )
         ]
@@ -198,31 +198,7 @@ export function serviceDetailMessages(service: string): LineMessage[] {
   }
 
   if (service === "vip-pelvic") {
-    return [
-      {
-        type: "text",
-        text:
-          "VIP 120 分是骨盆核心系列裡最完整的深度整理版本，會保留更完整的判讀、整理與整合時間。"
-      },
-      detailBubble(
-        "BODYFIX · VIP DEEP SESSION",
-        "VIP 骨盆核心深度整理",
-        "六大面向整合｜一天限一名",
-        [
-          infoRow("時間", "120 分"),
-          infoRow("價格", "NT$6,800"),
-          infoRow("安排", "一天限一名", "保留較完整的操作與恢復空間")
-        ],
-        [
-          postbackButton(
-            "詢問 VIP 時段",
-            "action=booking&mode=immediate",
-            "我想詢問 VIP 120 分可約時段",
-            true
-          )
-        ]
-      )
-    ];
+    return [{ type: "text", text: "原 VIP 120 分鐘方案已取消。現在可以詢問骨盆核心整理 60 分鐘 NT$2,500，或視當日空檔加時 30 分鐘 +NT$1,000。" }];
   }
 
   if (service === "personal-training" || service === "training-plans") {
@@ -237,8 +213,9 @@ export function serviceDetailMessages(service: string): LineMessage[] {
         "1 對 1 私人教練",
         "重訓 · 動作品質 · 訓練安排",
         [
-          infoRow("單堂", "NT$1,800 起"),
-          infoRow("方案", "另有多堂方案", "可依訓練頻率與目標另外規劃")
+          infoRow("單堂", "NT$1,800"),
+          infoRow("36 堂方案", "每堂 NT$1,500"),
+          infoRow("其他方案", "另行提供", "可依訓練頻率與目標規劃")
         ],
         [
           postbackButton(
