@@ -72,16 +72,10 @@ const A_AREAS = [
     "我想了解筋膜整理系列"
   ),
   postback(
-    { x: 890, y: 490, width: 800, height: 420 },
+    { x: 890, y: 490, width: 800, height: 820 },
     "骨盆核心整理",
     "action=service&service=pelvic-core",
     "我想了解骨盆核心整理"
-  ),
-  postback(
-    { x: 890, y: 910, width: 800, height: 400 },
-    "VIP 骨盆核心深層",
-    "action=service&service=vip-pelvic",
-    "我想了解 VIP 骨盆核心深層整理"
   ),
   postback(
     { x: 1700, y: 490, width: 770, height: 600 },
