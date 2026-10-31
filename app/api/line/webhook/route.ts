@@ -3,7 +3,7 @@ import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
-import { locationDetailMessages, serviceDetailMessages } from "@/lib/bodyfix-ai/richmenu";
+import { locationDetailMessages, serviceDetailMessages } from "../../../../lib/bodyfix-ai/richmenu";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord, recordRichMenuClick, markRichMenuBookingIntent } from "@/lib/bodyfix-ai/sheets";
 import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
 
