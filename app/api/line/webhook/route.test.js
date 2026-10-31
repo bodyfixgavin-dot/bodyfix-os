@@ -192,6 +192,27 @@ describe("LINE webhook stability", () => {
     expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
   });
 
+  it("sends the owner a booking-specific alert, not a safety handoff, for message-action booking", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message",
+      replyToken: "booking-reply",
+      source: { userId: "user-1" },
+      message: { type: "text", text: "我想預約 BodyFix" }
+    }]));
+
+    expect(res.status).toBe(200);
+    expect(lineMocks.notifyGavin).toHaveBeenCalledTimes(1);
+    const notification = lineMocks.notifyGavin.mock.calls[0][0];
+    expect(notification).toContain("新預約詢問");
+    expect(notification).toContain("請至官方 LINE 聊天室確認服務");
+    expect(notification).not.toContain("安全邊界");
+    expect(notification).not.toContain("收尾");
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith(
+      "booking-reply", expect.stringContaining("收到你的預約詢問")
+    );
+  });
+
   it("records a direct booking tap, replies with next steps and notifies Gavin", async () => {
     const { POST } = await import("./route");
     const res = await POST(signedRequest([{
