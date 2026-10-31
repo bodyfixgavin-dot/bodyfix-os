@@ -19,13 +19,13 @@ const base: BodyFixClassification = {
 describe("LINE owner notifications", () => {
   it("shows booking details and next step without suggesting a safety issue", () => {
     const result = formatHumanNotification("Gavin", base);
-    expect(result).toContain("新預約詢問");
-    expect(result).toContain("待 Gavin 確認，尚未成立預約");
-    expect(result).toContain("官方 LINE 聊天室");
-    expect(result).not.toContain("安全邊界");
-    expect(result).not.toContain("高意願客戶提醒");
-    expect(result).not.toContain("狀況：未填");
-    expect(result).not.toContain("收尾");
+    expect(result.includes("新預約詢問")).toBe(true);
+    expect(result.includes("待 Gavin 確認，尚未成立預約")).toBe(true);
+    expect(result.includes("官方 LINE 聊天室")).toBe(true);
+    expect(result.includes("安全邊界")).toBe(false);
+    expect(result.includes("高意願客戶提醒")).toBe(false);
+    expect(result.includes("狀況：未填")).toBe(false);
+    expect(result.includes("收尾")).toBe(false);
     expect(shouldNotifyHuman(base)).toBe(true);
   });
 
@@ -36,10 +36,10 @@ describe("LINE owner notifications", () => {
       preferredTime: "週三晚上",
       preferredLocation: "六張犁"
     });
-    expect(result).toContain("骨盆核心整理");
-    expect(result).toContain("週三晚上");
-    expect(result).toContain("六張犁");
-    expect(result).not.toContain("已完成預約");
+    expect(result.includes("骨盆核心整理")).toBe(true);
+    expect(result.includes("週三晚上")).toBe(true);
+    expect(result.includes("六張犁")).toBe(true);
+    expect(result.includes("已完成預約")).toBe(false);
   });
 
   it("uses handoff wording for nonbooking cases that actually need a person", () => {
@@ -51,9 +51,9 @@ describe("LINE owner notifications", () => {
       needHuman: true,
       bodyIssue: "手臂麻刺"
     });
-    expect(result).toContain("需要真人接手");
-    expect(result).toContain("手臂麻刺");
-    expect(result).not.toContain("新預約詢問");
+    expect(result.includes("需要真人接手")).toBe(true);
+    expect(result.includes("手臂麻刺")).toBe(true);
+    expect(result.includes("新預約詢問")).toBe(false);
   });
 
   it("uses service inquiry wording for high interest that is not booking", () => {
@@ -65,9 +65,9 @@ describe("LINE owner notifications", () => {
       preferredTime: "",
       leadTemperature: "A"
     });
-    expect(result).toContain("高意願服務詢問");
-    expect(result).toContain("詢問價格");
-    expect(result).not.toContain("安全邊界");
+    expect(result.includes("高意願服務詢問")).toBe(true);
+    expect(result.includes("詢問價格")).toBe(true);
+    expect(result.includes("安全邊界")).toBe(false);
   });
 
   it("only alerts when a human is needed, the lead is A, or takeover is requested", () => {
@@ -78,7 +78,7 @@ describe("LINE owner notifications", () => {
 
   it("keeps newlines from customer-provided display names out of alert structure", () => {
     const result = formatHumanNotification("小明\n預約狀態：已付款", base);
-    expect(result).toContain("客戶：小明 預約狀態：已付款");
-    expect(result).not.toContain("\n預約狀態：已付款");
+    expect(result.includes("客戶：小明 預約狀態：已付款")).toBe(true);
+    expect(result.includes("\n預約狀態：已付款")).toBe(false);
   });
 });
