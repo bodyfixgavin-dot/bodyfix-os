@@ -175,6 +175,23 @@ describe("LINE webhook stability", () => {
     expect(sheetMocks.upsertCrmRecord).toHaveBeenCalled();
     expect(lineMocks.notifyGavin).toHaveBeenCalled();
   });
+  it("acknowledges a heart without asking AI, overwriting CRM or notifying Gavin", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message",
+      replyToken: "reply-heart",
+      source: { userId: "user-1" },
+      message: { type: "text", text: "❤️" }
+    }]));
+
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-heart", expect.stringContaining("收到"));
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+    expect(sheetMocks.upsertCrmRecord).not.toHaveBeenCalled();
+    expect(sheetMocks.getCrmRecord).not.toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+  });
+
   it("records a direct booking tap, replies with next steps and notifies Gavin", async () => {
     const { POST } = await import("./route");
     const res = await POST(signedRequest([{
