@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
+import { createMenuBookingResult } from "../../../../lib/bodyfix-ai/booking";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
 import { locationDetailMessages, serviceDetailMessages } from "../../../../lib/bodyfix-ai/richmenu";
@@ -249,6 +250,9 @@ async function handlePostbackEvent(event: LineEvent, userId: string) {
 }
 
 async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
+  const menuBooking = createMenuBookingResult(message);
+  if (menuBooking) return menuBooking;
+
   if (isCoachingIntent(message)) {
     return createCoachingResult();
   }
