@@ -156,6 +156,136 @@ export async function markFollowupSent(record: CrmRecord, rowNumber: number, rep
   return updated;
 }
 
+
+/**
+ * Rich Menu audit log. Stores pseudonymous LINE IDs and menu selections
+ * without collecting conversation text or sensitive physical details.
+ */
+export type RichMenuClick = {
+  eventId: string;
+  clickedAt: string;
+  userId: string;
+  displayName: string;
+  action: string;
+  item: string;
+  intent: "booking" | "browse";
+  eventData: string;
+};
+
+const CLICK_TAB = "RichMenuClicks";
+const CLICK_HEADERS = [
+  "eventId", "clickedAt", "userId", "displayName",
+  "action", "item", "intent", "eventData"
+];
+let clickTabReady: Promise<void> | null = null;
+
+async function ensureClickTab() {
+  if (!clickTabReady) {
+    clickTabReady = (async () => {
+      const id = getSheetId();
+      const token = await getGoogleAccessToken();
+      const meta = await fetch(
+        SHEETS_BASE + "/" + id + "?fields=sheets.properties.title",
+        { headers: { Authorization: "Bearer " + token } }
+      );
+      if (!meta.ok) throw new Error("Click tab metadata failed: " + meta.status);
+      const result = (await meta.json()) as { sheets?: Array<{properties?:{title?:string}}> };
+      const exists = result.sheets?.some(s => s.properties?.title === CLICK_TAB);
+      if (!exists) {
+        const res = await fetch(SHEETS_BASE + "/" + id + ":batchUpdate", {
+          method: "POST",
+          headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+          body: JSON.stringify({ requests: [{ addSheet: { properties: { title: CLICK_TAB } } }] })
+        });
+        // Another webhook invocation may have created the same tab.
+        if (!res.ok && !(res.status === 400 && (await res.text()).includes("already exists"))) {
+          throw new Error("Create click tab failed: " + res.status);
+        }
+      }
+      await updateSheetValues(CLICK_TAB + "!A1:H1", [CLICK_HEADERS]);
+    })().catch(error => {
+      clickTabReady = null;
+      throw error;
+    });
+  }
+  await clickTabReady;
+}
+
+/**
+ * Keep every click. LINE webhookEventId prevents redelivery duplicates.
+ * Suppress repeated booking notifications within 30 minutes per user.
+ */
+export async function recordRichMenuClick(click: RichMenuClick): Promise<{
+  saved: boolean;
+  notify: boolean;
+  duplicate: boolean;
+}> {
+  await ensureClickTab();
+  let notify = click.intent === "booking";
+  if (click.intent === "booking" || click.eventId) {
+    const rows = await getSheetValues(CLICK_TAB + "!A2:H");
+    const recent = rows.slice(-1000);
+    if (click.eventId && recent.some(row => row[0] === click.eventId)) {
+      return { saved: false, notify: false, duplicate: true };
+    }
+    if (notify) {
+      const prior = [...recent].reverse().find(row =>
+        row[2] === click.userId && row[6] === "booking"
+      );
+      if (prior && Math.abs(Date.parse(click.clickedAt) - Date.parse(prior[1])) < 30 * 60_000) {
+        notify = false;
+      }
+    }
+  }
+  // Prevent spreadsheet-formula injection from external LINE display names.
+  const safeCell = (value: string) => ["=", "+", "-", "@"].some(prefix => value.startsWith(prefix)) ? "'" + value : value;
+  await appendSheetValues(CLICK_TAB + "!A:H", [[
+    click.eventId, click.clickedAt, click.userId, click.displayName,
+    click.action, click.item, click.intent, click.eventData
+  ].map(safeCell)]);
+  return { saved: true, notify, duplicate: false };
+}
+
+/** Preserve real chat-message history when recording an action-only click. */
+export async function markRichMenuBookingIntent(input: {
+  userId: string;
+  displayName?: string;
+  item: string;
+  clickedAt: string;
+}) {
+  const existing = await getCrmRecord(input.userId);
+  const previous = existing?.record;
+  const note = input.clickedAt + " Rich Menu 預約點擊：" + input.item + "（未完成預約）";
+  const record: CrmRecord = {
+    userId: input.userId,
+    displayName: input.displayName || previous?.displayName || "",
+    firstSeenAt: previous?.firstSeenAt || input.clickedAt,
+    lastUserMessageAt: previous?.lastUserMessageAt || "",
+    lastBotMessageAt: previous?.lastBotMessageAt || "",
+    lastUserMessage: previous?.lastUserMessage || "",
+    lastBotReply: previous?.lastBotReply || "",
+    lastIntent: "booking",
+    bodyIssue: previous?.bodyIssue || "",
+    bodyArea: previous?.bodyArea || "",
+    preferredService: previous?.preferredService || "unknown",
+    bookingStage: previous?.bookingStage === "booked" ? "booked" : "waiting_time",
+    leadTemperature: "A",
+    nextAction: "ask_time",
+    needHuman: "true",
+    preferredLocation: previous?.preferredLocation || "",
+    preferredTime: previous?.preferredTime || "",
+    followupCount: previous?.followupCount || "0",
+    lastFollowupAt: previous?.lastFollowupAt || "",
+    notes: mergeNotes(previous?.notes, note)
+  };
+  if (existing) {
+    await updateSheetValues("A" + existing.rowNumber + ":T" + existing.rowNumber, [recordToRow(record)]);
+  } else {
+    await appendSheetValues("A:T", [recordToRow(record)]);
+  }
+  return record;
+}
+
 function rowToRecord(row: string[]): CrmRecord {
   return CRM_HEADERS.reduce((record, header, index) => {
     record[header] = row[index] || "";

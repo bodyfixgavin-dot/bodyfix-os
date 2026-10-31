@@ -4,6 +4,7 @@ const lineMocks = vi.hoisted(() => ({
   getLineDisplayName: vi.fn(),
   notifyGavin: vi.fn(),
   replyLineMessage: vi.fn(),
+  replyLineMessages: vi.fn(),
   verifyLineSignature: vi.fn()
 }));
 
@@ -11,7 +12,9 @@ const sheetMocks = vi.hoisted(() => ({
   createWelcomeRecord: vi.fn(),
   ensureSheetHeaders: vi.fn(),
   getCrmRecord: vi.fn(),
-  upsertCrmRecord: vi.fn()
+  upsertCrmRecord: vi.fn(),
+  recordRichMenuClick: vi.fn(),
+  markRichMenuBookingIntent: vi.fn()
 }));
 
 const openAiMocks = vi.hoisted(() => ({
@@ -37,11 +40,14 @@ describe("LINE webhook stability", () => {
     lineMocks.verifyLineSignature.mockReturnValue(true);
     lineMocks.getLineDisplayName.mockResolvedValue("Gavin Test");
     lineMocks.replyLineMessage.mockResolvedValue(undefined);
+    lineMocks.replyLineMessages.mockResolvedValue(undefined);
     lineMocks.notifyGavin.mockResolvedValue(undefined);
     sheetMocks.ensureSheetHeaders.mockResolvedValue(undefined);
     sheetMocks.getCrmRecord.mockResolvedValue(null);
     sheetMocks.upsertCrmRecord.mockResolvedValue({ displayName: "Gavin Test" });
     sheetMocks.createWelcomeRecord.mockResolvedValue(undefined);
+    sheetMocks.recordRichMenuClick.mockResolvedValue({ saved: true, notify: true, duplicate: false });
+    sheetMocks.markRichMenuBookingIntent.mockResolvedValue(undefined);
     openAiMocks.generateBodyFixReply.mockResolvedValue({
       replyText: "正常 AI 回覆",
       classification: {
@@ -169,4 +175,86 @@ describe("LINE webhook stability", () => {
     expect(sheetMocks.upsertCrmRecord).toHaveBeenCalled();
     expect(lineMocks.notifyGavin).toHaveBeenCalled();
   });
+  it("records a direct booking tap, replies with next steps and notifies Gavin", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "postback",
+      webhookEventId: "click-123",
+      timestamp: 1793500000000,
+      replyToken: "postback-reply",
+      source: { userId: "user-1" },
+      postback: { data: "action=booking&mode=immediate" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(sheetMocks.recordRichMenuClick).toHaveBeenCalledWith(expect.objectContaining({
+      eventId: "click-123",
+      action: "booking",
+      intent: "booking",
+      item: "直接預約"
+    }));
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith(
+      "postback-reply", expect.stringContaining("請直接回覆")
+    );
+    expect(sheetMocks.markRichMenuBookingIntent).toHaveBeenCalledWith(expect.objectContaining({
+      userId: "user-1", item: "直接預約"
+    }));
+    expect(lineMocks.notifyGavin).toHaveBeenCalledWith(expect.stringContaining("新預約意願"));
+  });
+
+  it("records a booking notice click without creating a sales lead", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "postback", webhookEventId: "click-124",
+      replyToken: "reply", source: { userId: "user-1" },
+      postback: { data: "action=booking&mode=notice" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply", expect.stringContaining("預約制"));
+    expect(sheetMocks.recordRichMenuClick).toHaveBeenCalledWith(expect.objectContaining({ intent: "browse" }));
+    expect(sheetMocks.markRichMenuBookingIntent).not.toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+  });
+
+  it("does not reply or notify when LINE redelivers the same click", async () => {
+    sheetMocks.recordRichMenuClick.mockResolvedValueOnce({ saved: false, notify: false, duplicate: true });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "postback", webhookEventId: "click-124",
+      replyToken: "reply", source: { userId: "user-1" },
+      postback: { data: "action=booking&mode=immediate" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+  });
+
+  it("logs repeated booking taps but avoids alerting on every tap", async () => {
+    sheetMocks.recordRichMenuClick.mockResolvedValueOnce({ saved: true, notify: false, duplicate: false });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "postback", webhookEventId: "click-125",
+      replyToken: "reply", source: { userId: "user-1" },
+      postback: { data: "action=booking&mode=this-week" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply", expect.stringContaining("本週可約"));
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+    expect(sheetMocks.markRichMenuBookingIntent).not.toHaveBeenCalled();
+  });
+
+  it("tracks browsing clicks without falsely counting them as bookings", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "postback", webhookEventId: "click-126",
+      replyToken: "reply", source: { userId: "user-1" },
+      postback: { data: "action=service&service=pelvic-core" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(sheetMocks.recordRichMenuClick).toHaveBeenCalledWith(expect.objectContaining({
+      action: "service", item: "骨盆核心整理", intent: "browse"
+    }));
+    expect(lineMocks.replyLineMessages).toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+  });
+
 });

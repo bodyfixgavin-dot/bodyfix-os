@@ -86,6 +86,8 @@ export type CrmRecord = {
 
 export type LineEvent = {
   type: string;
+  webhookEventId?: string;
+  deliveryContext?: { isRedelivery?: boolean };
   replyToken?: string;
   source?: { userId?: string; type?: string };
   message?: { type: string; text?: string };
