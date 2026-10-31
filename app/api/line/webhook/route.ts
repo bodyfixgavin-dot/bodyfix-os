@@ -7,7 +7,8 @@ import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
 import { locationDetailMessages, serviceDetailMessages } from "../../../../lib/bodyfix-ai/richmenu";
 import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord, recordRichMenuClick, markRichMenuBookingIntent } from "@/lib/bodyfix-ai/sheets";
-import type { BodyFixAiResult, BodyFixClassification, LineEvent } from "@/lib/bodyfix-ai/types";
+import type { BodyFixAiResult, LineEvent } from "@/lib/bodyfix-ai/types";
+import { shouldNotifyHuman, formatHumanNotification } from "../../../../lib/bodyfix-ai/notifications";
 
 export const runtime = "nodejs";
 
@@ -275,21 +276,6 @@ async function generateReplyWithFallback(message: string, crm: Parameters<typeof
     logWebhookError("Failed to generate AI reply", error, { eventType, userId });
     return AI_FALLBACK_RESULT;
   }
-}
-
-function shouldNotifyHuman(classification: BodyFixClassification) {
-  return classification.needHuman || classification.leadTemperature === "A" || classification.bookingStage === "human_takeover";
-}
-
-function formatHumanNotification(displayName: string, classification: BodyFixClassification) {
-  return `高意願客戶提醒：
-客戶：${displayName}
-狀況：${classification.bodyIssue || "未填"}
-意圖：${classification.intent}
-建議下一步：請 Gavin 依客戶需求確認適合的服務與時長。
-地點偏好：${classification.preferredLocation || "未填"}
-時間偏好：${classification.preferredTime || "未填"}
-建議回覆：${classification.needHuman ? "請 Gavin 真人判斷安全邊界或收尾。" : "直接提供本週可約時段。"}`;
 }
 
 function logWebhookError(message: string, error: unknown, context?: { eventType?: string; userId?: string }) {
