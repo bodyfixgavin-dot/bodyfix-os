@@ -1,4 +1,6 @@
 import { NextResponse } from "next/server";
+import { cookies } from "next/headers";
+import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
 
 export const runtime = "nodejs";
 
@@ -13,6 +15,11 @@ const MIGRATIONS = new Map([
 function allowed() {
   // A/B/C admin operations must never be exposed on production.
   return process.env.VERCEL_ENV === "preview";
+}
+
+async function authorized() {
+  const jar = await cookies();
+  return verifyAdminSessionToken(jar.get(ADMIN_SESSION_COOKIE)?.value);
 }
 
 function page(title: string, details: string) {
@@ -60,6 +67,7 @@ type Menu = {
 
 export async function GET() {
   if (!allowed()) return page("不提供此功能", "<p>僅能從受保護的 Vercel Preview 環境操作。</p>");
+  if (!(await authorized())) return page("需要登入", '<p>請先登入 BodyFix OS 管理後台，再回到這個頁面操作。</p><p><a href="/admin">前往管理登入</a></p>');
   return page("BodyFix｜只修 B 頁兩個預約按鈕",
     "<p><strong>不更換圖片，不碰 A、C 頁。</strong>直接從 LINE 讀取目前 B 頁原始圖片與所有熱區；" +
     "只把「立即預約」及「本週可約時段」從 postback 改成真正傳送文字訊息。</p>" +
@@ -71,6 +79,7 @@ export async function GET() {
 
 export async function POST(req: Request) {
   if (!allowed()) return NextResponse.json({ error: "Disabled in production" }, { status: 403 });
+  if (!(await authorized())) return NextResponse.json({ error: "Admin login required" }, { status: 401 });
 
   // No cross-origin POSTs: the owner must explicitly submit from the preview page.
   const origin = req.headers.get("origin");
