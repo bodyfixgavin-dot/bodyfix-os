@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
 import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
 import { createMenuBookingResult } from "../../../../lib/bodyfix-ai/booking";
+import { isBriefReaction, REACTION_ACKNOWLEDGEMENT } from "../../../../lib/bodyfix-ai/reactions";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
 import { locationDetailMessages, serviceDetailMessages } from "../../../../lib/bodyfix-ai/richmenu";
@@ -97,6 +98,17 @@ async function handleLineEvent(event: LineEvent) {
   }
 
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
+
+  // An emoji acknowledgement is not a fresh booking request. Reply politely
+  // without overwriting existing CRM intent/stage or notifying the owner.
+  if (isBriefReaction(event.message.text)) {
+    try {
+      await replyLineMessage(event.replyToken, REACTION_ACKNOWLEDGEMENT);
+    } catch (error) {
+      logWebhookError("Failed to acknowledge LINE reaction", error, { eventType: event.type, userId });
+    }
+    return;
+  }
 
   const displayName = await getLineDisplayName(userId);
 
