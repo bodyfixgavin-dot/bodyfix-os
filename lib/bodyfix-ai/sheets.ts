@@ -237,10 +237,12 @@ export async function recordRichMenuClick(click: RichMenuClick): Promise<{
       }
     }
   }
+  // Prevent spreadsheet-formula injection from external LINE display names.
+  const safeCell = (value: string) => /^[=+\\-@]/.test(value) ? "'" + value : value;
   await appendSheetValues(CLICK_TAB + "!A:H", [[
     click.eventId, click.clickedAt, click.userId, click.displayName,
     click.action, click.item, click.intent, click.eventData
-  ]]);
+  ].map(safeCell)]);
   return { saved: true, notify, duplicate: false };
 }
 
