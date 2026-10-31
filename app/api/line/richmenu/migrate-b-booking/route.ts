@@ -1,16 +1,13 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { ADMIN_SESSION_COOKIE, verifyAdminSessionToken } from "@/lib/admin-session";
+import { convertBBookingActions, type MenuArea } from "@/lib/bodyfix-ai/richmenu-b-migration";
 
 export const runtime = "nodejs";
 
 const API = "https://api.line.me/v2/bot";
 const DATA_API = "https://api-data.line.me/v2/bot";
 const ALIAS = "bodyfix-b";
-const MIGRATIONS = new Map([
-  ["action=booking&mode=immediate", "我想預約 BodyFix"],
-  ["action=booking&mode=this-week", "我想查看本週可約時段"]
-]);
 
 function allowed() {
   // A/B/C admin operations must never be exposed on production.
@@ -53,16 +50,12 @@ async function checked(res: Response, name: string) {
   return res;
 }
 
-type Area = {
-  bounds: { x: number; y: number; width: number; height: number };
-  action: { type: string; label?: string; data?: string; text?: string; [key: string]: unknown };
-};
 type Menu = {
   size: { width: number; height: number };
   selected: boolean;
   name: string;
   chatBarText: string;
-  areas: Area[];
+  areas: MenuArea[];
 };
 
 export async function GET() {
@@ -102,22 +95,7 @@ export async function POST(req: Request) {
     if (oldMenu.size?.width !== 2500 || oldMenu.size?.height !== 1686 || !Array.isArray(oldMenu.areas)) {
       throw new Error("B 頁版型與預期不符，已停止更新");
     }
-    const changes: string[] = [];
-    const areas = oldMenu.areas.map(area => {
-      const data = area.action?.data || "";
-      const replacement = MIGRATIONS.get(data);
-      if (!replacement) return area;
-      if (area.action.type !== "postback") {
-        throw new Error("預約熱區已不是 postback，為避免覆蓋已停止");
-      }
-      changes.push(data);
-      return { ...area, action: { type: "message", label: area.action.label || "預約詢問", text: replacement } };
-    });
-    if (changes.length !== 2 || new Set(changes).size !== 2) {
-      throw new Error(changes.length === 0
-        ? "B 頁已更新或熱區不同，沒有進行重複替換"
-        : "只找到 " + changes.length + " 個預期預約熱區，已停止更新");
-    }
+    const areas = convertBBookingActions(oldMenu.areas);
 
     const imageRes = await checked(await fetch(
       DATA_API + "/richmenu/" + encodeURIComponent(oldId) + "/content",
