@@ -215,13 +215,17 @@ async function handlePostbackEvent(event: LineEvent, userId: string) {
   // LINE may redeliver an event with the same ID. Avoid replying or notifying twice.
   if (duplicate) return;
 
-  // Reply to the customer first, even if Sheets is temporarily unavailable.
-  if (action === "service") {
-    await replyLineMessages(event.replyToken, serviceDetailMessages(itemKey));
-  } else if (action === "location") {
-    await replyLineMessages(event.replyToken, locationDetailMessages(itemKey));
-  } else if (action === "booking") {
-    await replyLineMessage(event.replyToken, bookingReply(itemKey));
+  // Reply failures must never discard an otherwise valid booking lead.
+  try {
+    if (action === "service") {
+      await replyLineMessages(event.replyToken, serviceDetailMessages(itemKey));
+    } else if (action === "location") {
+      await replyLineMessages(event.replyToken, locationDetailMessages(itemKey));
+    } else if (action === "booking") {
+      await replyLineMessage(event.replyToken, bookingReply(itemKey));
+    }
+  } catch (error) {
+    logWebhookError("Failed to reply to Rich Menu click", error, { eventType: event.type, userId });
   }
 
   if (booking && notify) {
