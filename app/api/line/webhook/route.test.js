@@ -13,6 +13,7 @@ const sheetMocks = vi.hoisted(() => ({
   ensureSheetHeaders: vi.fn(),
   getCrmRecord: vi.fn(),
   upsertCrmRecord: vi.fn(),
+  recordHumanHandoffMessage: vi.fn(),
   recordRichMenuClick: vi.fn(),
   markRichMenuBookingIntent: vi.fn()
 }));
@@ -45,6 +46,7 @@ describe("LINE webhook stability", () => {
     sheetMocks.ensureSheetHeaders.mockResolvedValue(undefined);
     sheetMocks.getCrmRecord.mockResolvedValue(null);
     sheetMocks.upsertCrmRecord.mockResolvedValue({ displayName: "Gavin Test" });
+    sheetMocks.recordHumanHandoffMessage.mockResolvedValue({ displayName: "Gavin Test" });
     sheetMocks.createWelcomeRecord.mockResolvedValue(undefined);
     sheetMocks.recordRichMenuClick.mockResolvedValue({ saved: true, notify: true, duplicate: false });
     sheetMocks.markRichMenuBookingIntent.mockResolvedValue(undefined);
@@ -78,117 +80,104 @@ describe("LINE webhook stability", () => {
     expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
   });
 
-  it("sends the fallback reply when OpenAI fails", async () => {
+  it("uses a fixed first-contact reply without calling OpenAI", async () => {
     openAiMocks.generateBodyFixReply.mockRejectedValueOnce(new Error("OpenAI unavailable"));
     const { POST } = await import("./route");
-
-    const res = await POST(signedRequest([
-      {
-        type: "message",
-        replyToken: "reply-token",
-        source: { userId: "user-1" },
-        message: { type: "text", text: "我肩頸很緊" }
-      }
-    ]));
-
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "reply-token", source: { userId: "user-1" },
+      message: { type: "text", text: "我肩頸很緊" }
+    }]));
     expect(res.status).toBe(200);
-    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith(
-      "reply-token",
-      "收到你的訊息。目前自動接待暫時無法完成判讀，我已保留你的需求。你可以直接留下想處理的狀況、方便地點與時間，Gavin 會在工作空檔親自確認。"
-    );
-    expect(sheetMocks.upsertCrmRecord).toHaveBeenCalled();
-  });
-
-  it("uses the fixed coaching reply without OpenAI for one-on-one coaching inquiries", async () => {
-    const { POST } = await import("./route");
-
-    const res = await POST(signedRequest([
-      {
-        type: "message",
-        replyToken: "reply-token",
-        source: { userId: "user-1" },
-        message: { type: "text", text: "我想了解 BodyFix 1 對 1 教練課" }
-      }
-    ]));
-
-    const fixedReply = "有的，BodyFix 提供一對一動作整合訓練。課程會依你目前的身體狀態、動作經驗與目標安排，也會留意代償、張力分工與過往不適，不只是帶你把動作做完。你可以先告訴我：目前想改善的目標、平常運動頻率，以及方便的地點與時間。";
-    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", expect.stringContaining("Gavin 會親自確認"));
     expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
-    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", fixedReply);
-    expect(lineMocks.replyLineMessage.mock.calls[0][1]).not.toContain("不包含教練課");
     expect(sheetMocks.upsertCrmRecord).toHaveBeenCalledWith(expect.objectContaining({
       aiResult: expect.objectContaining({
-        classification: expect.objectContaining({ intent: "coaching" })
+        classification: expect.objectContaining({ bookingStage: "human_takeover" })
       })
     }));
   });
 
-  it("keeps body reset inquiries on the OpenAI flow", async () => {
-    const { POST } = await import("./route");
-
-    const res = await POST(signedRequest([
-      {
-        type: "message",
-        replyToken: "reply-token",
-        source: { userId: "user-1" },
-        message: { type: "text", text: "我肩頸很緊，想了解身體整理" }
-      }
-    ]));
-
-    expect(res.status).toBe(200);
-    expect(openAiMocks.generateBodyFixReply).toHaveBeenCalledWith("我肩頸很緊，想了解身體整理", undefined);
-    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", "正常 AI 回覆");
-  });
-
-  it("returns 200 when Sheet write and Gavin notification fail", async () => {
-    sheetMocks.upsertCrmRecord.mockRejectedValueOnce(new Error("sheet write failed"));
-    lineMocks.notifyGavin.mockRejectedValueOnce(new Error("notify failed"));
-    openAiMocks.generateBodyFixReply.mockResolvedValueOnce({
-      replyText: "我請 Gavin 協助確認。",
-      classification: {
-        intent: "unclear",
-        leadTemperature: "C",
-        bookingStage: "human_takeover",
-        preferredService: "unknown",
-        needHuman: true,
-        bodyIssue: "",
-        bodyArea: "",
-        preferredLocation: "",
-        preferredTime: "",
-        nextAction: "human_takeover",
-        notes: ""
-      }
-    });
-    const { POST } = await import("./route");
-
-    const res = await POST(signedRequest([
-      {
-        type: "message",
-        replyToken: "reply-token",
-        source: { userId: "user-1" },
-        message: { type: "text", text: "需要真人協助" }
-      }
-    ]));
-
-    expect(res.status).toBe(200);
-    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", "我請 Gavin 協助確認。");
-    expect(sheetMocks.upsertCrmRecord).toHaveBeenCalled();
-    expect(lineMocks.notifyGavin).toHaveBeenCalled();
-  });
-  it("acknowledges a heart without asking AI, overwriting CRM or notifying Gavin", async () => {
+  it("does not let automatic coaching responses take over the customer chat", async () => {
     const { POST } = await import("./route");
     const res = await POST(signedRequest([{
-      type: "message",
-      replyToken: "reply-heart",
-      source: { userId: "user-1" },
+      type: "message", replyToken: "reply-token", source: { userId: "user-1" },
+      message: { type: "text", text: "我想了解 BodyFix 1 對 1 教練課" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", expect.stringContaining("Gavin 會親自確認"));
+  });
+
+  it("does not call OpenAI on new fascia inquiries", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "reply-token", source: { userId: "user-1" },
+      message: { type: "text", text: "我肩頸很緊，想了解身體整理" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledTimes(1);
+  });
+
+  it("continues safely if first-contact CRM and owner notification fail", async () => {
+    sheetMocks.upsertCrmRecord.mockRejectedValueOnce(new Error("sheet write failed"));
+    lineMocks.notifyGavin.mockRejectedValueOnce(new Error("notify failed"));
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "reply-token", source: { userId: "user-1" },
+      message: { type: "text", text: "需要真人協助" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-token", expect.stringContaining("Gavin"));
+    expect(lineMocks.notifyGavin).toHaveBeenCalledTimes(1);
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+  });
+
+  it("stays silent for a heart and does not notify Gavin", async () => {
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "reply-heart", source: { userId: "user-1" },
       message: { type: "text", text: "❤️" }
     }]));
-
     expect(res.status).toBe(200);
-    expect(lineMocks.replyLineMessage).toHaveBeenCalledWith("reply-heart", expect.stringContaining("收到"));
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
     expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
     expect(sheetMocks.upsertCrmRecord).not.toHaveBeenCalled();
     expect(sheetMocks.getCrmRecord).not.toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+  });
+
+  it("does not reply or notify after Gavin has started a manual customer conversation", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "2026-11-04T01:00:00+08:00", bookingStage: "waiting_time" },
+      rowNumber: 3
+    });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "manual-reply-token", source: { userId: "user-1" },
+      message: { type: "text", text: "六張犁吧🤣" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
+    expect(openAiMocks.generateBodyFixReply).not.toHaveBeenCalled();
+    expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
+    expect(sheetMocks.recordHumanHandoffMessage).toHaveBeenCalledWith(expect.objectContaining({
+      userId: "user-1", userMessage: "六張犁吧🤣"
+    }));
+  });
+
+  it("does not even autoreply to a booking menu message inside an existing manual chat", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "2026-11-04T01:00:00+08:00", bookingStage: "human_takeover" },
+      rowNumber: 3
+    });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "manual-menu", source: { userId: "user-1" },
+      message: { type: "text", text: "我想預約 BodyFix" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
     expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
   });
 
