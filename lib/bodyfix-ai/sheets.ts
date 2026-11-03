@@ -77,7 +77,9 @@ export async function upsertCrmRecord(input: {
     bodyIssue: classification.bodyIssue || previous?.bodyIssue || "",
     bodyArea: classification.bodyArea || previous?.bodyArea || "",
     preferredService: classification.preferredService,
-    bookingStage: classification.bookingStage,
+    // A model cannot finalize a real appointment. Only a separately verified
+    // owner/calendar booking workflow may set the status to "booked".
+    bookingStage: classification.bookingStage === "booked" ? "human_takeover" : classification.bookingStage,
     leadTemperature: classification.leadTemperature,
     nextAction: classification.nextAction,
     needHuman: String(classification.needHuman),
