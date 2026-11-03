@@ -5,7 +5,8 @@ const sheetMocks = vi.hoisted(() => ({
   createWelcomeRecord: vi.fn(),
   ensureSheetHeaders: vi.fn(),
   getCrmRecord: vi.fn(),
-  upsertCrmRecord: vi.fn()
+  upsertCrmRecord: vi.fn(),
+  recordHumanHandoffMessage: vi.fn()
 }));
 
 const openAiMocks = vi.hoisted(() => ({
