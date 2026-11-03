@@ -77,7 +77,9 @@ export async function upsertCrmRecord(input: {
     bodyIssue: classification.bodyIssue || previous?.bodyIssue || "",
     bodyArea: classification.bodyArea || previous?.bodyArea || "",
     preferredService: classification.preferredService,
-    bookingStage: classification.bookingStage,
+    // A model cannot finalize a real appointment. Only a separately verified
+    // owner/calendar booking workflow may set the status to "booked".
+    bookingStage: classification.bookingStage === "booked" ? "human_takeover" : classification.bookingStage,
     leadTemperature: classification.leadTemperature,
     nextAction: classification.nextAction,
     needHuman: String(classification.needHuman),
@@ -94,6 +96,53 @@ export async function upsertCrmRecord(input: {
     await appendSheetValues("A:T", [recordToRow(record)]);
   }
 
+  return record;
+}
+
+/**
+ * Keep the customer message in CRM after Gavin takes over.
+ * Crucially, do NOT claim a new bot reply or let AI change a booking to "booked".
+ */
+export async function recordHumanHandoffMessage(input: {
+  userId: string;
+  displayName?: string;
+  userMessage: string;
+  existing?: { record: CrmRecord; rowNumber: number } | null;
+  now?: Date;
+}) {
+  const iso = (input.now || new Date()).toISOString();
+  const existing = input.existing ?? (await getCrmRecord(input.userId));
+  const previous = existing?.record;
+  const record: CrmRecord = {
+    userId: input.userId,
+    displayName: input.displayName || previous?.displayName || "",
+    firstSeenAt: previous?.firstSeenAt || iso,
+    lastUserMessageAt: iso,
+    lastBotMessageAt: previous?.lastBotMessageAt || "",
+    lastUserMessage: input.userMessage,
+    lastBotReply: previous?.lastBotReply || "",
+    lastIntent: previous?.lastIntent || "unclear",
+    bodyIssue: previous?.bodyIssue || "",
+    bodyArea: previous?.bodyArea || "",
+    preferredService: previous?.preferredService || "unknown",
+    // Preserve a verified historic booking when one exists; no AI can
+    // create or confirm a booking through this path.
+    bookingStage: previous?.bookingStage === "booked" ? "booked" : "human_takeover",
+    leadTemperature: previous?.leadTemperature || "C",
+    nextAction: "human_takeover",
+    needHuman: "true",
+    preferredLocation: previous?.preferredLocation || "",
+    preferredTime: previous?.preferredTime || "",
+    followupCount: previous?.followupCount || "0",
+    lastFollowupAt: previous?.lastFollowupAt || "",
+    notes: previous?.notes || ""
+  };
+
+  if (existing) {
+    await updateSheetValues(`A${existing.rowNumber}:T${existing.rowNumber}`, [recordToRow(record)]);
+  } else {
+    await appendSheetValues("A:T", [recordToRow(record)]);
+  }
   return record;
 }
 

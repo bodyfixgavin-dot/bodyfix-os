@@ -1,35 +1,14 @@
 import { NextResponse } from "next/server";
-import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
-import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
-import { createMenuBookingResult } from "../../../../lib/bodyfix-ai/booking";
-import { isBriefReaction, REACTION_ACKNOWLEDGEMENT } from "../../../../lib/bodyfix-ai/reactions";
+import { shouldAcknowledgeFirstMessage, createFirstContactResult } from "../../../../lib/bodyfix-ai/reception-policy";
+import { isBriefReaction } from "../../../../lib/bodyfix-ai/reactions";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
 import { locationDetailMessages, serviceDetailMessages } from "../../../../lib/bodyfix-ai/richmenu";
-import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord, recordRichMenuClick, markRichMenuBookingIntent } from "@/lib/bodyfix-ai/sheets";
-import type { BodyFixAiResult, LineEvent } from "@/lib/bodyfix-ai/types";
+import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord, recordHumanHandoffMessage, recordRichMenuClick, markRichMenuBookingIntent } from "@/lib/bodyfix-ai/sheets";
+import type { LineEvent } from "@/lib/bodyfix-ai/types";
 import { shouldNotifyHuman, formatHumanNotification } from "../../../../lib/bodyfix-ai/notifications";
 
 export const runtime = "nodejs";
-
-const AI_FALLBACK_REPLY = "收到你的訊息。目前自動接待暫時無法完成判讀，我已保留你的需求。你可以直接留下想處理的狀況、方便地點與時間，Gavin 會在工作空檔親自確認。";
-
-const AI_FALLBACK_RESULT: BodyFixAiResult = {
-  replyText: AI_FALLBACK_REPLY,
-  classification: {
-    intent: "unclear",
-    leadTemperature: "C",
-    bookingStage: "human_takeover",
-    preferredService: "unknown",
-    needHuman: true,
-    bodyIssue: "",
-    bodyArea: "",
-    preferredLocation: "",
-    preferredTime: "",
-    nextAction: "human_takeover",
-    notes: "AI reply generation failed; human takeover requested."
-  }
-};
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
@@ -100,16 +79,9 @@ async function handleLineEvent(event: LineEvent) {
 
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
 
-  // An emoji acknowledgement is not a fresh booking request. Reply politely
-  // without overwriting existing CRM intent/stage or notifying the owner.
-  if (isBriefReaction(event.message.text)) {
-    try {
-      await replyLineMessage(event.replyToken, REACTION_ACKNOWLEDGEMENT);
-    } catch (error) {
-      logWebhookError("Failed to acknowledge LINE reaction", error, { eventType: event.type, userId });
-    }
-    return;
-  }
+  // Emoji reactions never need a bot message; especially not after Gavin
+  // has taken control of a real conversation.
+  if (isBriefReaction(event.message.text)) return;
 
   const displayName = await getLineDisplayName(userId);
 
@@ -117,15 +89,35 @@ async function handleLineEvent(event: LineEvent) {
   try {
     existing = await getCrmRecord(userId);
   } catch (error) {
-    logWebhookError("Failed to read CRM record", error, { eventType: event.type, userId });
+    // Fail closed: if we cannot determine ownership of the conversation,
+    // do not risk an unwanted automatic reply.
+    logWebhookError("Failed to read CRM; human-only response", error, { eventType: event.type, userId });
+    return;
   }
 
-  const aiResult = await generateReplyWithFallback(event.message.text, existing?.record, event.type, userId);
+  if (!shouldAcknowledgeFirstMessage(existing?.record)) {
+    // Existing customers (including Gavin's active manual chats) never get
+    // a conversational bot response. Still retain the latest inbound text.
+    try {
+      await recordHumanHandoffMessage({
+        userId,
+        displayName,
+        userMessage: event.message.text,
+        existing
+      });
+    } catch (error) {
+      logWebhookError("Failed to record inbound human chat", error, { eventType: event.type, userId });
+    }
+    return;
+  }
 
+  // A new contact receives one short fixed acknowledgement, never generative
+  // AI. Subsequent messages silently become Gavin's responsibility.
+  const aiResult = createFirstContactResult(event.message.text);
   try {
     await replyLineMessage(event.replyToken, aiResult.replyText);
   } catch (error) {
-    logWebhookError("Failed to send LINE reply", error, { eventType: event.type, userId });
+    logWebhookError("Failed to send first-contact reply", error, { eventType: event.type, userId });
   }
 
   let recordDisplayName = displayName || userId;
@@ -139,14 +131,14 @@ async function handleLineEvent(event: LineEvent) {
     });
     recordDisplayName = record.displayName || userId;
   } catch (error) {
-    logWebhookError("Failed to upsert CRM record", error, { eventType: event.type, userId });
+    logWebhookError("Failed to record first-contact CRM", error, { eventType: event.type, userId });
   }
 
   if (shouldNotifyHuman(aiResult.classification)) {
     try {
       await notifyGavin(formatHumanNotification(recordDisplayName, aiResult.classification));
     } catch (error) {
-      logWebhookError("Failed to notify Gavin", error, { eventType: event.type, userId });
+      logWebhookError("Failed to notify Gavin about first contact", error, { eventType: event.type, userId });
     }
   }
 }
@@ -259,22 +251,6 @@ async function handlePostbackEvent(event: LineEvent, userId: string) {
     } catch (error) {
       logWebhookError("Failed to notify Gavin about Rich Menu booking", error, { eventType: event.type, userId });
     }
-  }
-}
-
-async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
-  const menuBooking = createMenuBookingResult(message);
-  if (menuBooking) return menuBooking;
-
-  if (isCoachingIntent(message)) {
-    return createCoachingResult();
-  }
-
-  try {
-    return await generateBodyFixReply(message, crm);
-  } catch (error) {
-    logWebhookError("Failed to generate AI reply", error, { eventType, userId });
-    return AI_FALLBACK_RESULT;
   }
 }
 

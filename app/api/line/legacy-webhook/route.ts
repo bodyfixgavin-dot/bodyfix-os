@@ -1,35 +1,16 @@
 import { NextResponse } from "next/server";
-import { generateBodyFixReply } from "@/lib/bodyfix-ai/openai";
-import { createCoachingResult, isCoachingIntent } from "../../../../lib/bodyfix-ai/coaching";
+import { shouldAcknowledgeFirstMessage, createFirstContactResult } from "../../../../lib/bodyfix-ai/reception-policy";
+import { isBriefReaction } from "../../../../lib/bodyfix-ai/reactions";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { createHmac, timingSafeEqual } from "crypto";
-import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord } from "@/lib/bodyfix-ai/sheets";
-import type { BodyFixAiResult, LineEvent } from "@/lib/bodyfix-ai/types";
+import { createWelcomeRecord, ensureSheetHeaders, getCrmRecord, upsertCrmRecord, recordHumanHandoffMessage } from "@/lib/bodyfix-ai/sheets";
+import type { LineEvent } from "@/lib/bodyfix-ai/types";
 import { shouldNotifyHuman, formatHumanNotification } from "../../../../lib/bodyfix-ai/notifications";
 
 export const runtime = "nodejs";
 
 const WEBHOOK_SOURCE = "legacy-line-channel";
 const LINE_API_BASE = "https://api.line.me/v2/bot";
-
-const AI_FALLBACK_REPLY = "收到你的訊息。目前自動接待暫時無法完成判讀，我已保留你的需求。你可以直接留下想處理的狀況、方便地點與時間，Gavin 會在工作空檔親自確認。";
-
-const AI_FALLBACK_RESULT: BodyFixAiResult = {
-  replyText: AI_FALLBACK_REPLY,
-  classification: {
-    intent: "unclear",
-    leadTemperature: "C",
-    bookingStage: "human_takeover",
-    preferredService: "unknown",
-    needHuman: true,
-    bodyIssue: "",
-    bodyArea: "",
-    preferredLocation: "",
-    preferredTime: "",
-    nextAction: "human_takeover",
-    notes: "AI reply generation failed; human takeover requested."
-  }
-};
 
 export async function POST(req: Request) {
   const rawBody = await req.text();
@@ -95,21 +76,38 @@ async function handleLineEvent(event: LineEvent) {
 
   if (event.type !== "message" || event.message?.type !== "text" || !event.message.text) return;
 
-  const displayName = await getLineDisplayName(userId);
+  // Reactions are not new booking requests. Stay silent during manual chats.
+  if (isBriefReaction(event.message.text)) return;
 
+  const displayName = await getLineDisplayName(userId);
   let existing: Awaited<ReturnType<typeof getCrmRecord>> = null;
   try {
     existing = await getCrmRecord(userId);
   } catch (error) {
-    logWebhookError("Failed to read CRM record", error, { eventType: event.type, userId });
+    // Never send a speculative reply when CRM read fails.
+    logWebhookError("Failed to read legacy CRM; human-only response", error, { eventType: event.type, userId });
+    return;
   }
 
-  const aiResult = await generateReplyWithFallback(event.message.text, existing?.record, event.type, userId);
+  if (!shouldAcknowledgeFirstMessage(existing?.record)) {
+    try {
+      await recordHumanHandoffMessage({
+        userId,
+        displayName,
+        userMessage: event.message.text,
+        existing
+      });
+    } catch (error) {
+      logWebhookError("Failed to record legacy human chat", error, { eventType: event.type, userId });
+    }
+    return;
+  }
 
+  const aiResult = createFirstContactResult(event.message.text);
   try {
     await replyLineMessage(event.replyToken, aiResult.replyText);
   } catch (error) {
-    logWebhookError("Failed to send LINE reply", error, { eventType: event.type, userId });
+    logWebhookError("Failed to send legacy first-contact reply", error, { eventType: event.type, userId });
   }
 
   let recordDisplayName = displayName || userId;
@@ -123,7 +121,7 @@ async function handleLineEvent(event: LineEvent) {
     });
     recordDisplayName = record.displayName || userId;
   } catch (error) {
-    logWebhookError("Failed to upsert CRM record", error, { eventType: event.type, userId });
+    logWebhookError("Failed to record legacy first-contact CRM", error, { eventType: event.type, userId });
   }
 
   if (shouldNotifyHuman(aiResult.classification)) {
@@ -134,20 +132,6 @@ async function handleLineEvent(event: LineEvent) {
     }
   }
 }
-
-async function generateReplyWithFallback(message: string, crm: Parameters<typeof generateBodyFixReply>[1], eventType: string, userId: string) {
-  if (isCoachingIntent(message)) {
-    return createCoachingResult();
-  }
-
-  try {
-    return await generateBodyFixReply(message, crm);
-  } catch (error) {
-    logWebhookError("Failed to generate AI reply", error, { eventType, userId });
-    return AI_FALLBACK_RESULT;
-  }
-}
-
 
 function verifyLegacyLineSignature(rawBody: string, signature: string | null) {
   const secret = process.env.LINE_LEGACY_CHANNEL_SECRET;
