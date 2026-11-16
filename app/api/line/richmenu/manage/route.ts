@@ -1,3 +1,4 @@
+import { createHash } from "crypto";
 import { NextResponse } from "next/server";
 
 export const runtime = "nodejs";
@@ -132,66 +133,188 @@ const MENU_CONFIGS = [
       )
     ]
   },
-  {
-    key: "b",
-    field: "imageB",
-    alias: "bodyfix-b",
-    name: "BodyFix B｜預約・據點",
-    areas: [
-      richMenuSwitch(TAB_A, "服務・價格", "bodyfix-a"),
-      richMenuSwitch(TAB_C, "更多", "bodyfix-c"),
-
-      // 六張犁三個服務小標籤只是介紹，不設熱區。
-      postback(
-        { x: 1220, y: 500, width: 920, height: 230 },
-        "六張犁工作室",
-        "action=location&location=luzhangli",
-        "BodyFix・六張犁工作室"
-      ),
-      postback(
-        { x: 1220, y: 875, width: 920, height: 155 },
-        "六張犁地址",
-        "action=location&location=luzhangli",
-        "BodyFix・六張犁工作室"
-      ),
-      postback(
-        { x: 30, y: 1090, width: 800, height: 315 },
-        "西門共享工作室",
-        "action=location&location=ximen",
-        "我想了解西門共享工作室"
-      ),
-      postback(
-        { x: 850, y: 1090, width: 810, height: 315 },
-        "國父紀念館共享工作室",
-        "action=location&location=sunyatsen",
-        "我想了解國父紀念館共享工作室"
-      ),
-      postback(
-        { x: 1680, y: 1090, width: 790, height: 315 },
-        "指定地點服務",
-        "action=location&location=custom",
-        "我想詢問指定地點服務"
-      ),
-      postback(
-        { x: 30, y: 1420, width: 800, height: 185 },
-        "立即預約",
-        "action=booking&mode=immediate",
-        "我想預約 BodyFix"
-      ),
-      postback(
-        { x: 850, y: 1420, width: 810, height: 185 },
-        "本週可約時段",
-        "action=booking&mode=this-week",
-        "查看本週可約時段"
-      ),
-      postback(
-        { x: 1680, y: 1420, width: 790, height: 185 },
-        "預約須知",
-        "action=booking&mode=notice",
-        "我想看預約須知"
-      )
-    ]
-  },
+{
+  "key": "b",
+  "field": "imageB",
+  "alias": "bodyfix-b",
+  "name": "BodyFix B｜固定時段 20261116",
+  "areas": [
+    {
+      "bounds": {
+        "x": 0,
+        "y": 0,
+        "width": 833,
+        "height": 165
+      },
+      "action": {
+        "type": "richmenuswitch",
+        "label": "服務・價格",
+        "richMenuAliasId": "bodyfix-a",
+        "data": "richmenu=bodyfix-a"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1667,
+        "y": 0,
+        "width": 833,
+        "height": 165
+      },
+      "action": {
+        "type": "richmenuswitch",
+        "label": "更多",
+        "richMenuAliasId": "bodyfix-c",
+        "data": "richmenu=bodyfix-c"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1010,
+        "y": 450,
+        "width": 650,
+        "height": 255
+      },
+      "action": {
+        "type": "postback",
+        "label": "詢問 14:00",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：14:00\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 1700,
+        "y": 450,
+        "width": 650,
+        "height": 255
+      },
+      "action": {
+        "type": "postback",
+        "label": "詢問 17:00",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：17:00\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 1010,
+        "y": 720,
+        "width": 650,
+        "height": 265
+      },
+      "action": {
+        "type": "postback",
+        "label": "詢問 19:00",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：19:00\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 1700,
+        "y": 720,
+        "width": 650,
+        "height": 265
+      },
+      "action": {
+        "type": "postback",
+        "label": "詢問 22:00",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：22:00\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 1000,
+        "y": 1000,
+        "width": 1380,
+        "height": 140
+      },
+      "action": {
+        "type": "postback",
+        "label": "詢問其他時間",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 45,
+        "y": 1420,
+        "width": 2410,
+        "height": 175
+      },
+      "action": {
+        "type": "postback",
+        "label": "私訊預約",
+        "data": "action=booking-draft",
+        "inputOption": "openKeyboard",
+        "fillInText": "想預約的服務：\n日期：\n時段：\n地點："
+      }
+    },
+    {
+      "bounds": {
+        "x": 80,
+        "y": 335,
+        "width": 795,
+        "height": 1070
+      },
+      "action": {
+        "type": "postback",
+        "label": "信義區・六張犁工作室",
+        "data": "action=location&location=luzhangli",
+        "displayText": "我想了解信義區・六張犁工作室"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1445,
+        "y": 1180,
+        "width": 195,
+        "height": 110
+      },
+      "action": {
+        "type": "postback",
+        "label": "西門",
+        "data": "action=location&location=ximen",
+        "displayText": "我想了解西門"
+      }
+    },
+    {
+      "bounds": {
+        "x": 1665,
+        "y": 1180,
+        "width": 365,
+        "height": 110
+      },
+      "action": {
+        "type": "postback",
+        "label": "國父紀念館",
+        "data": "action=location&location=sunyatsen",
+        "displayText": "我想了解國父紀念館"
+      }
+    },
+    {
+      "bounds": {
+        "x": 2050,
+        "y": 1180,
+        "width": 365,
+        "height": 110
+      },
+      "action": {
+        "type": "postback",
+        "label": "指定地點",
+        "data": "action=location&location=custom",
+        "displayText": "我想了解指定地點"
+      }
+    }
+  ]
+},
   {
     key: "c",
     field: "imageC",
@@ -364,7 +487,14 @@ function formCard(key:string,title:string,desc:string,defaultNote:string){
   ].join("");
 }
 
-export async function GET(){
+export async function GET(req: Request){
+  if (!isProduction() && new URL(req.url).searchParams.get("status") === "b") {
+    const res = await fetch(LINE_API_BASE+"/richmenu/alias/bodyfix-b",{headers:lineHeaders(),cache:"no-store"});
+    const alias = await readLineResponse(res);
+    if (!res.ok) return NextResponse.json({ok:false}, {status:502});
+    const menu = await fetch(LINE_API_BASE+"/richmenu/"+alias.richMenuId,{headers:lineHeaders(),cache:"no-store"});
+    return NextResponse.json({alias,menu:await readLineResponse(menu)});
+  }
   if(isProduction()){
     return page('<div class="hero"><h1>BodyFix Rich Menu Admin</h1><div class="warn">此管理工具目前只開放 Preview 環境。</div></div>');
   }
@@ -389,14 +519,29 @@ export async function POST(req:Request){
   }
 
   let createdId:string|null=null;
+  let aliasAttempted=false;
+  let previousId="";
   try{
     const form=await req.formData();
     const menuKey=String(form.get("menuKey")||"");
+    if(menuKey!=="b") throw new Error("本次只允許更新 B 頁");
     const config=MENU_CONFIGS.find((item:any)=>item.key===menuKey);
     if(!config) throw new Error("未知的 Rich Menu 頁面。");
     const image=validateImage(form.get("image"));
 
+    const hash=createHash("sha256").update(Buffer.from(await image.arrayBuffer())).digest("hex");
+    if(hash!=="6f662a7d381dd9954a2a0c0b31f00b9faa2457f11179271f1bb442eb6e47e042") throw new Error("請使用本次核准的 B 圖片");
+    const previous=await fetch(LINE_API_BASE+"/richmenu/alias/bodyfix-b",{headers:lineHeaders(),cache:"no-store"});
+    if(!previous.ok) throw new Error("無法確認現有 B 頁");
+    previousId=(await readLineResponse(previous)).richMenuId;
+    const current=await fetch(LINE_API_BASE+"/richmenu/"+previousId,{headers:lineHeaders(),cache:"no-store"});
+    if(!current.ok) throw new Error("無法讀取現有 B 頁");
+    const currentMenu=await readLineResponse(current);
+    if(currentMenu.name===config.name && JSON.stringify(currentMenu.areas)===JSON.stringify(config.areas)) return page("<h1>B 頁已是本次版本</h1><p>"+previousId+"</p>");
+    const check=await fetch(LINE_API_BASE+"/richmenu/validate",{method:"POST",headers:lineHeaders({"Content-Type":"application/json"}),body:JSON.stringify({size:{width:WIDTH,height:HEIGHT},selected:true,name:config.name,chatBarText:"BodyFix 選單",areas:config.areas})});
+    if(!check.ok) throw new Error("LINE 熱區驗證失敗："+JSON.stringify(await readLineResponse(check)));
     createdId=await createRichMenu(config,image);
+    aliasAttempted=true;
     await upsertAlias(config.alias,createdId);
     if(menuKey==="a") await setDefault(createdId);
 
@@ -404,12 +549,12 @@ export async function POST(req:Request){
       '<div class="hero">'+
       '<h1>更新完成 ✅</h1>'+
       '<div class="ok"><strong>'+config.name+'</strong><br>Alias：<code>'+config.alias+'</code><br>Rich Menu ID：<code>'+createdId+'</code></div>'+
-      '<p>其他兩頁沒有修改；原本熱區與 action 已沿用。</p>'+
+      '<p>其他兩頁沒有修改；B 熱區已對齊新版，預約按鈕會開啟可編輯訊息草稿。</p>'+ '<p>舊 B ID（保留供復原）：'+previousId+'</p>'+
       '<p><a href="/api/line/richmenu/manage" style="color:#e8bd78">← 回管理頁</a></p>'+
       '</div>'
     );
   }catch(error){
-    if(createdId){
+    if(createdId && !aliasAttempted){
       try{await fetch(LINE_API_BASE+"/richmenu/"+createdId,{method:"DELETE",headers:lineHeaders()});}catch{}
     }
     return page(
