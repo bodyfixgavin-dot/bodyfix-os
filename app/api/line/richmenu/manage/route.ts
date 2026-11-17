@@ -501,14 +501,12 @@ export async function GET(req: Request){
   return page(
     '<div class="hero">'+
     '<h1>BodyFix Rich Menu Admin</h1>'+
-    '<p>固定管理 A / B / C。每次更新都會沿用既有熱區與 action，只替換背景圖並更新 Alias。</p>'+
+    '<p>本次更新 B 頁固定時段圖片與對應按鈕。</p>'+
     '<div class="ok">尺寸固定 <strong>2500 × 1686</strong>｜PNG/JPG｜1 MB 內</div>'+
-    '<p class="note">A 更新後會自動重新設為所有好友預設首頁；B / C 只更新各自 Alias，不會改動其他頁。</p>'+
+    '<p class="note">僅更新 B 頁，保留 A / C 與原本預設首頁。</p>'+
     '</div>'+
     '<div class="grid">'+
-    formCard("a","A｜服務・價格","更新服務、價格或首頁品牌視覺。","保留 A 熱區；更新後自動設為預設首頁。")+
-    formCard("b","B｜預約・據點","更新據點、預約入口或位置資訊。","保留 B 熱區；A / C 完全不動。")+
-    formCard("c","C｜更多","更新 Gavin、FAQ、4R、網站等入口視覺。","保留 C 熱區；A / B 完全不動。")+
+    formCard("b","B｜預約・據點","更新據點、預約入口或位置資訊。","四個時段開啟可編輯的預約訊息。")+
     '</div>'
   );
 }
@@ -543,7 +541,6 @@ export async function POST(req:Request){
     createdId=await createRichMenu(config,image);
     aliasAttempted=true;
     await upsertAlias(config.alias,createdId);
-    if(menuKey==="a") await setDefault(createdId);
 
     return page(
       '<div class="hero">'+
