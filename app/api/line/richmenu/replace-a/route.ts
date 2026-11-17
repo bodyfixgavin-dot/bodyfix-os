@@ -66,45 +66,40 @@ const A_AREAS = [
   richMenuSwitch(TAB_B, "預約・據點", "bodyfix-b"),
   richMenuSwitch(TAB_C, "更多", "bodyfix-c"),
   postback(
-    { x: 30, y: 490, width: 850, height: 820 },
-    "Body Reset",
+    { x: 25, y: 475, width: 1235, height: 770 },
+    "肌筋膜整理按摩",
     "action=service&service=body-reset",
-    "我想了解筋膜整理系列"
+    "我想了解肌筋膜整理按摩"
   ),
   postback(
-    { x: 890, y: 490, width: 800, height: 820 },
-    "骨盆核心整理",
-    "action=service&service=pelvic-core",
-    "我想了解骨盆核心整理"
+    { x: 1270, y: 475, width: 1200, height: 770 },
+    "放鬆按摩",
+    "action=service&service=relaxation",
+    "我想了解放鬆按摩"
   ),
   postback(
-    { x: 1700, y: 490, width: 770, height: 600 },
-    "1 對 1 教練課",
+    { x: 25, y: 1260, width: 610, height: 390 },
+    "私人教練課",
     "action=service&service=personal-training",
-    "我想了解 1 對 1 教練課"
+    "我想了解私人教練課"
   ),
   postback(
-    { x: 1700, y: 1090, width: 770, height: 220 },
-    "教練課方案",
-    "action=service&service=training-plans",
-    "我想看教練課方案"
+    { x: 650, y: 1260, width: 610, height: 390 },
+    "骨盆核心整理按摩",
+    "action=service&service=pelvic-core",
+    "我想了解骨盆核心整理按摩"
   ),
   postback(
-    { x: 550, y: 1345, width: 780, height: 200 },
-    "紫微斗數解析",
-    "action=service&service=ziwei",
-    "我想了解紫微斗數解析"
+    { x: 1270, y: 1260, width: 580, height: 390 },
+    "其他個人服務",
+    "action=service&service=other-services",
+    "我想了解紫微斗數與塔羅占卜"
   ),
   postback(
-    { x: 1330, y: 1345, width: 700, height: 200 },
-    "塔羅占卜",
-    "action=service&service=tarot",
-    "我想了解塔羅占卜"
-  ),
-  richMenuSwitch(
-    { x: 2030, y: 1345, width: 440, height: 200 },
-    "更多詳細選項",
-    "bodyfix-c"
+    { x: 1860, y: 1260, width: 610, height: 390 },
+    "直接詢問",
+    "action=service&service=consultation",
+    "我想直接詢問適合的服務"
   )
 ];
 
@@ -246,7 +241,7 @@ export async function GET() {
   return page(
     "<h1>BodyFix｜只換 A 圖片</h1>" +
     "<p><strong>只處理 A｜服務・價格。</strong> B、C 完全不修改。</p>" +
-    '<div class="ok">流程：建立新版 A → 套用原 A 完全相同的熱區/action → 更新 <code>bodyfix-a</code> Alias → 將新版 A 設為所有好友預設。</div>' +
+    '<div class="ok">流程：建立新版 A → 套用新版雙主角 A 對應的熱區/action → 更新 <code>bodyfix-a</code> Alias → 將新版 A 設為所有好友預設。</div>' +
     '<div class="warn">圖片必須是 2500 × 1686，且小於 1 MB。</div>' +
     '<form method="POST" enctype="multipart/form-data">' +
     '<input type="file" name="image" accept="image/png,image/jpeg" required />' +
@@ -274,7 +269,7 @@ export async function POST(req: Request) {
       "<h1>BodyFix｜A 已更新 ✅</h1>" +
       '<div class="ok">A｜服務・價格已替換並發布。<br><br>Alias：<code>bodyfix-a</code><br>Rich Menu ID：<code>' + createdId + "</code></div>" +
       "<p>B｜預約・據點與 C｜更多沒有修改。</p>" +
-      "<p>原本 A 的熱區座標與 action 已原樣套用。</p>"
+      "<p>新版 A 的熱區座標與 action 已套用。</p>"
     );
   } catch (error) {
     if (createdId) {
