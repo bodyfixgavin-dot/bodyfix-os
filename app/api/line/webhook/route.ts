@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { shouldAcknowledgeFirstMessage, createFirstContactResult } from "../../../../lib/bodyfix-ai/reception-policy";
+import { shouldAcknowledgeFirstMessage, shouldSendFirstContactReply, createFirstContactResult } from "../../../../lib/bodyfix-ai/reception-policy";
 import { isBriefReaction } from "../../../../lib/bodyfix-ai/reactions";
 import { WELCOME_REPLY } from "@/lib/bodyfix-ai/prompt";
 import { getLineDisplayName, notifyGavin, replyLineMessage, replyLineMessages, verifyLineSignature } from "@/lib/bodyfix-ai/line";
@@ -57,13 +57,25 @@ async function handleLineEvent(event: LineEvent) {
   if (!userId || !event.replyToken) return;
 
   if (event.type === "follow") {
+    // Re-following an existing conversation must not restart automated reception.
+    let prior: Awaited<ReturnType<typeof getCrmRecord>> = null;
+    try {
+      prior = await getCrmRecord(userId);
+    } catch (error) {
+      logWebhookError("Failed to check existing follower; stay silent", error, { eventType: event.type, userId });
+      return;
+    }
+    if (prior?.record?.lastUserMessageAt?.trim() || prior?.record?.lastBotReply?.trim()) return;
     const displayName = await getLineDisplayName(userId);
+    let welcomeSent = false;
     try {
       await replyLineMessage(event.replyToken, WELCOME_REPLY);
+      welcomeSent = true;
     } catch (error) {
       logWebhookError("Failed to send LINE welcome reply", error, { eventType: event.type, userId });
     }
 
+    if (!welcomeSent) return;
     try {
       await createWelcomeRecord({ userId, displayName, replyText: WELCOME_REPLY });
     } catch (error) {
@@ -114,10 +126,14 @@ async function handleLineEvent(event: LineEvent) {
   // A new contact receives one short fixed acknowledgement, never generative
   // AI. Subsequent messages silently become Gavin's responsibility.
   const aiResult = createFirstContactResult(event.message.text);
-  try {
-    await replyLineMessage(event.replyToken, aiResult.replyText);
-  } catch (error) {
-    logWebhookError("Failed to send first-contact reply", error, { eventType: event.type, userId });
+  let replySent = false;
+  if (shouldSendFirstContactReply(existing?.record)) {
+    try {
+      await replyLineMessage(event.replyToken, aiResult.replyText);
+      replySent = true;
+    } catch (error) {
+      logWebhookError("Failed to send first-contact reply", error, { eventType: event.type, userId });
+    }
   }
 
   let recordDisplayName = displayName || userId;
@@ -127,6 +143,7 @@ async function handleLineEvent(event: LineEvent) {
       displayName,
       userMessage: event.message.text,
       aiResult,
+      replySent,
       existing
     });
     recordDisplayName = record.displayName || userId;
