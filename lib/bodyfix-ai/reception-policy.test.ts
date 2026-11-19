@@ -1,5 +1,5 @@
 import { describe, it, expect } from "vitest";
-import { createFirstContactResult, shouldAcknowledgeFirstMessage, FIRST_CONTACT_ACK } from "./reception-policy";
+import { createFirstContactResult, shouldAcknowledgeFirstMessage, shouldSendFirstContactReply, FIRST_CONTACT_ACK } from "./reception-policy";
 import type { CrmRecord } from "./types";
 
 function record(lastUserMessageAt: string): CrmRecord {
@@ -18,6 +18,14 @@ describe("BodyFix first-contact-only response policy", () => {
     expect(shouldAcknowledgeFirstMessage(null)).toBe(true);
     expect(shouldAcknowledgeFirstMessage(record(""))).toBe(true); // follower welcome
     expect(shouldAcknowledgeFirstMessage(record("2026-11-03T17:45:00Z"))).toBe(false);
+  });
+
+  it("does not send a second automated reply after a follow welcome", () => {
+    expect(shouldSendFirstContactReply(null)).toBe(true);
+    const joined = { ...record(""), lastBotReply: "嗨，歡迎來到 BodyFix。", lastBotMessageAt: "2026-11-19T02:00:00Z" };
+    expect(shouldAcknowledgeFirstMessage(joined)).toBe(true);
+    expect(shouldSendFirstContactReply(joined)).toBe(false);
+    expect(shouldSendFirstContactReply(record(""))).toBe(true);
   });
 
   it("does not generate booking confirmations or promise an appointment", () => {
