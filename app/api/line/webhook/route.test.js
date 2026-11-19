@@ -284,4 +284,37 @@ describe("LINE webhook stability", () => {
     expect(lineMocks.notifyGavin).not.toHaveBeenCalled();
   });
 
+
+  it("keeps first customer text silent after a successful follow welcome but still alerts Gavin", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "", lastBotReply: "歡迎訊息", lastBotMessageAt: "2026-11-19T06:00:00Z" },
+      rowNumber: 2
+    });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "first-after-welcome", source: { userId: "user-1" },
+      message: { type: "text", text: "我想約按摩" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
+    expect(sheetMocks.upsertCrmRecord).toHaveBeenCalledWith(expect.objectContaining({
+      userId: "user-1", userMessage: "我想約按摩", replySent: false
+    }));
+    expect(lineMocks.notifyGavin).toHaveBeenCalledTimes(1);
+  });
+
+  it("does not welcome an already-contacted customer again after refollowing", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "2026-11-18T12:00:00Z", lastBotReply: "先前的招呼" },
+      rowNumber: 2
+    });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "follow", replyToken: "second-follow", source: { userId: "user-1" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(lineMocks.replyLineMessage).not.toHaveBeenCalled();
+    expect(sheetMocks.createWelcomeRecord).not.toHaveBeenCalled();
+  });
+
 });
