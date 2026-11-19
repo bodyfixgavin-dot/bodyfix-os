@@ -56,6 +56,8 @@ export async function upsertCrmRecord(input: {
   displayName?: string;
   userMessage: string;
   aiResult: BodyFixAiResult;
+  /** Was the customer-facing reply actually sent? Omitted for other existing callers. */
+  replySent?: boolean;
   existing?: { record: CrmRecord; rowNumber: number } | null;
   now?: Date;
 }) {
@@ -70,9 +72,9 @@ export async function upsertCrmRecord(input: {
     displayName: input.displayName || previous?.displayName || "",
     firstSeenAt: previous?.firstSeenAt || iso,
     lastUserMessageAt: iso,
-    lastBotMessageAt: iso,
+    lastBotMessageAt: input.replySent === false ? previous?.lastBotMessageAt || "" : iso,
     lastUserMessage: input.userMessage,
-    lastBotReply: input.aiResult.replyText,
+    lastBotReply: input.replySent === false ? previous?.lastBotReply || "" : input.aiResult.replyText,
     lastIntent: classification.intent,
     bodyIssue: classification.bodyIssue || previous?.bodyIssue || "",
     bodyArea: classification.bodyArea || previous?.bodyArea || "",
