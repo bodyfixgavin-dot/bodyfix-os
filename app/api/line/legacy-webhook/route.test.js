@@ -165,4 +165,33 @@ describe("legacy LINE webhook", () => {
     }));
   });
 
+
+  it("does not repeat first-contact receipt after a successful follow welcome", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "", lastBotReply: "歡迎訊息", lastBotMessageAt: "2026-11-19T06:00:00Z" },
+      rowNumber: 2
+    });
+    const { POST } = await import("./route");
+    const res = await POST(signedRequest([{
+      type: "message", replyToken: "first-after-welcome", source: { userId: "legacy-user-1" },
+      message: { type: "text", text: "我想預約筋膜整理" }
+    }]));
+    expect(res.status).toBe(200);
+    expect(global.fetch.mock.calls.some(([url]) => String(url).includes("/message/reply"))).toBe(false);
+    expect(sheetMocks.upsertCrmRecord).toHaveBeenCalledWith(expect.objectContaining({
+      userMessage: "我想預約筋膜整理", replySent: false
+    }));
+  });
+
+  it("does not send a duplicate welcome on refollow", async () => {
+    sheetMocks.getCrmRecord.mockResolvedValueOnce({
+      record: { lastUserMessageAt: "2026-11-18T12:00:00Z", lastBotReply: "歡迎訊息" },
+      rowNumber: 2
+    });
+    const { POST } = await import("./route");
+    await POST(signedRequest([{type:"follow",replyToken:"second-follow",source:{userId:"legacy-user-1"}}]));
+    expect(global.fetch.mock.calls.some(([url]) => String(url).includes("/message/reply"))).toBe(false);
+    expect(sheetMocks.createWelcomeRecord).not.toHaveBeenCalled();
+  });
+
 });

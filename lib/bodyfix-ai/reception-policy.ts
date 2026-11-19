@@ -17,6 +17,11 @@ export function shouldAcknowledgeFirstMessage(record: CrmRecord | null | undefin
   return !record?.lastUserMessageAt?.trim();
 }
 
+/** A welcome message already invited a reply; sending another receipt is redundant. */
+export function shouldSendFirstContactReply(record: CrmRecord | null | undefined) {
+  return !record?.lastBotReply?.trim();
+}
+
 export function createFirstContactResult(message: string): BodyFixAiResult {
   const menu = createMenuBookingResult(message);
   if (menu) {
