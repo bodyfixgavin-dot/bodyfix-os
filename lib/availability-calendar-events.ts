@@ -27,7 +27,7 @@ function parsePoint(t: CalendarEntry["start"]): Date | null {
     const d = new Date(t.dateTime);
     return Number.isFinite(d.getTime()) ? d : null;
   }
-  if (t.date && /^\\d{4}-\\d{2}-\\d{2}$/.test(t.date)) {
+  if (t.date && /^\d{4}-\d{2}-\d{2}$/.test(t.date)) {
     return slotDate(t.date, "00:00");
   }
   return null;
@@ -38,8 +38,8 @@ function clock(d: Date): string {
   }).format(d);
 }
 
-const restPattern = /(固定休|完整休息|公休|休假|休息日|休週|^rest\\b|^off\\b)/i;
-const workPattern = /^(?:BodyFix|BF)[\\s|｜:_-]*(?:開放預約|預約開放|可接客|可預約時段|開放時段)/i;
+const restPattern = /(固定休|完整休息|公休|休假|休息日|休週|^rest\b|^off\b)/i;
+const workPattern = /^(?:BodyFix|BF)[\s|｜:_-]*(?:開放預約|預約開放|可接客|可預約時段|開放時段)/i;
 const appointmentPattern = /(摩根|morgan|私人教練|教練課|重訓課|肌筋膜|筋膜整理|放鬆按摩|運動按摩|按摩|客戶|看房|牙醫|門診|就診|看牙|搬家|移動|交通)/i;
 
 export function classifyCalendarEvents(events: ReadonlyArray<CalendarEntry>): ClassifiedCalendarRules {
