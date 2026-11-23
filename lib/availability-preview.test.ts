@@ -30,7 +30,7 @@ describe("BodyFix availability preview", () => {
   });
 
   it("enforces the full 90-minute service when deciding a slot", () => {
-    const busy = [{ start: slotDate(TODAY, "15:10").toISOString(), end: slotDate(TODAY, "15:40").toISOString() }];
+    const busy = [{ start: slotDate(TODAY, "15:20").toISOString(), end: slotDate(TODAY, "15:40").toISOString() }];
     const base = { mode: "demo" as const, startDate: TODAY, now: NOW, days: 1, openDates: new Set([TODAY]), busy };
     const short = computeAvailability({ ...base, serviceId: "fascia" });
     const long = computeAvailability({ ...base, serviceId: "multi" });
