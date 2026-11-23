@@ -1,5 +1,6 @@
 import { createSign } from "node:crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { classifyCalendarEvents, type CalendarEntry } from "@/lib/availability-calendar-events";
 import {
   addDays, computeAvailability, localDate, sampleBusy, SERVICES, slotDate,
   type BusyWindow, type ServiceId,
@@ -50,8 +51,7 @@ async function googleToken(): Promise<string> {
   return data.access_token;
 }
 
-async function fetchBusy(calendarId: string, startDate: string, days: number): Promise<BusyWindow[]> {
-  const accessToken = await googleToken();
+async function fetchBusy(accessToken: string, calendarId: string, startDate: string, days: number): Promise<BusyWindow[]> {
   const response = await fetch("https://www.googleapis.com/calendar/v3/freeBusy", {
     method: "POST", cache: "no-store", signal: AbortSignal.timeout(8000),
     headers: { Authorization: "Bearer " + accessToken, "Content-Type": "application/json" },
@@ -86,6 +86,40 @@ async function fetchBusy(calendarId: string, startDate: string, days: number): P
   return result.busy;
 }
 
+
+/**
+ * Event-title access is intentionally opt-in. The previously granted
+ * free/busy-only sharing permission must never be silently expanded.
+ */
+async function fetchEventDetails(
+  accessToken: string, calendarId: string, startDate: string, days: number
+): Promise<CalendarEntry[]> {
+  const result: CalendarEntry[] = [];
+  let pageToken = "";
+  for (let page = 0; page < 8; page++) {
+    const params = new URLSearchParams({
+      timeMin: slotDate(startDate, "00:00").toISOString(),
+      timeMax: slotDate(addDays(startDate, days), "00:00").toISOString(),
+      singleEvents: "true", orderBy: "startTime", maxResults: "250",
+      fields: "nextPageToken,items(summary,status,transparency,eventType,start,end)",
+    });
+    if (pageToken) params.set("pageToken", pageToken);
+    const response = await fetch(
+      "https://www.googleapis.com/calendar/v3/calendars/" +
+      encodeURIComponent(calendarId) + "/events?" + params.toString(),
+      { headers: { Authorization: "Bearer " + accessToken }, cache: "no-store",
+        signal: AbortSignal.timeout(8000) }
+    );
+    if (!response.ok) throw new Error("Calendar event metadata permission missing (HTTP " + response.status + ")");
+    const parsed = (await response.json()) as { items?: CalendarEntry[]; nextPageToken?: string };
+    result.push(...(parsed.items ?? []));
+    pageToken = parsed.nextPageToken ?? "";
+    if (!pageToken) return result;
+  }
+  // Don't publish incomplete availability when paging is truncated.
+  throw new Error("Calendar event scan exceeded safe pagination limit");
+}
+
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const serviceId = params.get("service") ?? "fascia";
@@ -116,26 +150,41 @@ export async function GET(request: NextRequest) {
   const weekdays = parseWeekdays(process.env.BODYFIX_WORK_WEEKDAYS);
   const openDates = parseDates(process.env.BODYFIX_OPEN_DATES);
   const closedDates = parseDates(process.env.BODYFIX_CLOSED_DATES);
+  const closedWeekdays = parseWeekdays(process.env.BODYFIX_CLOSED_WEEKDAYS);
+  const detailEnabled = process.env.BODYFIX_CALENDAR_DETAILS_ENABLED === "true";
   const calendarId = process.env.GOOGLE_PRIMARY_CALENDAR_ID;
   if (!calendarId) {
     return json({ error: "尚未指定讀取的 Google 行事曆", status: "NOT_CONFIGURED" }, 503);
   }
 
-  // Reading a calendar is different from opening appointment times.
-  // Even when FreeBusy access works, no business hours are inferred from an empty day.
-  const scheduleConfigured = weekdays.size > 0 || openDates.size > 0;
+  // FreeBusy is the baseline. Event metadata is a separate opt-in,
+  // never inferred from the existing free/busy-only calendar share.
   try {
-    const busy = await fetchBusy(calendarId, startDate, days);
+    const accessToken = await googleToken();
+    const busy = await fetchBusy(accessToken, calendarId, startDate, days);
+    const details = detailEnabled
+      ? classifyCalendarEvents(await fetchEventDetails(accessToken, calendarId, startDate, days))
+      : { extraBusy: [] as BusyWindow[], closedDates: new Set<string>(),
+          workWindowsByDate: {} as Record<string, { start: string; end: string }[]> };
+    for (let i = 0; i < days; i++) {
+      const date = addDays(startDate, i);
+      if (closedWeekdays.has(slotDate(date, "12:00").getUTCDay())) closedDates.add(date);
+    }
+    for (const date of details.closedDates) closedDates.add(date);
+    const scheduleConfigured =
+      weekdays.size > 0 || openDates.size > 0 || Object.keys(details.workWindowsByDate).length > 0;
     return json({
       ...computeAvailability({
         mode, serviceId: serviceId as ServiceId, startDate, days, now,
-        workWeekdays: weekdays, openDates, closedDates, busy,
+        workWeekdays: weekdays, openDates, closedDates,
+        workWindowsByDate: details.workWindowsByDate,
+        busy: [...busy, ...details.extraBusy],
       }),
       calendarConnected: true,
       scheduleConfigured,
       connectionNote: scheduleConfigured
-        ? "已同步 Google 行事曆的忙碌時段，公開時段仍需人工確認"
-        : "Google 行事曆已連線；尚未設定工作時段，因此不會自動開放任何預約",
+        ? "已核對 Google 行事曆；可洽詢時段須由 Gavin 確認"
+        : "Google 行事曆已連線；尚未確認開放時段，因此不會自動開放預約",
     });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
