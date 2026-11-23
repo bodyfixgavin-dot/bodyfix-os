@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { SERVICES, type AvailabilityResult, type DayAvailability, type ServiceId } from "@/lib/availability-preview";
 import styles from "./AvailabilityPreview.module.css";
 
@@ -23,7 +23,12 @@ function localTime(iso: string) {
 
 export default function AvailabilityPreviewPage() {
   const [serviceId, setServiceId] = useState<ServiceId>("fascia");
-  const mode = "demo" as const;
+  const [mode, setMode] = useState<"demo" | "live">("demo");
+  const requestId = useRef(0);
+  useEffect(() => {
+    // Internal-only testing: the ordinary customer-facing preview remains demo.
+    if (new URLSearchParams(window.location.search).get("source") === "calendar") setMode("live");
+  }, []);
   const [data, setData] = useState<AvailabilityResult | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -34,6 +39,7 @@ export default function AvailabilityPreviewPage() {
   const service = SERVICES.find((s) => s.id === serviceId) ?? SERVICES[1];
 
   const refresh = useCallback(async () => {
+    const id = ++requestId.current;
     setLoading(true);
     setError("");
     setCopied(false);
@@ -44,14 +50,16 @@ export default function AvailabilityPreviewPage() {
         { cache: "no-store" },
       );
       const next = await response.json();
+      if (id !== requestId.current) return;
       if (!response.ok) throw new Error(next.error || "無法取得空檔");
       setData(next as AvailabilityResult);
       setSelectedDate((current) => next.days.some((d: DayAvailability) => d.date === current) ? current : next.days[0]?.date || "");
     } catch (err) {
+      if (id !== requestId.current) return;
       setData(null);
       setError(err instanceof Error ? err.message : "目前無法查詢，請改用 LINE 人工詢問");
     } finally {
-      setLoading(false);
+      if (id === requestId.current) setLoading(false);
     }
   }, [serviceId, mode]);
 
@@ -106,7 +114,12 @@ export default function AvailabilityPreviewPage() {
           </div>
           <span className={styles.previewTag}>測試版</span>
         </header>
-        <p className={styles.demoNotice}>目前為示範時段，尚未連接實際預約。</p>
+        <p className={styles.demoNotice}>
+          {mode === "demo" ? "目前為示範時段，尚未連接實際預約。" :
+            data?.calendarConnected
+              ? "Google 行事曆已連線，工作日仍待確認；這裡不會直接成立預約。"
+              : "Google 行事曆連線驗證中；尚不開放線上預約。"}
+        </p>
 
         <section className={styles.surface} aria-labelledby="services-title">
           <div className={styles.sectionTop}><span className={styles.step}>01</span><h2 id="services-title">選擇服務</h2></div>
@@ -130,7 +143,7 @@ export default function AvailabilityPreviewPage() {
             <>
               <div className={styles.summary}>
                 <span>最早可洽詢時段</span>
-                <strong>{data.nextAvailableAt ? localTime(data.nextAvailableAt) : "查詢範圍內暫無可洽詢時段"}</strong>
+                <strong>{data.nextAvailableAt ? localTime(data.nextAvailableAt) : mode === "live" && !data.scheduleConfigured ? "尚未開放線上時段" : "查詢範圍內暫無可洽詢時段"}</strong>
                 <small>{data.nextAvailableAt ? "實際預約須經 Gavin 確認" : "可透過 LINE 詢問其他安排"}</small>
               </div>
               <div className={styles.calendar} aria-label="可查詢日期">
@@ -175,7 +188,7 @@ export default function AvailabilityPreviewPage() {
         <footer className={styles.footer}>
           <strong>BodyFix 筋膜整理</strong>
           
-          <p>示範畫面，非正式預約入口。</p>
+          <p>{mode === "demo" ? "示範畫面，非正式預約入口。" : "行事曆連線測試，非正式預約入口。"}</p>
         </footer>
       </div>
     </main>
