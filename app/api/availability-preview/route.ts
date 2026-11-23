@@ -79,7 +79,9 @@ async function fetchBusy(calendarId: string, startDate: string, days: number): P
   };
   const result = parsed.calendars?.[calendarId];
   if (!result || result.errors?.length || !Array.isArray(result.busy)) {
-    throw new Error("Calendar access unavailable");
+    const errorReasons = result?.errors?.map((e) => String((e as { reason?: string }).reason ?? "unknown"))
+      .join(",")?.replace(/[^a-zA-Z,\-_]/g, "").slice(0, 70) || "unknown";
+    throw new Error("Calendar access unavailable (per-calendar reason: " + errorReasons + ")");
   }
   return result.busy;
 }
@@ -137,7 +139,12 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
-    console.error("BodyFix availability preview: Google Calendar unavailable", error instanceof Error ? error.message : "unknown");
+    const serviceProject = (process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.split("@")[1] ?? "")
+      .replace(".iam.gserviceaccount.com", "").replace(/[^a-z0-9-]/g, "").slice(0, 48) || "unknown";
+    console.error("BodyFix calendar FreeBusy diagnostic", {
+      project: serviceProject,
+      reason: error instanceof Error ? error.message : "unknown",
+    });
     return json({ error: "目前無法核對 Google 行事曆，請透過 LINE 人工詢問", status: "UNAVAILABLE" }, 503);
   }
 }
