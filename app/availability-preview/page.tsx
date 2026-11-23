@@ -23,7 +23,7 @@ function localTime(iso: string) {
 
 export default function AvailabilityPreviewPage() {
   const [serviceId, setServiceId] = useState<ServiceId>("fascia");
-  const [mode, setMode] = useState<"demo" | "live">("demo");
+  const mode = "demo" as const;
   const [data, setData] = useState<AvailabilityResult | null>(null);
   const [selectedDate, setSelectedDate] = useState("");
   const [selectedTime, setSelectedTime] = useState("");
@@ -100,20 +100,13 @@ export default function AvailabilityPreviewPage() {
     <main className={styles.page}>
       <div className={styles.shell}>
         <header className={styles.header}>
-          <div><div className={styles.brand}>BODYFIX <span>／</span> AVAILABILITY</div><p>即時空檔查詢｜開發測試版</p></div>
-          <span className={styles.previewTag}>V1.0 · PREVIEW ONLY</span>
+          <div>
+            <div className={styles.brand}>BodyFix</div>
+            <h1>預約時間</h1>
+          </div>
+          <span className={styles.previewTag}>測試版</span>
         </header>
-        <section className={styles.hero}>
-          <span className={styles.eyebrow}>BEFORE YOUR SESSION</span>
-          <h1>想預約，不必再猜<br /><em>什麼時候有空。</em></h1>
-          <p>先查看近期可洽詢時段，再由 Gavin 透過 LINE 人工確認。這裡不會直接成立預約。</p>
-        </section>
-
-        <div className={styles.modePanel} role="group" aria-label="資料來源">
-          <button type="button" aria-pressed={mode === "demo"} className={mode === "demo" ? styles.modeActive : ""} onClick={() => setMode("demo")}>模擬資料</button>
-          <button type="button" aria-pressed={mode === "live"} className={mode === "live" ? styles.modeActive : ""} onClick={() => setMode("live")}>實際行事曆（驗證）</button>
-          <p>預設為模擬資料。正式日曆模式需安全授權、工作日設定後才會開放，不會把空白日曆當成可接客。</p>
-        </div>
+        <p className={styles.demoNotice}>目前為示範時段，尚未連接實際預約。</p>
 
         <section className={styles.surface} aria-labelledby="services-title">
           <div className={styles.sectionTop}><span className={styles.step}>01</span><h2 id="services-title">選擇服務</h2></div>
@@ -130,15 +123,15 @@ export default function AvailabilityPreviewPage() {
         </section>
 
         <section className={styles.surface} aria-labelledby="slots-title">
-          <div className={styles.sectionTop}><span className={styles.step}>02</span><h2 id="slots-title">查看近期時段</h2></div>
+          <div className={styles.sectionTop}><span className={styles.step}>02</span><h2 id="slots-title">選擇日期與時間</h2></div>
           {loading ? <p className={styles.loading} role="status">正在核對可洽詢時段…</p> : null}
           {error ? <div className={styles.error} role="alert">{error}</div> : null}
           {!loading && data ? (
             <>
               <div className={styles.summary}>
-                <span>{mode === "demo" ? "示範資料 · 非真實預約" : "尚須 Gavin 人工確認"}</span>
+                <span>最早可洽詢時段</span>
                 <strong>{data.nextAvailableAt ? localTime(data.nextAvailableAt) : "查詢範圍內暫無可洽詢時段"}</strong>
-                <small>{data.nextAvailableAt ? "最早可洽詢時間" : "可以透過 LINE 詢問其他安排"}</small>
+                <small>{data.nextAvailableAt ? "實際預約須經 Gavin 確認" : "可透過 LINE 詢問其他安排"}</small>
               </div>
               <div className={styles.calendar} aria-label="可查詢日期">
                 {days.map((d) => (
@@ -180,9 +173,9 @@ export default function AvailabilityPreviewPage() {
           <button type="button" className={styles.refresh} onClick={() => void refresh()} disabled={loading}>重新查詢</button>
         </section>
         <footer className={styles.footer}>
-          <strong>READ · RESET · RECONNECT · RETURN</strong>
-          <p>BodyFix 筋膜整理｜低痛感、可呼吸、身體能接受的深度</p>
-          <p>此頁為開發測試，不是正式官網預約入口。</p>
+          <strong>BodyFix 筋膜整理</strong>
+          
+          <p>示範畫面，非正式預約入口。</p>
         </footer>
       </div>
     </main>
