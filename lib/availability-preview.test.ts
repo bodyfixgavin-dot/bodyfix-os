@@ -8,7 +8,7 @@ describe("BodyFix availability preview", () => {
   it("never turns an unspecified workday into an available day", () => {
     const r = computeAvailability({ mode: "live", serviceId: "fascia", startDate: TODAY, now: NOW, days: 1 });
     expect(r.days[0].status).toBe("NOT_OPEN");
-    expect(r.nextAvailableAt).toBeNull();
+    expect(r.nextAvailableAt).toBe(null);
   });
 
   it("labels true rest days CLOSED rather than FULL", () => {
@@ -25,7 +25,7 @@ describe("BodyFix availability preview", () => {
       openDates: new Set([TODAY]),
       busy: [{ start: "2026-11-23T08:45:00.000Z", end: "2026-11-23T09:00:00.000Z" }],
     });
-    expect(r.days[0].slots).not.toContain("17:00");
+    expect(r.days[0].slots.includes("17:00")).toBe(false);
     expect(r.days[0].status).toBe("LIMITED");
   });
 
@@ -34,8 +34,8 @@ describe("BodyFix availability preview", () => {
     const base = { mode: "demo" as const, startDate: TODAY, now: NOW, days: 1, openDates: new Set([TODAY]), busy };
     const short = computeAvailability({ ...base, serviceId: "fascia" });
     const long = computeAvailability({ ...base, serviceId: "multi" });
-    expect(short.days[0].slots).toContain("14:00");
-    expect(long.days[0].slots).not.toContain("14:00");
+    expect(short.days[0].slots.includes("14:00")).toBe(true);
+    expect(long.days[0].slots.includes("14:00")).toBe(false);
   });
 
   it("shows FULL only when all future candidate slots are blocked", () => {
