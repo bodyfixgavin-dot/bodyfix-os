@@ -15,6 +15,10 @@ export const SERVICES = [
 export type ServiceId = (typeof SERVICES)[number]["id"];
 export type DayStatus = "AVAILABLE" | "LIMITED" | "FULL" | "CLOSED" | "NOT_OPEN" | "ENDED";
 export type BusyWindow = { start: string; end: string };
+/** Approved availability windows, in Taipei local wall-clock time.
+ * "25:00" means 01:00 the following day. No windows are inferred from a blank calendar.
+ */
+export type WorkWindow = { start: string; end: string };
 export type DayAvailability = {
   date: string;
   status: DayStatus;
@@ -63,7 +67,10 @@ export function computeAvailability(args: {
   openDates?: ReadonlySet<string>;
   closedDates?: ReadonlySet<string>;
   workWeekdays?: ReadonlySet<number>;
+  /** Date-specific approved work windows. When present they override recurring weekday windows. */
+  workWindowsByDate?: Readonly<Record<string, ReadonlyArray<WorkWindow>>>;
   leadMinutes?: number;
+  /** A conservative cushion around any busy appointment; includes travel and preparation. */
   bufferMinutes?: number;
 }): AvailabilityResult {
   const service = SERVICES.find((s) => s.id === args.serviceId);
@@ -71,23 +78,45 @@ export function computeAvailability(args: {
   const now = args.now ?? new Date();
   const count = Math.min(30, Math.max(1, args.days ?? 30));
   const leadMs = (args.leadMinutes ?? 120) * 60_000;
-  const bufferMs = (args.bufferMinutes ?? 15) * 60_000;
+  const bufferMinutes = Math.max(0, Math.min(180, args.bufferMinutes ?? 45));
+  const bufferMs = bufferMinutes * 60_000;
   const busy = (args.busy ?? []).map((b) => [new Date(b.start).getTime(), new Date(b.end).getTime()]);
   const results: DayAvailability[] = [];
   let nextAvailableAt: string | null = null;
+  const localMinutes = (time: string) => {
+    const match = /^(\\d{1,2}):(\\d{2})$/.exec(time);
+    if (!match) return NaN;
+    const hour = Number(match[1]), minute = Number(match[2]);
+    return hour >= 0 && hour <= 28 && minute >= 0 && minute < 60 ? hour * 60 + minute : NaN;
+  };
+  // The normal day range is NOT an automatic opening rule. It only bounds
+  // slots on dates explicitly approved by the user's calendar/open-day policy.
+  const standardWindow: ReadonlyArray<WorkWindow> = [{ start: "13:00", end: "25:00" }];
 
   for (let i = 0; i < count; i++) {
     const date = addDays(args.startDate, i);
-    const allowed = args.openDates?.has(date) || (args.workWeekdays?.has(weekday(date)) ?? false);
     if (args.closedDates?.has(date)) {
       results.push({ date, status: "CLOSED", slots: [], remaining: 0 });
       continue;
     }
-    if (!allowed) {
+    const explicitWindows = args.workWindowsByDate?.[date];
+    const recurringOpen = args.openDates?.has(date) || (args.workWeekdays?.has(weekday(date)) ?? false);
+    const windows = explicitWindows ?? (recurringOpen ? standardWindow : []);
+    if (windows.length === 0) {
       results.push({ date, status: "NOT_OPEN", slots: [], remaining: 0 });
       continue;
     }
-    const future = START_TIMES.filter((time) => slotDate(date, time).getTime() >= now.getTime() + leadMs);
+
+    const withinApprovedWindow = START_TIMES.filter((time) => {
+      const from = localMinutes(time) - bufferMinutes;
+      const until = localMinutes(time) + service.duration + bufferMinutes;
+      return windows.some((w) => from >= localMinutes(w.start) && until <= localMinutes(w.end));
+    });
+    if (withinApprovedWindow.length === 0) {
+      results.push({ date, status: "NOT_OPEN", slots: [], remaining: 0 });
+      continue;
+    }
+    const future = withinApprovedWindow.filter((time) => slotDate(date, time).getTime() >= now.getTime() + leadMs);
     if (future.length === 0) {
       results.push({ date, status: "ENDED", slots: [], remaining: 0 });
       continue;
@@ -95,7 +124,7 @@ export function computeAvailability(args: {
     const available = future.filter((time) => {
       const from = slotDate(date, time).getTime() - bufferMs;
       const until = slotDate(date, time).getTime() + service.duration * 60_000 + bufferMs;
-      // A slot is valid only if its entire session + buffer is conflict-free.
+      // A slot is valid only if its entire session + travel/preparation buffer is conflict-free.
       return !busy.some(([start, end]) => from < end && until > start);
     });
     if (!nextAvailableAt && available.length) nextAvailableAt = slotDate(date, available[0]).toISOString();
