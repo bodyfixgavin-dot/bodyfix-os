@@ -103,16 +103,26 @@ export async function GET(request: NextRequest) {
   const openDates = parseDates(process.env.BODYFIX_OPEN_DATES);
   const closedDates = parseDates(process.env.BODYFIX_CLOSED_DATES);
   const calendarId = process.env.GOOGLE_PRIMARY_CALENDAR_ID;
-  if (!calendarId || (!weekdays.size && !openDates.size)) {
-    return json({ error: "尚未設定可開放的工作日與日曆，不能推測可預約時段", status: "NOT_CONFIGURED" }, 503);
+  if (!calendarId) {
+    return json({ error: "尚未指定讀取的 Google 行事曆", status: "NOT_CONFIGURED" }, 503);
   }
 
+  // Reading a calendar is different from opening appointment times.
+  // Even when FreeBusy access works, no business hours are inferred from an empty day.
+  const scheduleConfigured = weekdays.size > 0 || openDates.size > 0;
   try {
     const busy = await fetchBusy(calendarId, startDate, days);
-    return json(computeAvailability({
-      mode, serviceId: serviceId as ServiceId, startDate, days, now,
-      workWeekdays: weekdays, openDates, closedDates, busy,
-    }));
+    return json({
+      ...computeAvailability({
+        mode, serviceId: serviceId as ServiceId, startDate, days, now,
+        workWeekdays: weekdays, openDates, closedDates, busy,
+      }),
+      calendarConnected: true,
+      scheduleConfigured,
+      connectionNote: scheduleConfigured
+        ? "已同步 Google 行事曆的忙碌時段，公開時段仍需人工確認"
+        : "Google 行事曆已連線；尚未設定工作時段，因此不會自動開放任何預約",
+    });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
     console.error("BodyFix availability preview: Google Calendar unavailable", error instanceof Error ? error.message : "unknown");
