@@ -171,20 +171,26 @@ export async function GET(request: NextRequest) {
       if (closedWeekdays.has(slotDate(date, "12:00").getUTCDay())) closedDates.add(date);
     }
     for (const date of details.closedDates) closedDates.add(date);
-    const scheduleConfigured =
-      weekdays.size > 0 || openDates.size > 0 || Object.keys(details.workWindowsByDate).length > 0;
+    // The user's existing calendar contains transparent work/rest events.
+    // Never expose openings based on FreeBusy alone until this limitation
+    // has been deliberately reviewed and accepted.
+    const policyVerified = detailEnabled ||
+      process.env.BODYFIX_FREEBUSY_ONLY_POLICY_CONFIRMED === "true";
+    const scheduleConfigured = policyVerified &&
+      (weekdays.size > 0 || openDates.size > 0 || Object.keys(details.workWindowsByDate).length > 0);
     return json({
       ...computeAvailability({
         mode, serviceId: serviceId as ServiceId, startDate, days, now,
-        workWeekdays: weekdays, openDates, closedDates,
-        workWindowsByDate: details.workWindowsByDate,
+        workWeekdays: scheduleConfigured ? weekdays : new Set<number>(),
+        openDates: scheduleConfigured ? openDates : new Set<string>(),
+        closedDates, workWindowsByDate: scheduleConfigured ? details.workWindowsByDate : {},
         busy: [...busy, ...details.extraBusy],
       }),
       calendarConnected: true,
       scheduleConfigured,
       connectionNote: scheduleConfigured
         ? "已核對 Google 行事曆；可洽詢時段須由 Gavin 確認"
-        : "Google 行事曆已連線；尚未確認開放時段，因此不會自動開放預約",
+        : "Google 行事曆已連線；開放工作日與透明事件的安全規則仍待確認",
     });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
