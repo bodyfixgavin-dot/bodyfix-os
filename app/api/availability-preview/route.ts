@@ -61,7 +61,7 @@ async function fetchBusy(calendarId: string, startDate: string, days: number): P
       timeZone: "Asia/Taipei", items: [{ id: calendarId }],
     }),
   });
-  if (!response.ok) throw new Error("Calendar FreeBusy request failed");
+  if (!response.ok) throw new Error("Calendar FreeBusy request failed (HTTP " + response.status + ")");
   const parsed = (await response.json()) as {
     calendars?: Record<string, { busy?: BusyWindow[]; errors?: unknown[] }>;
   };
