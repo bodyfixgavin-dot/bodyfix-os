@@ -20,7 +20,7 @@ function parseDates(raw: string | undefined) {
 }
 
 function parseWeekdays(raw: string | undefined) {
-  return new Set((raw ?? "").split(",").map((x) => Number(x.trim())).filter((x) => Number.isInteger(x) && x >= 0 && x <= 6));
+  return new Set((raw ?? "").split(",").map((x) => x.trim()).filter(Boolean).map(Number).filter((x) => Number.isInteger(x) && x >= 0 && x <= 6));
 }
 
 async function googleToken(): Promise<string> {
