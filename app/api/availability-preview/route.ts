@@ -61,7 +61,19 @@ async function fetchBusy(calendarId: string, startDate: string, days: number): P
       timeZone: "Asia/Taipei", items: [{ id: calendarId }],
     }),
   });
-  if (!response.ok) throw new Error("Calendar FreeBusy request failed (HTTP " + response.status + ")");
+  if (!response.ok) {
+    let reason = "unknown";
+    try {
+      const details = (await response.json()) as {
+        error?: { status?: string; errors?: Array<{ reason?: string }> };
+      };
+      reason = (details.error?.errors?.[0]?.reason || details.error?.status || "unknown")
+        .replace(/[^a-zA-Z_-]/g, "").slice(0, 48);
+    } catch {
+      // Google might return HTML during an outage. Never log response bodies.
+    }
+    throw new Error("Calendar FreeBusy request failed (HTTP " + response.status + ", " + reason + ")");
+  }
   const parsed = (await response.json()) as {
     calendars?: Record<string, { busy?: BusyWindow[]; errors?: unknown[] }>;
   };
