@@ -35,6 +35,10 @@ export type AvailabilityResult = {
   days: DayAvailability[];
   nextAvailableAt: string | null;
   requiresConfirmation: true;
+  /** Diagnostics only; no calendar event details are ever returned. */
+  calendarConnected?: boolean;
+  scheduleConfigured?: boolean;
+  connectionNote?: string;
 };
 
 export function localDate(now: Date): string {
@@ -84,7 +88,7 @@ export function computeAvailability(args: {
   const results: DayAvailability[] = [];
   let nextAvailableAt: string | null = null;
   const localMinutes = (time: string) => {
-    const match = /^(\\d{1,2}):(\\d{2})$/.exec(time);
+    const match = /^(\d{1,2}):(\d{2})$/.exec(time);
     if (!match) return NaN;
     const hour = Number(match[1]), minute = Number(match[2]);
     return hour >= 0 && hour <= 28 && minute >= 0 && minute < 60 ? hour * 60 + minute : NaN;
