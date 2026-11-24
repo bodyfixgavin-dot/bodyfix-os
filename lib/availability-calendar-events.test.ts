@@ -55,4 +55,22 @@ describe("BodyFix calendar event details: opt-in enrichment", () => {
     expect(Object.keys(r.workWindowsByDate).length).toBe(0);
     expect(r.extraBusy.length).toBe(1);
   });
+  it("blocks ordinary plans such as a dinner recorded as free", () => {
+    const r = classifyCalendarEvents([{
+      summary: "與朋友聚餐", transparency: "transparent",
+      start: { dateTime: "2026-11-25T18:00:00+08:00" },
+      end: { dateTime: "2026-11-25T20:00:00+08:00" },
+    }]);
+    expect(r.extraBusy.length).toBe(1);
+  });
+
+  it("ignores short free reminders so they do not occupy service time", () => {
+    const r = classifyCalendarEvents([{
+      summary: "提醒回覆客人", transparency: "transparent",
+      start: { dateTime: "2026-11-25T13:00:00+08:00" },
+      end: { dateTime: "2026-11-25T13:20:00+08:00" },
+    }]);
+    expect(r.extraBusy.length).toBe(0);
+  });
+
 });
