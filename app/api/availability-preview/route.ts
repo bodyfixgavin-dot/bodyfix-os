@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
     const closed = new Set([addDays(startDate, 3)]);
     const data = computeAvailability({
       mode, serviceId: serviceId as ServiceId, startDate, days, now,
-      workWeekdays: new Set([0, 1, 2, 3, 4, 5, 6]),
+      defaultOpen: true,
       closedDates: closed, busy: sampleBusy(startDate),
     });
     return json(data);
