@@ -71,6 +71,8 @@ export function computeAvailability(args: {
   openDates?: ReadonlySet<string>;
   closedDates?: ReadonlySet<string>;
   workWeekdays?: ReadonlySet<number>;
+  /** Gavin's rule: daily availability is the default; calendar commitments close slots. */
+  defaultOpen?: boolean;
   /** Date-specific approved work windows. When present they override recurring weekday windows. */
   workWindowsByDate?: Readonly<Record<string, ReadonlyArray<WorkWindow>>>;
   leadMinutes?: number;
@@ -93,8 +95,8 @@ export function computeAvailability(args: {
     const hour = Number(match[1]), minute = Number(match[2]);
     return hour >= 0 && hour <= 28 && minute >= 0 && minute < 60 ? hour * 60 + minute : NaN;
   };
-  // The normal day range is NOT an automatic opening rule. It only bounds
-  // slots on dates explicitly approved by the user's calendar/open-day policy.
+  // Daily opening is allowed only when the caller explicitly enables defaultOpen.
+  // This cannot be enabled from a public query parameter; API must verify event coverage.
   const standardWindow: ReadonlyArray<WorkWindow> = [{ start: "13:00", end: "25:00" }];
 
   for (let i = 0; i < count; i++) {
@@ -104,7 +106,7 @@ export function computeAvailability(args: {
       continue;
     }
     const explicitWindows = args.workWindowsByDate?.[date];
-    const recurringOpen = args.openDates?.has(date) || (args.workWeekdays?.has(weekday(date)) ?? false);
+    const recurringOpen = args.defaultOpen === true || args.openDates?.has(date) || (args.workWeekdays?.has(weekday(date)) ?? false);
     const windows = explicitWindows ?? (recurringOpen ? standardWindow : []);
     if (windows.length === 0) {
       results.push({ date, status: "NOT_OPEN", slots: [], remaining: 0 });
