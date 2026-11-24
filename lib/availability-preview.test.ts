@@ -106,4 +106,33 @@ describe("BodyFix availability preview", () => {
     expect(r.days[0].slots.includes("22:00")).toBe(true);
   });
 
+  it("opens any day by default only when the API has verified calendar coverage", () => {
+    const r = computeAvailability({
+      mode: "live", serviceId: "fascia", startDate: TODAY, now: NOW, days: 2,
+      defaultOpen: true, busy: [],
+    });
+    expect(r.days.every(d => d.status === "AVAILABLE")).toBe(true);
+    expect(r.days[0].slots).toEqual(["14:00", "17:00", "19:00", "22:00"]);
+  });
+
+  it("blocks an actual calendar commitment without needing a separate workday", () => {
+    const r = computeAvailability({
+      mode: "live", serviceId: "fascia", startDate: TODAY, now: NOW, days: 1,
+      defaultOpen: true, busy: [{
+        start: slotDate(TODAY, "16:30").toISOString(),
+        end: slotDate(TODAY, "18:00").toISOString(),
+      }],
+    });
+    expect(r.days[0].slots).toEqual(["14:00", "19:00", "22:00"]);
+    expect(r.days[0].status).toBe("LIMITED");
+  });
+
+  it("keeps fully recorded rest days closed even with automatic daily opening", () => {
+    const r = computeAvailability({
+      mode: "live", serviceId: "fascia", startDate: TODAY, now: NOW, days: 1,
+      defaultOpen: true, closedDates: new Set([TODAY]),
+    });
+    expect(r.days[0].status).toBe("CLOSED");
+  });
+
 });
