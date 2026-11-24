@@ -67,7 +67,8 @@ export default function AvailabilityPreviewPage() {
 
   const days = useMemo(() => data?.days.slice(0, showAll ? 30 : 7) ?? [], [data, showAll]);
   const day = data?.days.find((d) => d.date === selectedDate);
-  const canCopy = Boolean(day && selectedTime && day.slots.includes(selectedTime));
+  const needsEventCoverage = mode === "live" && data?.calendarConnected === true && data.scheduleConfigured === false;
+  const canCopy = Boolean(day && selectedTime && day.slots.includes(selectedTime) && !needsEventCoverage);
 
   async function copyRequest() {
     if (!canCopy || !day) return;
@@ -117,7 +118,9 @@ export default function AvailabilityPreviewPage() {
         <p className={styles.demoNotice}>
           {mode === "demo" ? "目前為示範時段，尚未連接實際預約。" :
             data?.calendarConnected
-              ? "Google 行事曆已連線，工作日仍待確認；這裡不會直接成立預約。"
+              ? needsEventCoverage
+                ? "行事曆已連線；部分行程尚無法核對，暫不提供可約時段。"
+                : "已依照你的行事曆計算可洽詢時間，實際預約仍須確認。"
               : "Google 行事曆連線驗證中；尚不開放線上預約。"}
         </p>
 
@@ -143,7 +146,7 @@ export default function AvailabilityPreviewPage() {
             <>
               <div className={styles.summary}>
                 <span>最早可洽詢時段</span>
-                <strong>{data.nextAvailableAt ? localTime(data.nextAvailableAt) : mode === "live" && !data.scheduleConfigured ? "尚未開放線上時段" : "查詢範圍內暫無可洽詢時段"}</strong>
+                <strong>{needsEventCoverage ? "待完成行事曆核對" : data.nextAvailableAt ? localTime(data.nextAvailableAt) : "查詢範圍內暫無可洽詢時段"}</strong>
                 <small>{data.nextAvailableAt ? "實際預約須經 Gavin 確認" : "可透過 LINE 詢問其他安排"}</small>
               </div>
               <div className={styles.calendar} aria-label="可查詢日期">
@@ -152,7 +155,7 @@ export default function AvailabilityPreviewPage() {
                     className={selectedDate === d.date ? styles.dayActive : styles.day}
                     onClick={() => {setSelectedDate(d.date); setSelectedTime(""); setCopied(false);}}>
                     <span>{dateLabel(d.date)}</span>
-                    <strong>{d.status === "LIMITED" ? "剩 " + d.remaining + " 格" : statusLabel[d.status]}</strong>
+                    <strong>{needsEventCoverage ? "待核對" : d.status === "LIMITED" ? "剩 " + d.remaining + " 格" : statusLabel[d.status]}</strong>
                   </button>
                 ))}
               </div>
@@ -162,7 +165,7 @@ export default function AvailabilityPreviewPage() {
               <div className={styles.slotPanel}>
                 <div className={styles.slotHeading}>
                   <strong>{selectedDate ? dateLabel(selectedDate) : "請選擇日期"}</strong>
-                  <span>{day?.remaining ? "還有 " + day.remaining + " 個可洽詢時段" : day ? statusLabel[day.status] : ""}</span>
+                  <span>{needsEventCoverage ? "待核對" : day?.remaining ? "還有 " + day.remaining + " 個可洽詢時段" : day ? statusLabel[day.status] : ""}</span>
                 </div>
                 {day?.slots.length ? (
                   <div className={styles.slots}>
@@ -172,7 +175,7 @@ export default function AvailabilityPreviewPage() {
                         onClick={() => {setSelectedTime(time);setCopied(false);}}>{time}</button>
                     ))}
                   </div>
-                ) : <p className={styles.empty}>這天沒有開放可洽詢的時段；請選其他日期，或透過 LINE 人工詢問。</p>}
+                ) : <p className={styles.empty}>{needsEventCoverage ? "尚有部分行程無法核對，暫不顯示時段。不是額滿，也不是休息日。" : "這天沒有符合條件的可洽詢時段；請選其他日期，或透過 LINE 人工詢問。"}</p>}
               </div>
               <div className={styles.action}>
                 <button type="button" disabled={!canCopy} onClick={() => void copyRequest()}>
