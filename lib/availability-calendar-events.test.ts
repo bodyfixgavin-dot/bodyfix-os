@@ -2,12 +2,13 @@ import { describe, expect, it } from "vitest";
 import { classifyCalendarEvents } from "./availability-calendar-events";
 
 describe("BodyFix calendar event details: opt-in enrichment", () => {
-  it("recognizes a recurring transparent Tuesday rest marker", () => {
+  it("does not hard-close an older recurring Tuesday rest preference", () => {
     const r = classifyCalendarEvents([{
       summary: "固定休週二", status: "confirmed", transparency: "transparent",
+      recurringEventId: "old-tuesday-rest",
       start: { date: "2026-11-24" }, end: { date: "2026-11-25" },
     }]);
-    expect(r.closedDates.has("2026-11-24")).toBe(true);
+    expect(r.closedDates.has("2026-11-24")).toBe(false);
     expect(r.extraBusy.length).toBe(0);
   });
 
