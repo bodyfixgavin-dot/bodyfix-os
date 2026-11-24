@@ -101,7 +101,7 @@ async function fetchEventDetails(
       timeMin: slotDate(startDate, "00:00").toISOString(),
       timeMax: slotDate(addDays(startDate, days), "00:00").toISOString(),
       singleEvents: "true", orderBy: "startTime", maxResults: "250",
-      fields: "nextPageToken,items(summary,status,transparency,eventType,start,end)",
+      fields: "nextPageToken,items(summary,status,transparency,eventType,start,end,recurringEventId)",
     });
     if (pageToken) params.set("pageToken", pageToken);
     const response = await fetch(
@@ -143,7 +143,7 @@ export async function GET(request: NextRequest) {
     return json(data);
   }
 
-  // Fail closed: an empty calendar is not evidence that Gavin works that day.
+  // Fail closed only for missing Google authorization; daily booking is the default once event coverage is verified.
   if (process.env.BODYFIX_AVAILABILITY_LIVE_ENABLED !== "true") {
     return json({ error: "真實日曆查詢尚未啟用；請先使用示範模式測試介面", status: "NOT_CONFIGURED" }, 503);
   }
@@ -171,26 +171,29 @@ export async function GET(request: NextRequest) {
       if (closedWeekdays.has(slotDate(date, "12:00").getUTCDay())) closedDates.add(date);
     }
     for (const date of details.closedDates) closedDates.add(date);
-    // The user's existing calendar contains transparent work/rest events.
-    // Never expose openings based on FreeBusy alone until this limitation
-    // has been deliberately reviewed and accepted.
-    const policyVerified = detailEnabled ||
+    // Gavin accepts appointments every day by default. Calendar commitments
+    // are subtracted; no extra workday schedule should be maintained.
+    //
+    // The current share exposes FreeBusy only, hiding "transparent" entries.
+    // Keep the customer-facing slots disabled until detailed event coverage is
+    // approved, or Gavin deliberately confirms ALL real events are marked busy.
+    const calendarCoverageVerified = detailEnabled ||
       process.env.BODYFIX_FREEBUSY_ONLY_POLICY_CONFIRMED === "true";
-    const scheduleConfigured = policyVerified &&
-      (weekdays.size > 0 || openDates.size > 0 || Object.keys(details.workWindowsByDate).length > 0);
+    const scheduleConfigured = calendarCoverageVerified;
     return json({
       ...computeAvailability({
         mode, serviceId: serviceId as ServiceId, startDate, days, now,
-        workWeekdays: scheduleConfigured ? weekdays : new Set<number>(),
-        openDates: scheduleConfigured ? openDates : new Set<string>(),
-        closedDates, workWindowsByDate: scheduleConfigured ? details.workWindowsByDate : {},
+        defaultOpen: calendarCoverageVerified,
+        workWeekdays: weekdays,
+        openDates,
+        closedDates, workWindowsByDate: details.workWindowsByDate,
         busy: [...busy, ...details.extraBusy],
       }),
       calendarConnected: true,
       scheduleConfigured,
-      connectionNote: scheduleConfigured
-        ? "已核對 Google 行事曆；可洽詢時段須由 Gavin 確認"
-        : "Google 行事曆已連線；開放工作日與透明事件的安全規則仍待確認",
+      connectionNote: calendarCoverageVerified
+        ? "每天預設可洽詢；已扣除行事曆安排與休息日，實際預約仍須確認"
+        : "Google 行事曆已連線；部分標記為有空的活動無法讀取，暫不顯示可能錯誤的可約時段",
     });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
