@@ -14,6 +14,7 @@ export type CalendarEntry = {
   eventType?: string;
   start: { date?: string; dateTime?: string };
   end: { date?: string; dateTime?: string };
+  recurringEventId?: string;
 };
 
 export type ClassifiedCalendarRules = {
@@ -77,12 +78,15 @@ export function classifyCalendarEvents(events: ReadonlyArray<CalendarEntry>): Cl
       continue;
     }
 
-    // FreeBusy already returns opaque/busy entries. Enrich only the entries
-    // deliberately set to "free" by the calendar owner. Long all-day routine
-    // reminders are not assumed to be paid appointments or work shifts.
-    if (event.transparency === "transparent" &&
-        ((appointmentPattern.test(title) && mins >= 45 && mins <= 18 * 60) ||
-         (mins >= 45 && mins <= 8 * 60))) {
+    // Gavin's normal rule is "if it is in my calendar, I am occupied".
+    // Calendar's FreeBusy API does not report entries marked "free".
+    // Treat substantial timed entries (including meals and activities) as
+    // conflicts, while excluding 24-hour reminders and quick 10-20m prompts.
+    // Short explicitly named appointments are also genuine commitments.
+    const timed = Boolean(event.start.dateTime) && Boolean(event.end.dateTime);
+    const actualCommitment = (mins >= 30 && mins < 12 * 60) ||
+      (appointmentPattern.test(title) && mins >= 10 && mins < 18 * 60);
+    if (event.transparency === "transparent" && timed && actualCommitment) {
       extraBusy.push({ start: start.toISOString(), end: end.toISOString() });
     }
   }
