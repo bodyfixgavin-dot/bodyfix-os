@@ -190,8 +190,13 @@ export async function GET(request: NextRequest) {
     // The current share exposes FreeBusy only, hiding "transparent" entries.
     // Keep the customer-facing slots disabled until detailed event coverage is
     // approved, or Gavin deliberately confirms ALL real events are marked busy.
-    const calendarCoverageVerified = detailEnabled ||
-      process.env.BODYFIX_FREEBUSY_ONLY_POLICY_CONFIRMED === "true";
+    // Shared calendar reader access redacts private event titles, even if
+    // events.list succeeds. That can conceal transparent full-day rest markers.
+    // Do not promise openings unless an owner-authorized read-only integration
+    // has independently verified full event coverage.
+    const redactedEvents = calendarEvents.some(e => !e.summary);
+    const calendarCoverageVerified = detailEnabled && !redactedEvents &&
+      process.env.BODYFIX_FULL_EVENT_COVERAGE_VERIFIED === "true";
     const scheduleConfigured = calendarCoverageVerified;
     return json({
       ...computeAvailability({
@@ -206,7 +211,7 @@ export async function GET(request: NextRequest) {
       scheduleConfigured,
       connectionNote: calendarCoverageVerified
         ? "每天預設可洽詢；已扣除行事曆安排與休息日，實際預約仍須確認"
-        : "Google 行事曆已連線；部分標記為有空的活動無法讀取，暫不顯示可能錯誤的可約時段",
+        : "Google 行事曆已連線，但仍有私人活動無法核對；暫不顯示可能撞期的時段",
     });
   } catch (error) {
     // Never expose event names, calendar IDs, credential errors, or secrets.
