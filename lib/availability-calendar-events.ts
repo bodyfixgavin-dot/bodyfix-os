@@ -58,8 +58,14 @@ export function classifyCalendarEvents(events: ReadonlyArray<CalendarEntry>): Cl
     const firstDate = localDate(start);
     const endDate = localDate(new Date(end.getTime() - 1)); // Google all-day end is exclusive
 
-    // Only clearly full-day rest/out-of-office entries close an entire day.
-    if ((restPattern.test(title) || event.eventType === "outOfOffice") && mins >= 12 * 60) {
+    // An older recurring "固定休週二" template is a soft day-off preference,
+    // not a hard closure: Gavin accepts paid appointments on those days.
+    // A deliberate one-off full rest or out-of-office still takes precedence.
+    const softRecurringRest = Boolean(event.recurringEventId) &&
+      /^固定休週[一二三四五六日天]$/.test(title) &&
+      event.transparency === "transparent";
+    if (!softRecurringRest &&
+        (restPattern.test(title) || event.eventType === "outOfOffice") && mins >= 12 * 60) {
       for (let day = firstDate, guard = 0; day <= endDate && guard++ < 35; day = addDays(day, 1)) {
         closedDates.add(day);
       }
