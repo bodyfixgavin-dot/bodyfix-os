@@ -162,10 +162,23 @@ export async function GET(request: NextRequest) {
   try {
     const accessToken = await googleToken();
     const busy = await fetchBusy(accessToken, calendarId, startDate, days);
+    const calendarEvents = detailEnabled
+      ? await fetchEventDetails(accessToken, calendarId, startDate, days) : [];
     const details = detailEnabled
-      ? classifyCalendarEvents(await fetchEventDetails(accessToken, calendarId, startDate, days))
+      ? classifyCalendarEvents(calendarEvents)
       : { extraBusy: [] as BusyWindow[], closedDates: new Set<string>(),
           workWindowsByDate: {} as Record<string, { start: string; end: string }[]> };
+    if (detailEnabled) {
+      // Only aggregate counts in server logs. Never record titles or descriptions.
+      console.info("BodyFix calendar coverage diagnostics", {
+        eventCount: calendarEvents.length,
+        eventWithTitleCount: calendarEvents.filter(e => Boolean(e.summary)).length,
+        transparentEventCount: calendarEvents.filter(e => e.transparency === "transparent").length,
+        recurringEventCount: calendarEvents.filter(e => Boolean(e.recurringEventId)).length,
+        restDayCount: details.closedDates.size,
+        transparentConflictCount: details.extraBusy.length,
+      });
+    }
     for (let i = 0; i < days; i++) {
       const date = addDays(startDate, i);
       if (closedWeekdays.has(slotDate(date, "12:00").getUTCDay())) closedDates.add(date);
