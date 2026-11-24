@@ -1,9 +1,10 @@
 import { NextResponse } from "next/server";
+import { previewOAuthRedirectUri } from "@/lib/availability-oauth-preview";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-const REDIRECT_URI = "https://bodyfix-os.vercel.app/api/google/calendar/oauth/callback";
+const REDIRECT_URI = previewOAuthRedirectUri();
 
 function page(content: string) {
   return new Response(
@@ -36,7 +37,7 @@ export async function GET(req: Request) {
   const url = new URL(req.url);
   const error = url.searchParams.get("error");
   if (error) {
-    return page("<h1>Google Calendar 授權未完成</h1><div class=\"warn\">" + error + "</div>");
+    return page("<h1>Google Calendar 授權未完成</h1><div class=\"warn\">" + error.replace(/[^a-zA-Z_-]/g, "") + "</div>");
   }
 
   const code = url.searchParams.get("code");
@@ -72,7 +73,7 @@ export async function GET(req: Request) {
   });
 
   if (!tokenRes.ok) {
-    return page("<h1>Token 交換失敗</h1><div class=\"warn\">" + (await tokenRes.text()) + "</div>");
+    return page("<h1>Token 交換失敗</h1><div class=\"warn\">" + "請確認 Google Cloud 的已授權重新導向 URI 與測試版完全一致" + "</div>");
   }
 
   const data = (await tokenRes.json()) as {
