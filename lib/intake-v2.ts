@@ -82,10 +82,23 @@ export function validateIntake(a: IntakeAnswers, now = new Date()): Record<strin
 }
 export type IntakeRecord = { version: "2.0"; answers: IntakeAnswers; quote: ReturnType<typeof serviceQuote>; profile: ReturnType<typeof birthProfile>; placeName: string; createdAt: string; ageAsOf: string; consentVersion: string };
 export function bookingSummary(a: IntakeAnswers, placeName: string, reference?: string) {
+  a = normalizeIntake(a);
   const q = serviceQuote(a.service, a.extended);
-  return ["【BodyFix 預約需求】", `稱呼：${a.name}`, `身分：${a.visit}`, `服務：${q.name}`, `時長：${q.duration}`, `預估價格：${formatPrice(q.amount)}`, `希望日期：${a.date}`, `希望時間：${a.time}`, `希望地點：${placeName}`, reference ? `資料編號：${reference}` : "", "請 Gavin 協助確認實際服務時間。"].filter(Boolean).join("\n");
+  const birth = birthProfile(a.birthday);
+  const optional = (label: string, value: string | undefined) => value ? `${label}：${value}` : "";
+  // Explicit allowlist. Never copy contact, DOB, health history, safety flags,
+  // free-text notes, private touch boundaries or pelvic-specific details.
+  return ["【BodyFix 預約需求】", `稱呼：${a.name}`, `身分：${a.visit}`,
+    optional("年齡", birth ? `${birth.age} 歲` : a.age ? `${a.age} 歲` : ""), optional("星座", birth?.sunSign),
+    optional("身高", a.height ? `${a.height} cm` : ""), optional("體重", a.weight ? `${a.weight} kg` : ""),
+    optional("職業", a.occupation), optional("工作型態", a.work.join("、")), optional("運動習慣", a.exerciseFrequency), optional("運動類型", a.sports.join("、")),
+    `服務：${q.name}`, `時長：${q.duration}`, `預估價格：${formatPrice(q.amount)}`,
+    optional("主要身體需求", (a.service === "movement" ? a.trainingGoals : a.needs).join("、")), optional("希望整理部位", a.regions.join("、")),
+    `希望日期：${a.date}`, `希望時間：${a.time}`, `希望地點：${placeName}`,
+    reference ? `資料編號：${reference}` : "同步狀態：尚未確認同步，請以此摘要聯繫 Gavin。",
+    "請 Gavin 協助確認實際服務時間；尚未確認預約，服務前仍須安全確認。"].filter(Boolean).join("\n");
 }
-export function lineBookingUrl(summary: string) {
-  const account = LINE_URL.split("/").pop()!;
-  return `https://line.me/R/oaMessage/${account}/?${encodeURIComponent(summary)}`;
+export function lineBookingUrl() {
+  // Copy then open the existing official account. No personal data in URLs.
+  return LINE_URL;
 }

@@ -41,10 +41,16 @@ describe("Intake V2 contracts", () => {
     expect(validateIntake({ ...complete(), service: "pelvic-core" }, now)).toHaveProperty("pelvicConsent");
     expect(validateIntake({ ...complete(), service: "pelvic-core", birthMode: "年齡", age: "17", adultMale: true, pelvicConsent: true }, now)).toHaveProperty("adultMale");
   });
-  it("LINE contains only booking allowlist, no contact/profile/health/notes", () => {
-    const a = { ...complete(), birthday: "1990-10-10", safetyNote: "機密健康", noTouch: "碰觸界線", notes: "私人補充", occupation: "私人職業", height: "175", weight: "75" };
+  it("copies the requested profile and needs but excludes sensitive details and empty optionals", () => {
+    const a = { ...complete(), birthMode: "生日", birthday: "1990-10-10", safetyNote: "機密健康", noTouch: "碰觸界線", notes: "私人補充", safetyFlags: ["近期受傷、手術或骨折"], occupation: "工程師", height: "175", weight: "75", work: ["長時間坐著"], exerciseFrequency: "每週 1–2 次", sports: ["跑步"], needs: ["單純想放鬆"], regions: ["肩頸"] };
     const summary = bookingSummary(a, "討論地點", "receipt");
-    for (const secret of [a.birthday, a.contact, a.safetyNote, a.noTouch, a.notes, a.occupation, a.height, a.weight]) expect(summary).not.toContain(secret);
-    expect(lineBookingUrl(summary)).toContain("/oaMessage/@359gzxzi/?");
+    for (const secret of [a.birthday, a.contact, a.safetyNote, a.noTouch, a.notes, ...a.safetyFlags]) expect(summary).not.toContain(secret);
+    for (const value of ["天秤座", a.occupation, a.height, a.weight, ...a.work, ...a.sports, ...a.needs, ...a.regions, "receipt"]) expect(summary).toContain(value);
+    const offline = bookingSummary(complete(), "討論地點");
+    expect(offline).toContain("尚未確認同步");
+    expect(offline).not.toContain("職業：");
+    expect(offline).not.toContain("資料編號：");
+    expect(lineBookingUrl()).toBe("https://line.me/R/ti/p/@359gzxzi");
+    expect(new URL(lineBookingUrl()).search).toBe("");
   });
 });

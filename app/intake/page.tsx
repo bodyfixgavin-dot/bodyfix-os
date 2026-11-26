@@ -2,9 +2,9 @@
 
 import Link from "next/link";
 import { useEffect, useRef, useState, type FormEvent, type ReactNode } from "react";
-import { INTAKE_SERVICES, intakeService, serviceQuote, formatPrice, LINE_URL } from "@/lib/bodyfix-services";
+import { INTAKE_SERVICES, intakeService, serviceQuote, formatPrice } from "@/lib/bodyfix-services";
 import { WORK, FREQUENCY, SPORTS, NEEDS, REGIONS, FEELINGS, DURATIONS, GOALS, EXPERIENCE, SAFETY_FLAGS, SAFETY, TIMES, emptyIntake, normalizeIntake, validateIntake, taipeiToday, birthProfile, showsDuration, bookingSummary, lineBookingUrl, type IntakeAnswers } from "@/lib/intake-v2";
-import type { IntakePlace } from "@/lib/intake-options";
+import { OFFLINE_INTAKE_PLACES, type IntakePlace } from "@/lib/intake-places";
 import styles from "./intake.module.css";
 
 type ErrorMap = Record<string, string>;
@@ -49,21 +49,25 @@ function BookingCard({ answers, placeName }: { answers: IntakeAnswers; placeName
 export default function IntakePage() {
   const [a, setA] = useState<IntakeAnswers>(emptyIntake);
   const [errors, setErrors] = useState<ErrorMap>({});
-  const [places, setPlaces] = useState<IntakePlace[]>([]);
+  const [places, setPlaces] = useState<IntakePlace[]>(OFFLINE_INTAKE_PLACES);
   const [today, setToday] = useState("");
   const [busy, setBusy] = useState(false);
   const [failure, setFailure] = useState("");
-  const [receipt, setReceipt] = useState<{ reference: string; summary: string; answers: IntakeAnswers; placeName: string } | null>(null);
+  const [receipt, setReceipt] = useState<{ stored: boolean; reference?: string; summary: string; answers: IntakeAnswers; placeName: string } | null>(null);
   const [copied, setCopied] = useState("");
   const [copyFallback, setCopyFallback] = useState(false);
+  const summaryText = useRef<HTMLTextAreaElement>(null);
   const lock = useRef(false);
   const key = useRef("");
   useEffect(() => {
     setToday(taipeiToday());
     key.current = crypto.randomUUID();
     const abort = new AbortController();
-    fetch("/api/intake/options", { signal: abort.signal }).then(r => r.json()).then(d => setPlaces(d.places ?? [])).catch(() => {});
-    return () => abort.abort();
+    const timer = window.setTimeout(() => abort.abort(), 5000);
+    fetch("/api/intake/options", { signal: abort.signal }).then(r => r.ok ? r.json() : Promise.reject()).then(d => {
+      if (Array.isArray(d.places) && d.places.length) setPlaces(d.places);
+    }).catch(() => {}).finally(() => window.clearTimeout(timer));
+    return () => { abort.abort(); window.clearTimeout(timer); };
   }, []);
   function set<K extends keyof IntakeAnswers>(name: K, value: IntakeAnswers[K]) {
     setA(current => ({ ...current, [name]: value }));
@@ -85,8 +89,8 @@ export default function IntakePage() {
   const field = (name: keyof IntakeAnswers, label: string, placeholder?: string, type = "text", unit?: string, multiline = false) => <TextField name={name} label={label} value={a[name] as string} set={v => set(name, v as never)} placeholder={placeholder} type={type} unit={unit} multiline={multiline} error={errors[name]} />;
   const check = (name: "privacyConsent" | "serviceConsent" | "pelvicConsent" | "adultMale", label: string) => <div id={`field-${name}`}><label className={styles.consent}><input name={name} type="checkbox" checked={a[name]} onChange={e => set(name, e.target.checked)} /><span>{label}</span></label>{errors[name] && <p className={styles.error} role="alert">{errors[name]}</p>}</div>;
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function submit(event?: FormEvent) {
+    event?.preventDefault();
     if (lock.current) return;
     const validation = validateIntake(normalized);
     setErrors(validation); setFailure("");
@@ -96,34 +100,60 @@ export default function IntakePage() {
       target?.querySelector<HTMLElement>("input,button,select,textarea")?.focus({ preventScroll: true });
       return;
     }
-    lock.current = true; setBusy(true);
+    lock.current = true; setBusy(true); setCopied(""); setCopyFallback(false);
+    // Generate entirely from form memory, before any network request.
+    const localReceipt = { stored: false, summary: bookingSummary(normalized, placeName), answers: normalized, placeName };
+    const abort = new AbortController();
+    const timer = window.setTimeout(() => abort.abort(), 12000);
     try {
-      const response = await fetch("/api/intake", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version: "2.0", submissionKey: key.current, answers: normalized }) });
-      const result = await response.json();
-      if (!response.ok || result.stored !== true) {
+      const response = await fetch("/api/intake", { method: "POST", signal: abort.signal, headers: { "Content-Type": "application/json" }, body: JSON.stringify({ version: "2.0", submissionKey: key.current, answers: normalized }) });
+      const result = await response.json().catch(() => ({}));
+      if (response.status >= 400 && response.status < 500) {
         if (result.fields) setErrors(Object.fromEntries(Object.entries(result.fields).map(([k, v]) => [k, Array.isArray(v) ? String(v[0]) : String(v)])));
-        throw new Error(result.error || "資料尚未儲存，請重試。你的填寫內容仍保留在本頁。");
+        setReceipt(null);
+        setFailure(result.error || "請檢查表單內容後再繼續；填寫內容仍保留。");
+        return;
       }
-      const summary = bookingSummary(normalized, placeName, result.reference);
-      setReceipt({ reference: result.reference, summary, answers: normalized, placeName });
-      // Navigate only after persistence; a same-tab deep link avoids asynchronous popup blocking.
-      window.location.assign(lineBookingUrl(summary));
-    } catch (err) { setFailure(err instanceof Error ? err.message : "連線中斷，請重試。填寫內容仍保留在本頁。"); }
-    finally { lock.current = false; setBusy(false); }
+      if (!response.ok || result.stored !== true || typeof result.reference !== "string") {
+        setReceipt(localReceipt);
+        return;
+      }
+      setReceipt({ ...localReceipt, stored: true, reference: result.reference, summary: bookingSummary(normalized, placeName, result.reference) });
+      // A direct user click opens LINE reliably on iOS and leaves a chance to copy first.
+    } catch { setReceipt(localReceipt); }
+    finally { window.clearTimeout(timer); lock.current = false; setBusy(false); }
   }
   async function copy() {
     if (!receipt) return;
-    try { await navigator.clipboard.writeText(receipt.summary); setCopied("已複製預約摘要，可貼到 Gavin 的 LINE 對話。"); }
-    catch { setCopyFallback(true); setCopied("無法自動複製，請選取下方預約摘要複製。"); }
+    let success = false;
+    // Invoke clipboard immediately in the tap handler to preserve Safari user activation.
+    try { await navigator.clipboard.writeText(receipt.summary); success = true; }
+    catch {
+      const text = summaryText.current;
+      if (text) {
+        text.focus(); text.select(); text.setSelectionRange(0, text.value.length);
+        try { success = document.execCommand("copy"); } catch { /* Manual selection remains available. */ }
+      }
+    }
+    setCopyFallback(!success);
+    setCopied(success ? "已複製問卷內容，請開啟官方 LINE，貼上並傳送給 Gavin。" : "無法自動複製，請長按下方純文字摘要，選取並複製。");
   }
   if (receipt) return <main className={styles.page}><div className={styles.shell}><header className={styles.hero}>
     <Link href="/website" className={styles.brand}><span>BF</span> BODYFIX</Link><p className={styles.eyebrow}>CLIENT INTAKE & QUICK BOOKING</p>
-    <h1>預約資料已儲存</h1><p>已完成預約資料填寫，請透過 LINE 與 Gavin 確認實際服務時間。</p>
-    <p className={styles.hint}>這還不是預約成功。服務開始前，Gavin 仍會確認安全狀況與服務範圍。</p>
+    <h1>{receipt.stored ? "預約資料已儲存" : "問卷已填寫完成"}</h1>
+    <p role="status">{receipt.stored ? "問卷已同步。請複製下方摘要，透過官方 LINE 與 Gavin 確認實際服務時間。" : "問卷已填寫完成，目前暫時無法同步資料。你仍然可以複製問卷內容，透過官方 LINE 完成預約聯繫，不需要重新填寫。"}</p>
+    <p className={styles.hint}>這還不是預約成功。預約由 Gavin 人工確認；服務開始前仍會確認安全狀況與服務範圍。</p>
     <BookingCard answers={receipt.answers} placeName={receipt.placeName} />
-    <a className={styles.primary} href={lineBookingUrl(receipt.summary)}>前往 LINE 確認預約</a>
-    <details className={styles.details}><summary>LINE 沒有帶入訊息？</summary><p>可一鍵複製預約摘要，再開啟 LINE。摘要不包含生日或身體與健康資料。</p><button className={styles.secondary} onClick={copy}>一鍵複製預約摘要</button><a className={styles.secondary} href={LINE_URL}>開啟 Gavin 的 LINE</a>{copied && <p role="status">{copied}</p>}{copyFallback && <textarea aria-label="預約摘要備援複製" readOnly value={receipt.summary} onFocus={e => e.currentTarget.select()} />}</details>
-    <p className={styles.hint}>資料編號：{receipt.reference}</p>
+    <label htmlFor="booking-summary">問卷摘要預覽（可手動選取複製）</label>
+    <p className={styles.hint}>摘要包含下方顯示的基本輪廓與本次需求；不含完整生日、聯絡帳號、健康病史、安全細項、自由備註或私密碰觸界線。</p>
+    <textarea id="booking-summary" ref={summaryText} aria-label="問卷純文字摘要" readOnly value={receipt.summary} rows={16} onFocus={e => { if (copyFallback) e.currentTarget.select(); }} />
+    <button type="button" className={styles.primary} onClick={copy}>一鍵複製問卷內容</button>
+    {copied && <p role="status" aria-live="polite">{copied}</p>}
+    <a className={styles.primary} href={lineBookingUrl()} target="_blank" rel="noopener noreferrer">開啟 BodyFix 官方 LINE</a>
+    <p className={styles.hint}>開啟 LINE 後，請將已複製的摘要貼上並傳送。請保留本頁；回到這裡仍可複製或重試，重新整理或關閉頁面會清除尚未同步的內容。</p>
+    {!receipt.stored && <button type="button" className={styles.secondary} disabled={busy} onClick={() => void submit()}>{busy ? "正在重試同步…" : "重試儲存（可稍後再試）"}</button>}
+    <button type="button" className={styles.secondary} disabled={busy} onClick={() => { setReceipt(null); setCopied(""); setCopyFallback(false); }}>返回查看／修改問卷</button>
+    {receipt.stored && <p className={styles.hint}>資料編號：{receipt.reference}</p>}
   </header></div></main>;
 
   return <main className={styles.page}><div className={styles.shell}>
@@ -227,12 +257,12 @@ export default function IntakePage() {
         <h2>確認這次的安排</h2>
         <BookingCard answers={normalized} placeName={placeName} />
         <p>填寫的資料將用於預約聯繫、服務前了解及必要的安全確認，非必要資料可選擇不提供。</p>
-        <details className={styles.details}><summary>資料使用與隱私說明</summary><p>資料由 BodyFix（Gavin）於受保護的系統保存，供 Gavin 及經授權的服務人員於預約聯繫、服務前了解與安全確認時使用；僅於上述目的所需期間保存，必要性消失後刪除或去識別化，依法須保存的部分除外。可透過 LINE 聯絡 Gavin 查詢、更正、停止使用或申請刪除。</p><p>生日、健康與身體資料不會帶入 LINE 預約摘要，也不會用於行銷或生日推播。必要聯絡與安全確認未提供時，可能無法安排服務。尚未送出的資料只留在本頁記憶體，重新整理或離開可能清除。</p></details>
+        <details className={styles.details}><summary>資料使用與隱私說明</summary><p>資料由 BodyFix（Gavin）於受保護的系統保存，供 Gavin 及經授權的服務人員於預約聯繫、服務前了解與安全確認時使用；僅於上述目的所需期間保存，必要性消失後刪除或去識別化，依法須保存的部分除外。可透過 LINE 聯絡 Gavin 查詢、更正、停止使用或申請刪除。</p><p>複製摘要可包含年齡、星座、身高體重、職業、運動與本次需求，複製前可先預覽；完整生日、敏感健康資訊與私密碰觸界線不納入，也不會放入網址或用於行銷／生日推播。必要聯絡與安全確認未提供時，可能無法安排服務。尚未送出的資料只留在本頁記憶體，重新整理或離開可能清除。</p></details>
         {check("privacyConsent", "我已閱讀並同意上述資料使用說明，包含為服務前安全確認而提供的健康資訊。")}
         {Object.keys(errors).length > 0 && <p className={styles.error} role="alert">請補齊或修正上方標示欄位，再繼續預約。</p>}
         {failure && <p className={styles.error} role="alert">{failure}</p>}
-        <button className={styles.primary} type="submit" disabled={busy}>{busy ? "正在安全儲存資料…" : failure ? "重試儲存並前往 LINE" : "前往 LINE 確認預約"}</button>
-        <p className={styles.hint}>按下後會先儲存資料，再開啟 Gavin 的 LINE 並帶入預約摘要。實際時間仍需由 Gavin 人工確認。</p>
+        <button className={styles.primary} type="submit" disabled={busy}>{busy ? "正在安全儲存資料…" : "完成問卷並產生摘要"}</button>
+        <p className={styles.hint}>按下後會嘗試儲存並顯示摘要，可複製後開啟官方 LINE；暫時無法同步也不影響聯繫。實際時間仍需由 Gavin 人工確認。</p>
       </section>
       </fieldset>
     </form>

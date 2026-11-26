@@ -2,12 +2,12 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { emptyIntake, taipeiToday } from "./intake-v2";
 const { state } = vi.hoisted(() => ({ state: { configured: true, fails: false, rows: new Map<string, any>() } }));
 vi.mock("@/lib/intake-options", () => ({ getIntakePlaces: async () => [{ id: "discuss", name: "指定地點／與 Gavin 討論" }] }));
-vi.mock("@/lib/supabase/server", () => ({ createSupabaseAdminClient: () => !state.configured ? null : { from: (table: string) => ({ upsert: async (row: any, options: any) => {
+vi.mock("@/lib/supabase/server", () => ({ createSupabaseAdminClient: () => !state.configured ? null : { from: (table: string) => ({ upsert: (row: any, options: any) => ({ abortSignal: async () => {
   expect(table).toBe("intake_submissions"); expect(options).toEqual({ onConflict: "id", ignoreDuplicates: true });
   if (state.fails) return { error: { message: "private database details" } };
   if (!state.rows.has(row.id)) state.rows.set(row.id, row);
   return { error: null };
-} }) } }));
+} }) }) } }));
 import { saveIntakeV2 } from "./intake-v2-server";
 const request = () => ({ version: "2.0", submissionKey: "32f81e20-8b6a-4826-a1a2-86508a013a20", answers: { ...emptyIntake(), name: "測試", visit: "我之前來過", contact: "測試 LINE", contactMethod: "LINE", service: "body-reset", date: taipeiToday(), time: "14:00", place: "discuss", safety: "沒有上述需要告知的狀況", privacyConsent: true, serviceConsent: true } });
 describe("V2 persistence boundary", () => {
