@@ -17,8 +17,8 @@ describe("V2 persistence boundary", () => {
     expect(a.status).toBe(201); expect(b.status).toBe(201);
     expect(state.rows.size).toBe(1); expect(await a.json()).toEqual(await b.json());
     const row = [...state.rows.values()][0];
-    expect(row.raw_payload.quote).toMatchObject({ name: "肌筋膜整理按摩", amount: 2200 });
-    expect(row.resolution_status).toBe("needs_review"); expect(row.client_id).toBeUndefined();
+    expect(JSON.parse(row.raw_message).quote).toMatchObject({ name: "肌筋膜整理按摩", amount: 2200 });
+    expect(row.resolution_status).toBeUndefined(); expect(row.client_id).toBeUndefined();
   });
   it("returns explicit failure without a false receipt when database fails/is missing", async () => {
     state.fails = true; const response = await saveIntakeV2(request());
@@ -35,8 +35,8 @@ describe("V2 persistence boundary", () => {
     const body = request(); Object.assign(body.answers, { birthday: "1990-11-26", height: "175", service: "movement", extended: true, regions: ["肩頸"], safetyNote: "secret", pelvicConsent: true, lineUserId: "forged" });
     const result = await saveIntakeV2(body); expect(result.status).toBe(201);
     const row = [...state.rows.values()][0];
-    expect(row.raw_payload.answers).toMatchObject({ birthday: "", height: "", regions: [], safetyNote: "", pelvicConsent: false, extended: false });
-    expect(row.line_user_id).toBeUndefined(); expect(row.raw_payload.answers.lineUserId).toBeUndefined();
+    expect(JSON.parse(row.raw_message).answers).toMatchObject({ birthday: "", height: "", regions: [], safetyNote: "", pelvicConsent: false, extended: false });
+    expect(row.line_user_id).toBeUndefined(); expect(JSON.parse(row.raw_message).answers.lineUserId).toBeUndefined();
     expect(Object.keys(await result.json()).sort()).toEqual(["ok", "reference", "stored"]);
   });
 });

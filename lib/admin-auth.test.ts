@@ -33,15 +33,18 @@ async function withEnv(values: Record<string, string | undefined>, run: () => Pr
 }
 
 describe("admin authentication", () => {
-  it("creates a server-readable Preview bypass session", async () => {
-    await withEnv({ ALLOW_ADMIN_BYPASS: "true", VERCEL_ENV: "preview", ADMIN_SESSION_SECRET: "preview-test-secret" }, async () => {
+  it("allows an explicitly configured local development bypass", async () => {
+    await withEnv({ ALLOW_ADMIN_BYPASS: "true", VERCEL_ENV: undefined, NODE_ENV: "development", ADMIN_SESSION_SECRET: "preview-test-secret" }, async () => {
       const response = await login(loginRequest({ bypass: true }));
       expect(response.status).toBe(200);
       expect(verifyAdminSessionToken(cookieToken(response))).toBe(true);
     });
   });
 
-  it("fails closed when bypass is requested in production", async () => {
+  it("fails closed when bypass is requested in any deployed environment", async () => {
+    await withEnv({ ALLOW_ADMIN_BYPASS: "true", VERCEL_ENV: "preview" }, async () => {
+      expect((await login(loginRequest({ bypass: true }))).status).toBe(403);
+    });
     await withEnv({ ALLOW_ADMIN_BYPASS: "true", VERCEL_ENV: "production" }, async () => {
       expect((await login(loginRequest({ bypass: true }))).status).toBe(403);
     });

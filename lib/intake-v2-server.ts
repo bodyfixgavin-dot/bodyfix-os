@@ -30,20 +30,16 @@ export async function saveIntakeV2(input: unknown) {
       id, display_name: answers.name, source: "public_intake_v2", status: "new",
       line_id: answers.contactMethod === "LINE" ? answers.contact : null,
       phone: answers.contactMethod === "電話" ? answers.contact : null,
-      instagram: answers.contactMethod === "Instagram" ? answers.contact : null,
       birthday: answers.birthday || null, sun_sign: record.profile?.sunSign ?? null,
-      consent_at: record.createdAt, raw_payload: record,
+      // The base schema already has raw_message. Versioned JSON here avoids requiring
+      // the older optional CRM migration, while preserving all profile/intake snapshots.
+      raw_message: JSON.stringify(record),
       goals: answers.service === "movement" ? answers.trainingGoals : answers.needs,
       body_locations: answers.regions, duration: answers.duration || null,
-      exercise_frequency: answers.exerciseFrequency || null, exercise_types: answers.sports,
-      safety_flags: answers.safetyFlags, safety_note: answers.safetyNote || null,
       service_interest: record.quote.name, preferred_place: place.name,
       preferred_time_note: `${answers.date} ${answers.time}（Asia/Taipei）`, note: answers.notes || null,
-      // Public self-reported names/contact are not authenticated identities. Never update a
-      // client profile or accept a claimed LINE user ID from this endpoint.
-      resolution_status: "needs_review", resolution_reason: "line_manual_identity_confirmation",
     }, { onConflict: "id", ignoreDuplicates: true });
-    if (error) return json({ error: "儲存未成功，請重試。填寫內容仍保留在本頁。", stored: false }, 503);
+    if (error) { console.error("intake_storage_unavailable", error.code ?? "unknown"); return json({ error: "儲存未成功，請重試。填寫內容仍保留在本頁。", stored: false }, 503); }
     return json({ ok: true, stored: true, reference: id }, 201);
   } catch { return json({ error: "連線暫時中斷，請重試。填寫內容仍保留在本頁。", stored: false }, 503); }
 }

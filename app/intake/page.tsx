@@ -24,7 +24,7 @@ function Choices({ name, options, value, onChange, multiple = false, compact = f
     return onChange(option === none ? [option] : [...values.filter(v => v !== none), option]);
   }
   return <div className={compact ? styles.chips : styles.options}>{options.map(option => <label key={option} className={`${styles.choice} ${values.includes(option) ? styles.selected : ""}`}>
-    <input name={name} type={multiple ? "checkbox" : "radio"} checked={values.includes(option)} onChange={() => change(option)} />
+    <input aria-label={option} name={name} type={multiple ? "checkbox" : "radio"} checked={values.includes(option)} onChange={() => change(option)} />
     <span>{option}</span>
   </label>)}</div>;
 }
