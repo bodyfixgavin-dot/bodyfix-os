@@ -1,3 +1,5 @@
+> 歷史規格：本文件保留供追溯；2026-11-26 起以 Gavin 本次指令及 [V2 預覽驗收紀錄](intake-v2-preview-report.md) 為準，舊服務名稱、公開方案及 LINE 健康摘要規則已被取代。
+
 # BodyFix Intake v2.0｜Canonical Specification
 
 > 本文件是 BodyFix Intake v2.0 的 Canonical Source of Truth。Intake、BodyFix 2.0 首頁與服務頁必須使用同一套服務名稱、價格、品牌語言與安全界線；不另行發明架構或服務。此次只完成 code 與 preview-ready 狀態，不變更 production hosting、不部署、不刪除舊 Netlify 網站。
