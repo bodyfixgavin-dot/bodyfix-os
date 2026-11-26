@@ -39,7 +39,7 @@ export async function saveIntakeV2(input: unknown) {
       service_interest: record.quote.name, preferred_place: place.name,
       preferred_time_note: `${answers.date} ${answers.time}（Asia/Taipei）`, note: answers.notes || null,
     }, { onConflict: "id", ignoreDuplicates: true });
-    if (error) { console.error("intake_storage_unavailable", error.code ?? "unknown"); return json({ error: "儲存未成功，請重試。填寫內容仍保留在本頁。", stored: false }, 503); }
+    if (error) { console.error(`intake_storage_unavailable:${error.code || "transport"}:${/fetch failed/i.test(error.message || "") ? "fetch_failed" : /invalid api key/i.test(error.message || "") ? "invalid_key" : /could not find.*table/i.test(error.message || "") ? "missing_table" : /could not find.*column/i.test(error.message || "") ? "missing_column" : "database_error"}`); return json({ error: "儲存未成功，請重試。填寫內容仍保留在本頁。", stored: false }, 503); }
     return json({ ok: true, stored: true, reference: id }, 201);
   } catch { return json({ error: "連線暫時中斷，請重試。填寫內容仍保留在本頁。", stored: false }, 503); }
 }
