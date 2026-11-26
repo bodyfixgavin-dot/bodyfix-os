@@ -1,3 +1,4 @@
+import { saveIntakeV2 } from "@/lib/intake-v2-server";
 import { NextResponse } from "next/server";
 import { createSupabaseAdminClient } from "@/lib/supabase/server";
 import { normalizePhone, normalizeText, resolveIntakeClient, type CandidateClient } from "@/lib/intake-crm-resolver";
@@ -43,10 +44,12 @@ async function fetchCandidates(supabase: any, body: IntakeBody) {
   const identifiers = await checked<any[]>("load candidate identifiers", supabase.from("client_identifiers").select("client_id, identifier_type, identifier_value, normalized_value, is_verified, is_active").in("client_id", idList));
   return clients.map((c) => ({ ...c, aliases: aliases.filter((a) => a.client_id === c.id).map((a) => a.alias), identifiers: identifiers.filter((i) => i.client_id === c.id) })) as CandidateClient[];
 }
-async function markFailed(supabase: any, submissionId: string, error: unknown) { console.error("intake CRM promotion failed", error); await supabase.from("intake_submissions").update({ resolution_status: "failed", resolution_reason: error instanceof Error ? error.message : "unknown_error", resolved_at: null, resolved_by: null, updated_at: new Date().toISOString() }).eq("id", submissionId); }
+async function markFailed(supabase: any, submissionId: string, error: unknown) { console.error("intake CRM promotion failed"); await supabase.from("intake_submissions").update({ resolution_status: "failed", resolution_reason: error instanceof Error ? error.message : "unknown_error", resolved_at: null, resolved_by: null, updated_at: new Date().toISOString() }).eq("id", submissionId); }
 export async function POST(req: Request) {
+  if (Number(req.headers.get("content-length") || 0) > 32768) return NextResponse.json({ error: "資料過大" }, { status: 413 });
   let body: IntakeBody = {};
   try { body = await req.json(); } catch { body = {}; }
+  if ((body as Record<string, unknown>)?.version === "2.0") return saveIntakeV2(body);
   const name = text(body.name); const line = text(body.line); const phoneRaw = text(body.phone); const instagramRaw = text(body.instagram); const lineUserId = text(body.lineUserId);
   const phone = normalizePhone(phoneRaw); const lineNorm = normalizeText(line); const instagram = normalizeText(instagramRaw);
   if (!name) return NextResponse.json({ error: "請填寫稱呼。" }, { status: 400 });
@@ -56,7 +59,7 @@ export async function POST(req: Request) {
   const payload = { display_name: name, line_id: line || null, line_user_id: lineUserId || null, phone: phoneRaw || null, instagram: instagramRaw || null, birthday: birthday || null, birth_time_note: birthTime || null, birth_place: birthPlace || null, sun_sign: text(body.sunSign) || null, chart_interest: chartInterest(text(body.chartInterest)), birth_data_level: birthDataLevel(text(body.birthDataLevel), birthday, birthTime, birthPlace), consent_at: new Date().toISOString(), raw_payload: body, goals: list(body.selections, "goal"), body_locations: list(body.selections, "location"), duration: list(body.selections, "duration")[0] ?? null, comfort_score: list(body.selections, "comfort")[0] ? Number(list(body.selections, "comfort")[0]) : null, previous_support: list(body.selections, "history"), trigger_moments: list(body.selections, "triggerMoment"), exercise_frequency: list(body.selections, "exerciseFrequency")[0] ?? null, exercise_types: list(body.selections, "exerciseTypes"), trainer_status: list(body.selections, "trainerStatus")[0] ?? null, safety_flags: list(body.selections, "safetyFlags"), pressure_preferences: list(body.selections, "pressurePreferences"), safety_note: text(body.safetyNote) || null, pressure_note: text(body.pressureNote) || null, state_recent: list(body.selections, "stateRecent")[0] ?? null, state_improve: list(body.selections, "stateImprove")[0] ?? null, state_feeling: list(body.selections, "stateFeeling")[0] ?? null, state_trend: text(body.stateTrend) || null, service_interest: list(body.selections, "service")[0] ?? null, preferred_place: list(body.selections, "place")[0] ?? null, available_times: list(body.selections, "availableTimes"), last_minute_ok: list(body.selections, "lastMinute")[0] ?? null, preferred_time_note: text(body.timeNote || body.time) || null, note: text(body.note) || null, raw_message: text(body.message) || null, source: "public_intake", status: "new", resolution_status: "pending" };
   const supabase = createSupabaseAdminClient();
   if (!supabase) return NextResponse.json({ ok: true, stored: false, reason: "supabase_not_configured" }, { status: 202 });
-  const submission = await checked<any>("insert intake submission", supabase.from("intake_submissions").insert(payload).select("id, created_at").single()).catch((error) => { console.error("intake submission insert failed", error); return null; });
+  const submission = await checked<any>("insert intake submission", supabase.from("intake_submissions").insert(payload).select("id, created_at").single()).catch((error) => { console.error("intake submission insert failed"); return null; });
   if (!submission) return NextResponse.json({ ok: true, stored: false }, { status: 202 });
   try {
     const candidates = await fetchCandidates(supabase, body);
