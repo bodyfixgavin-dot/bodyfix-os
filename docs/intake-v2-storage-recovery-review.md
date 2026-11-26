@@ -1,4 +1,4 @@
-# Intake 儲存修復 SQL 審閱稿（尚未執行）
+# Intake 儲存修復 SQL 審閱與執行紀錄
 
 目標：現有 `bodyfix-database`／`mxthlhabqvlsbfgytrdg`。
 
@@ -6,7 +6,7 @@
 
 所有變更包在同一 transaction；若表已存在，CREATE TABLE 失敗後整個 transaction 回復，不重建／覆寫它。只新增問卷表和其索引；RLS 啟用，拒絕公開／anon／authenticated 直接讀寫，保留既有伺服器 service_role 寫入與授權後台讀取。RLS policy 使用明確角色，取代舊 SQL 的 auth.role() 判斷。API 的管理員 session 驗證維持原狀。
 
-此步驟是資料庫 schema 變更，依使用者先唯讀的選擇，待同意後才執行。後續僅送出清楚標示的虛構測試資料；不修改或刪除歷史客戶。
+使用者先選唯讀檢查，之後已明確回覆「同意套用此 SQL 並繼續虛構資料驗證」。已於 2026-11-26 套用下方原審閱 SQL，migration version `20261126141416`／`restore_intake_submissions_storage`。實際虛構資料寫入與並行重試去重已通過；未修改或刪除歷史客戶。
 
 ```sql
 begin;
