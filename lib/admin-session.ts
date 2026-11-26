@@ -5,7 +5,7 @@ const SESSION_TTL_SECONDS = 60 * 60 * 8;
 const PREVIEW_BYPASS_SESSION_SECRET = "bodyfix-preview-admin-bypass-session";
 
 export function isAdminBypassAllowed() {
-  return process.env.ALLOW_ADMIN_BYPASS === "true" && process.env.VERCEL_ENV !== "production";
+  return process.env.ALLOW_ADMIN_BYPASS === "true" && !process.env.VERCEL_ENV && process.env.NODE_ENV !== "production";
 }
 
 function getSessionSecret() {
@@ -18,7 +18,7 @@ function getSessionSecret() {
 }
 
 function sign(value: string) {
-  return createHmac("sha256", getSessionSecret()).update(value).digest("base64url");
+  return createHmac("sha256", getSessionSecret()).update(`bodyfix-admin-v2:${value}`).digest("base64url");
 }
 
 export function hasAdminPassword() {

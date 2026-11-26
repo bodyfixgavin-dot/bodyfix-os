@@ -178,7 +178,7 @@ export default function BodyFixWebsitePage() {
             <span className={styles.subtitle}>— Services</span>
           </div>
           <p className={styles.copyWide}>
-            BodyFix 目前提供完整的身體整理與 Movement Training。先選最貼近現在狀態的入口，再透過預約前問卷整理需求。
+            BodyFix 目前提供完整的身體整理與私人教練課。先選最貼近現在狀態的入口，再透過預約前問卷整理需求。
           </p>
           <div className={styles.serviceGrid}>
             {serviceEntrances.map((service) => (
@@ -194,7 +194,7 @@ export default function BodyFixWebsitePage() {
               <span className={styles.cardNum}>06</span>
               <h3>{MOVEMENT_TRAINING.name}</h3>
               <p>{MOVEMENT_TRAINING.planName}，單堂 {MOVEMENT_TRAINING.duration}｜{MOVEMENT_TRAINING.singlePrice}。另有 12、24、36 堂與訓練＋筋膜整理方案。</p>
-              <a href="/intake.html?service=movement">填寫 Movement 問卷 →</a>
+              <a href="/intake.html?service=movement">預約私人教練課 →</a>
             </article>
           </div>
           <div className={styles.brandIntro}>
@@ -337,7 +337,7 @@ export default function BodyFixWebsitePage() {
           </div>
           <aside className={styles.contactCard}>
             <span className={styles.smallLabel}>Contact Channels</span>
-            <a className={styles.contactLink} href="/intake.html"><div><strong>開始 BodyFix Intake</strong><span>約 2–3 分鐘，建議從這裡開始</span></div><span>→</span></a>
+            <a className={styles.contactLink} href="/intake.html"><div><strong>開始 BodyFix Intake</strong><span>初次認識與快速預約</span></div><span>→</span></a>
             <a className={styles.contactLink} href="https://line.me/R/ti/p/@359gzxzi" target="_blank" rel="noreferrer"><div><strong>LINE 官方帳號</strong><span>@359gzxzi</span></div><span>→</span></a>
             <a className={styles.contactLink} href="https://instagram.com/bodyfix.fascia" target="_blank" rel="noreferrer"><div><strong>Instagram 私訊</strong><span>@bodyfix.fascia</span></div><span>→</span></a>
             <a className={styles.contactLink} href="#city"><div><strong>城市場次登記</strong><span>台中、高雄與需求城市</span></div><span>→</span></a>
